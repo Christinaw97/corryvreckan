@@ -56,6 +56,8 @@ namespace corryvreckan {
         bool charge_weighting_;
         bool fitted_profile_;
 
+        bool ignore_first_frame_;
+
         // Graphs:
         TH2F* hitMapIntegrated;
         TH2F* hitMapLastFrame;

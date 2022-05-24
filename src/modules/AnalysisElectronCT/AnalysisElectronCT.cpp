@@ -14,7 +14,11 @@
 using namespace corryvreckan;
 
 AnalysisElectronCT::AnalysisElectronCT(Configuration& config, std::shared_ptr<Detector> detector)
-    : Module(config, detector), m_detector(detector) {}
+    : Module(config, detector), m_detector(detector) {
+
+      ignore_first_frame_ = config_.get<bool>("ignore_first_frame",false);
+
+    }
 
 void AnalysisElectronCT::initialize() {
 
@@ -144,11 +148,12 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
     hitMapLastFrame->Reset();
     chargeMapLastFrame->Reset();
 
-    auto pixels = clipboard->getData<Pixel>(m_detector->getName());
-    if(pixels.empty()) {
-        LOG(DEBUG) << "Detector " << m_detector->getName() << " does not have any pixels on the clipboard";
-        return StatusCode::Success;
+    if(ignore_first_frame_ && m_eventNumber == 0) {
+      m_eventNumber++;
+      return StatusCode::Success;
     }
+
+    auto pixels = clipboard->getData<Pixel>(m_detector->getName());
 
     long unsigned int nPixels = pixels.size();
     LOG(DEBUG) << "Picked up " << nPixels << " pixels for device " << m_detector->getName();
