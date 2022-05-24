@@ -162,6 +162,7 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     // Extend axes if necessary
     if(m_eventNumber > nHitsVsFrame->GetXaxis()->GetXmax()) {
+      LOG(DEBUG) << "Extending axis to " << m_eventNumber * 2;
       nHitsVsFrame->ExtendAxis(m_eventNumber * 2, nHitsVsFrame->GetXaxis());
       projectionXVsFrame->ExtendAxis(m_eventNumber * 2, projectionXVsFrame->GetXaxis());
       projectionYVsFrame->ExtendAxis(m_eventNumber * 2, projectionYVsFrame->GetXaxis());
