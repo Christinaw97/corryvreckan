@@ -139,8 +139,8 @@ void AnalysisElectronCT::initialize() {
     widthsYVsFrame = new TProfile("widthsYVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5);
     widthsYVsFrame->GetXaxis()->SetCanExtend(true);
 
-    title = "Hit Timestamp within Frame;time [s];hits";
-    hitTimeWithinFrame = new TH1F("hitTimeWithinFrame", title.c_str(), 1000, 0, 1);
+    title = "Hit Timestamp within Frame;time [us];hits";
+    hitTimeWithinFrame = new TH1F("hitTimeWithinFrame", title.c_str(), 1000, 0, 1000);
 }
 
 StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -207,7 +207,7 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
       projectionChargeXVsFrame->Fill(m_eventNumber, pxcol, pxcharge);
       projectionChargeYVsFrame->Fill(m_eventNumber, pxrow, pxcharge);
 
-      hitTimeWithinFrame->Fill(static_cast<double>(Units::convert(pixel->timestamp() - frameStart, "s")));
+      hitTimeWithinFrame->Fill(static_cast<double>(Units::convert(pixel->timestamp() - frameStart, "us")));
     }
 
     double centerX, centerY, widthX, widthY;
