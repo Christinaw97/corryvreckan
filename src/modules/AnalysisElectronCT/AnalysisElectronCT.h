@@ -99,6 +99,7 @@ namespace corryvreckan {
 
         TH1F* hitTimeWithinFrame;
 
+        TH1F* pixelCharge;
     };
 
 } // namespace corryvreckan

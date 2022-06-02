@@ -16,9 +16,8 @@ using namespace corryvreckan;
 AnalysisElectronCT::AnalysisElectronCT(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector) {
 
-      ignore_first_frame_ = config_.get<bool>("ignore_first_frame",false);
-
-    }
+    ignore_first_frame_ = config_.get<bool>("ignore_first_frame", false);
+}
 
 void AnalysisElectronCT::initialize() {
 
@@ -37,46 +36,20 @@ void AnalysisElectronCT::initialize() {
     fitted_profile_ = config_.get<bool>("fitted_profile", true);
 
     std::string title = "Integrated hit map;x [px]; y [px];hits";
-    hitMapIntegrated = new TH2F("hitMapIntegrated",
-                      title.c_str(),
-                      xpixels,
-                      -0.5,
-                      xpixels - 0.5,
-                      ypixels,
-                      -0.5,
-                      ypixels - 0.5);
+    hitMapIntegrated =
+        new TH2F("hitMapIntegrated", title.c_str(), xpixels, -0.5, xpixels - 0.5, ypixels, -0.5, ypixels - 0.5);
     title = "Hit map of last frame;x [px]; y [px];hits";
-    hitMapLastFrame = new TH2F("hitMapLastFrame",
-                                title.c_str(),
-                                xpixels,
-                                -0.5,
-                                xpixels - 0.5,
-                                ypixels,
-                                -0.5,
-                                ypixels - 0.5);
-
+    hitMapLastFrame = new TH2F("hitMapLastFrame", title.c_str(), xpixels, -0.5, xpixels - 0.5, ypixels, -0.5, ypixels - 0.5);
 
     title = "Integrated charge map;x [px]; y [px];charge [ke]";
-    chargeMapIntegrated = new TH2F("chargeMapIntegrated",
-                                    title.c_str(),
-                                    xpixels,
-                                    -0.5,
-                                    xpixels - 0.5,
-                                    ypixels,
-                                    -0.5,
-                                    ypixels - 0.5);
+    chargeMapIntegrated =
+        new TH2F("chargeMapIntegrated", title.c_str(), xpixels, -0.5, xpixels - 0.5, ypixels, -0.5, ypixels - 0.5);
     title = "Charge map of last frame;x [px]; y [px];charge [ke]";
-    chargeMapLastFrame = new TH2F("chargeMapLastFrame",
-                                  title.c_str(),
-                                  xpixels,
-                                  -0.5,
-                                  xpixels - 0.5,
-                                  ypixels,
-                                  -0.5,
-                                  ypixels - 0.5);
+    chargeMapLastFrame =
+        new TH2F("chargeMapLastFrame", title.c_str(), xpixels, -0.5, xpixels - 0.5, ypixels, -0.5, ypixels - 0.5);
 
     title = "Hits per frame;hits;frame";
-    hitsPerFrame = new TH1F("hitsPerFrame", title.c_str(), 200, -0.5, xpixels*ypixels - 0.5);
+    hitsPerFrame = new TH1F("hitsPerFrame", title.c_str(), 200, -0.5, xpixels * ypixels - 0.5);
     title = "Charge per frame;charge [ke];frame";
     chargePerFrame = new TH1F("chargePerFrame", title.c_str(), 200, 0, 1e7);
 
@@ -91,14 +64,14 @@ void AnalysisElectronCT::initialize() {
     projectionChargeY = new TH1F("projectionChargeY", title.c_str(), ypixels, -0.5, ypixels - 0.5);
 
     title = "centers (RMS) X;RMS X [px];frames";
-    centersX = new TH1F("centersX", title.c_str(), xpixels/5, -0.5, xpixels - 0.5);
+    centersX = new TH1F("centersX", title.c_str(), xpixels / 5, -0.5, xpixels - 0.5);
     title = "centers (RMS) Y;RMS Y [px];frames";
-    centersY = new TH1F("centersY", title.c_str(), ypixels/5, -0.5, ypixels - 0.5);
+    centersY = new TH1F("centersY", title.c_str(), ypixels / 5, -0.5, ypixels - 0.5);
 
     title = "Widths (RMS) X;RMS X [px];frames";
-    widthsX = new TH1F("widthsX", title.c_str(), xpixels/5, -0.5, xpixels - 0.5);
+    widthsX = new TH1F("widthsX", title.c_str(), xpixels / 5, -0.5, xpixels - 0.5);
     title = "Widths (RMS) Y;RMS Y [px];frames";
-    widthsY = new TH1F("widthsY", title.c_str(), ypixels/5, -0.5, ypixels - 0.5);
+    widthsY = new TH1F("widthsY", title.c_str(), ypixels / 5, -0.5, ypixels - 0.5);
 
     title = "Hits per frame vs Frame Nr.;frame;hits";
     nHitsVsFrame = new TProfile("nHitsVsFrame", title.c_str(), 10, -0.5, plot_frames - 0.5);
@@ -108,17 +81,21 @@ void AnalysisElectronCT::initialize() {
     chargeVsFrame->GetXaxis()->SetCanExtend(true);
 
     title = "Projection X vs Frame Nr.;frame;projection x";
-    projectionXVsFrame = new TH2F("projectionXVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5, xpixels/5, -0.5, xpixels - 0.5);
+    projectionXVsFrame =
+        new TH2F("projectionXVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5, xpixels / 5, -0.5, xpixels - 0.5);
     projectionXVsFrame->GetXaxis()->SetCanExtend(true);
     title = "Projection Y vs Frame Nr.;frame;projection y";
-    projectionYVsFrame = new TH2F("projectionYVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5, xpixels/5, -0.5, xpixels - 0.5);
+    projectionYVsFrame =
+        new TH2F("projectionYVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5, xpixels / 5, -0.5, xpixels - 0.5);
     projectionYVsFrame->GetXaxis()->SetCanExtend(true);
 
     title = "Projection Charge X vs Frame Nr.;frame;projection charge x";
-    projectionChargeXVsFrame = new TH2F("projectionChargeXVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5, xpixels/5, -0.5, xpixels - 0.5);
+    projectionChargeXVsFrame =
+        new TH2F("projectionChargeXVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5, xpixels / 5, -0.5, xpixels - 0.5);
     projectionChargeXVsFrame->GetXaxis()->SetCanExtend(true);
     title = "Projection Charge Y vs Frame Nr.;frame;projection charge y";
-    projectionChargeYVsFrame = new TH2F("projectionChargeYVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5, xpixels/5, -0.5, xpixels - 0.5);
+    projectionChargeYVsFrame =
+        new TH2F("projectionChargeYVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5, xpixels / 5, -0.5, xpixels - 0.5);
     projectionChargeYVsFrame->GetXaxis()->SetCanExtend(true);
 
     title = "Frames vs Time;time [s];frames";
@@ -140,7 +117,10 @@ void AnalysisElectronCT::initialize() {
     widthsYVsFrame->GetXaxis()->SetCanExtend(true);
 
     title = "Hit Timestamp within Frame;time [us];hits";
-    hitTimeWithinFrame = new TH1F("hitTimeWithinFrame", title.c_str(), 1000, 0, 1000);
+    hitTimeWithinFrame = new TH1F("hitTimeWithinFrame", title.c_str(), 10000, 0, 100000);
+
+    title = "Pixel Charge;charge [ToT];pixels";
+    pixelCharge = new TH1F("pixelCharge", title.c_str(), 1000, -0.5, 1000 - 0.5);
 }
 
 StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -149,8 +129,8 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
     chargeMapLastFrame->Reset();
 
     if(ignore_first_frame_ && m_eventNumber == 0) {
-      m_eventNumber++;
-      return StatusCode::Success;
+        m_eventNumber++;
+        return StatusCode::Success;
     }
 
     auto pixels = clipboard->getData<Pixel>(m_detector->getName());
@@ -162,18 +142,18 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     // Extend axes if necessary
     if(m_eventNumber > nHitsVsFrame->GetXaxis()->GetXmax()) {
-      LOG(DEBUG) << "Extending axis to " << m_eventNumber * 2;
-      nHitsVsFrame->ExtendAxis(m_eventNumber * 2, nHitsVsFrame->GetXaxis());
-      projectionXVsFrame->ExtendAxis(m_eventNumber * 2, projectionXVsFrame->GetXaxis());
-      projectionYVsFrame->ExtendAxis(m_eventNumber * 2, projectionYVsFrame->GetXaxis());
-      projectionChargeXVsFrame->ExtendAxis(m_eventNumber * 2, projectionChargeXVsFrame->GetXaxis());
-      projectionChargeYVsFrame->ExtendAxis(m_eventNumber * 2, projectionChargeYVsFrame->GetXaxis());
-      centersXVsFrame->ExtendAxis(m_eventNumber * 2, centersXVsFrame->GetXaxis());
-      centersYVsFrame->ExtendAxis(m_eventNumber * 2, centersYVsFrame->GetXaxis());
-      chargeVsFrame->ExtendAxis(m_eventNumber * 2, chargeVsFrame->GetXaxis());
+        LOG(DEBUG) << "Extending axis to " << m_eventNumber * 2;
+        nHitsVsFrame->ExtendAxis(m_eventNumber * 2, nHitsVsFrame->GetXaxis());
+        projectionXVsFrame->ExtendAxis(m_eventNumber * 2, projectionXVsFrame->GetXaxis());
+        projectionYVsFrame->ExtendAxis(m_eventNumber * 2, projectionYVsFrame->GetXaxis());
+        projectionChargeXVsFrame->ExtendAxis(m_eventNumber * 2, projectionChargeXVsFrame->GetXaxis());
+        projectionChargeYVsFrame->ExtendAxis(m_eventNumber * 2, projectionChargeYVsFrame->GetXaxis());
+        centersXVsFrame->ExtendAxis(m_eventNumber * 2, centersXVsFrame->GetXaxis());
+        centersYVsFrame->ExtendAxis(m_eventNumber * 2, centersYVsFrame->GetXaxis());
+        chargeVsFrame->ExtendAxis(m_eventNumber * 2, chargeVsFrame->GetXaxis());
     }
     if(static_cast<double>(Units::convert(frameStart, "s")) > framesVsTime->GetXaxis()->GetXmax()) {
-      framesVsTime->ExtendAxis(static_cast<double>(Units::convert(frameStart, "s")), framesVsTime->GetXaxis());
+        framesVsTime->ExtendAxis(static_cast<double>(Units::convert(frameStart, "s")), framesVsTime->GetXaxis());
     }
 
     hitsPerFrame->Fill(static_cast<double>(nPixels));
@@ -184,72 +164,74 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
     double total_charge = 0;
 
     for(auto& pixel : pixels) {
-      int pxcol = pixel->column();
-      int pxrow = pixel->row();
-      double pxcharge = pixel->charge();
+        int pxcol = pixel->column();
+        int pxrow = pixel->row();
+        double pxcharge = pixel->charge();
 
-      total_charge += pxcharge;
+        total_charge += pxcharge;
 
-      hitMapIntegrated->Fill(pxcol, pxrow);
-      hitMapLastFrame->Fill(pxcol, pxrow);
+        hitMapIntegrated->Fill(pxcol, pxrow);
+        hitMapLastFrame->Fill(pxcol, pxrow);
 
-      chargeMapIntegrated->Fill(pxcol, pxrow, pxcharge);
-      chargeMapLastFrame->Fill(pxcol, pxrow, pxcharge);
+        chargeMapIntegrated->Fill(pxcol, pxrow, pxcharge);
+        chargeMapLastFrame->Fill(pxcol, pxrow, pxcharge);
 
-      projectionX->Fill(pxcol);
-      projectionY->Fill(pxrow);
+        projectionX->Fill(pxcol);
+        projectionY->Fill(pxrow);
 
-      projectionChargeX->Fill(pxcol, pxcharge);
-      projectionChargeY->Fill(pxrow, pxcharge);
+        projectionChargeX->Fill(pxcol, pxcharge);
+        projectionChargeY->Fill(pxrow, pxcharge);
 
-      projectionXVsFrame->Fill(m_eventNumber, pxcol);
-      projectionYVsFrame->Fill(m_eventNumber, pxrow);
+        projectionXVsFrame->Fill(m_eventNumber, pxcol);
+        projectionYVsFrame->Fill(m_eventNumber, pxrow);
 
-      projectionChargeXVsFrame->Fill(m_eventNumber, pxcol, pxcharge);
-      projectionChargeYVsFrame->Fill(m_eventNumber, pxrow, pxcharge);
+        projectionChargeXVsFrame->Fill(m_eventNumber, pxcol, pxcharge);
+        projectionChargeYVsFrame->Fill(m_eventNumber, pxrow, pxcharge);
 
-      hitTimeWithinFrame->Fill(static_cast<double>(Units::convert(pixel->timestamp() - frameStart, "us")));
+        hitTimeWithinFrame->Fill(static_cast<double>(Units::convert(pixel->timestamp() - frameStart, "us")));
+
+        pixelCharge->Fill(pxcharge);
     }
 
     double centerX, centerY, widthX, widthY;
     if(charge_weighting_) {
-      if(fitted_profile_) {
-        auto fitX = new TF1("fitX", "gaus(0)", 0, m_detector->nPixels().X());
-        auto projX = chargeMapLastFrame->ProjectionX();
-        projX->Fit(fitX, "QN");
-        centerX = fitX->GetParameter(1);
-        widthX = fitX->GetParameter(2);
+        if(fitted_profile_) {
+            auto fitX = new TF1("fitX", "gaus(0)", 0, m_detector->nPixels().X());
+            auto projX = chargeMapLastFrame->ProjectionX();
+            projX->Fit(fitX, "QN");
+            centerX = fitX->GetParameter(1);
+            widthX = fitX->GetParameter(2);
 
-        auto fitY = new TF1("fitY", "gaus(0)", 0, m_detector->nPixels().Y());
-        auto projY = chargeMapLastFrame->ProjectionY();
-        projY->Fit(fitY, "QN");
-        centerY = fitY->GetParameter(1);
-        widthY = fitY->GetParameter(2);
-      } else {
-        centerX = chargeMapLastFrame->GetMean(1);
-        centerY = chargeMapLastFrame->GetMean(2);
-        widthX = chargeMapLastFrame->GetRMS(1);
-        widthY = chargeMapLastFrame->GetRMS(2);
-      }
+            auto fitY = new TF1("fitY", "gaus(0)", 0, m_detector->nPixels().Y());
+            auto projY = chargeMapLastFrame->ProjectionY();
+            projY->Fit(fitY, "QN");
+            centerY = fitY->GetParameter(1);
+            widthY = fitY->GetParameter(2);
+        } else {
+            centerX = chargeMapLastFrame->GetMean(1);
+            centerY = chargeMapLastFrame->GetMean(2);
+            widthX = chargeMapLastFrame->GetRMS(1);
+            widthY = chargeMapLastFrame->GetRMS(2);
+        }
     } else {
-      if(fitted_profile_) {
-        auto fitX = new TF1("fitX", "gaus(0)", 0, m_detector->nPixels().X());
-        auto projX = hitMapLastFrame->ProjectionX();
-        projX->Fit(fitX, "QN");
-        centerX = fitX->GetParameter(1);
-        widthX = fitX->GetParameter(2);
+        if(fitted_profile_) {
+            auto fitX = new TF1("fitX", "gaus(0)", 0, m_detector->nPixels().X());
+            auto projX = hitMapLastFrame->ProjectionX();
+            projX->Fit(fitX, "QN");
+            centerX = fitX->GetParameter(1);
+            widthX = fitX->GetParameter(2);
 
-        auto fitY = new TF1("fitY", "gaus(0)", 0, m_detector->nPixels().Y());
-        auto projY = hitMapLastFrame->ProjectionY();
-        projY->Fit(fitY, "QN");
-        centerY = fitY->GetParameter(1);
-        widthY = fitY->GetParameter(2);
-      } else {
-        centerX = hitMapLastFrame->GetMean(1);
-        centerY = hitMapLastFrame->GetMean(2);
-        widthX = hitMapLastFrame->GetRMS(1);
-        widthY = hitMapLastFrame->GetRMS(2);
-      }
+            auto fitY = new TF1("fitY", "gaus(0)", 0, m_detector->nPixels().Y());
+            auto projY = hitMapLastFrame->ProjectionY();
+            projY->Fit(fitY, "QN");
+            centerY = fitY->GetParameter(1);
+            widthY = fitY->GetParameter(2);
+        } else {
+            centerX = hitMapLastFrame->GetMean(1);
+            centerY = hitMapLastFrame->GetMean(2);
+            widthX = hitMapLastFrame->GetRMS(1);
+            widthY = hitMapLastFrame->GetRMS(2);
+        }
     }
 
     centersX->Fill(centerX);
