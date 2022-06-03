@@ -193,20 +193,31 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
         pixelCharge->Fill(pxcharge);
     }
 
-    double centerX, centerY, widthX, widthY;
+    double centerX = 0;
+    double centerY = 0;
+    double widthX = 0;
+    double widthY = 0;
     if(charge_weighting_) {
         if(fitted_profile_) {
             auto fitX = new TF1("fitX", "gaus(0)", 0, m_detector->nPixels().X());
             auto projX = chargeMapLastFrame->ProjectionX();
-            projX->Fit(fitX, "QN");
-            centerX = fitX->GetParameter(1);
-            widthX = fitX->GetParameter(2);
+            if(projX->GetEntries() > 10) {
+                fitX->SetParameter(1, projX->GetMean());
+                fitX->SetParameter(2, projX->GetRMS());
+                projX->Fit(fitX, "QNW");
+                centerX = fitX->GetParameter(1);
+                widthX = fitX->GetParameter(2);
+            }
 
             auto fitY = new TF1("fitY", "gaus(0)", 0, m_detector->nPixels().Y());
             auto projY = chargeMapLastFrame->ProjectionY();
-            projY->Fit(fitY, "QN");
-            centerY = fitY->GetParameter(1);
-            widthY = fitY->GetParameter(2);
+            if(projY->GetEntries() > 10) {
+                fitY->SetParameter(1, projY->GetMean());
+                fitY->SetParameter(2, projY->GetRMS());
+                projY->Fit(fitY, "QNW");
+                centerY = fitY->GetParameter(1);
+                widthY = fitY->GetParameter(2);
+            }
         } else {
             centerX = chargeMapLastFrame->GetMean(1);
             centerY = chargeMapLastFrame->GetMean(2);
@@ -217,15 +228,23 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
         if(fitted_profile_) {
             auto fitX = new TF1("fitX", "gaus(0)", 0, m_detector->nPixels().X());
             auto projX = hitMapLastFrame->ProjectionX();
-            projX->Fit(fitX, "QN");
-            centerX = fitX->GetParameter(1);
-            widthX = fitX->GetParameter(2);
+            if(projX->GetEntries() > 10) {
+                fitX->SetParameter(1, projX->GetMean());
+                fitX->SetParameter(2, projX->GetRMS());
+                projX->Fit(fitX, "QNW");
+                centerX = fitX->GetParameter(1);
+                widthX = fitX->GetParameter(2);
+            }
 
             auto fitY = new TF1("fitY", "gaus(0)", 0, m_detector->nPixels().Y());
             auto projY = hitMapLastFrame->ProjectionY();
-            projY->Fit(fitY, "QN");
-            centerY = fitY->GetParameter(1);
-            widthY = fitY->GetParameter(2);
+            if(projY->GetEntries() > 10) {
+                fitY->SetParameter(1, projY->GetMean());
+                fitY->SetParameter(2, projY->GetRMS());
+                projY->Fit(fitY, "QNW");
+                centerY = fitY->GetParameter(1);
+                widthY = fitY->GetParameter(2);
+            }
         } else {
             centerX = hitMapLastFrame->GetMean(1);
             centerY = hitMapLastFrame->GetMean(2);
