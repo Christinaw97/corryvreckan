@@ -49,9 +49,9 @@ void AnalysisElectronCT::initialize() {
         new TH2F("chargeMapLastFrame", title.c_str(), xpixels, -0.5, xpixels - 0.5, ypixels, -0.5, ypixels - 0.5);
 
     title = "Hits per frame;hits;frame";
-    hitsPerFrame = new TH1F("hitsPerFrame", title.c_str(), 200, -0.5, xpixels * ypixels - 0.5);
+    hitsPerFrame = new TH1F("hitsPerFrame", title.c_str(), xpixels * ypixels / 50, -0.5, xpixels * ypixels - 0.5);
     title = "Charge per frame;charge [ke];frame";
-    chargePerFrame = new TH1F("chargePerFrame", title.c_str(), 200, 0, 1e7);
+    chargePerFrame = new TH1F("chargePerFrame", title.c_str(), 1000, 0, 5e6);
 
     title = "Hit column (projection X);x [px];hits";
     projectionX = new TH1F("projectionX", title.c_str(), xpixels, -0.5, xpixels - 0.5);
@@ -64,14 +64,14 @@ void AnalysisElectronCT::initialize() {
     projectionChargeY = new TH1F("projectionChargeY", title.c_str(), ypixels, -0.5, ypixels - 0.5);
 
     title = "centers (RMS) X;RMS X [px];frames";
-    centersX = new TH1F("centersX", title.c_str(), xpixels / 5, -0.5, xpixels - 0.5);
+    centersX = new TH1F("centersX", title.c_str(), xpixels, -0.5, xpixels - 0.5);
     title = "centers (RMS) Y;RMS Y [px];frames";
-    centersY = new TH1F("centersY", title.c_str(), ypixels / 5, -0.5, ypixels - 0.5);
+    centersY = new TH1F("centersY", title.c_str(), ypixels, -0.5, ypixels - 0.5);
 
     title = "Widths (RMS) X;RMS X [px];frames";
-    widthsX = new TH1F("widthsX", title.c_str(), xpixels / 5, -0.5, xpixels - 0.5);
+    widthsX = new TH1F("widthsX", title.c_str(), 200, 0, 50);
     title = "Widths (RMS) Y;RMS Y [px];frames";
-    widthsY = new TH1F("widthsY", title.c_str(), ypixels / 5, -0.5, ypixels - 0.5);
+    widthsY = new TH1F("widthsY", title.c_str(), 200, 0, 50);
 
     title = "Hits per frame vs Frame Nr.;frame;hits";
     nHitsVsFrame = new TProfile("nHitsVsFrame", title.c_str(), 10, -0.5, plot_frames - 0.5);
@@ -109,15 +109,15 @@ void AnalysisElectronCT::initialize() {
     centersYVsFrame = new TProfile("centersYVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5);
     centersYVsFrame->GetXaxis()->SetCanExtend(true);
 
-    title = "Width position X vs Frame Nr.;frame;width x [px]";
+    title = "Width X vs Frame Nr.;frame;width x [px]";
     widthsXVsFrame = new TProfile("widthsXVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5);
     widthsXVsFrame->GetXaxis()->SetCanExtend(true);
-    title = "Width position Y vs Frame Nr.;frame;width y [px]";
+    title = "Width Y vs Frame Nr.;frame;width y [px]";
     widthsYVsFrame = new TProfile("widthsYVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5);
     widthsYVsFrame->GetXaxis()->SetCanExtend(true);
 
     title = "Hit Timestamp within Frame;time [us];hits";
-    hitTimeWithinFrame = new TH1F("hitTimeWithinFrame", title.c_str(), 10000, 0, 100000);
+    hitTimeWithinFrame = new TH1F("hitTimeWithinFrame", title.c_str(), 2000, 0, 20);
 
     title = "Pixel Charge;charge [ToT];pixels";
     pixelCharge = new TH1F("pixelCharge", title.c_str(), 1000, -0.5, 1000 - 0.5);
