@@ -116,6 +116,11 @@ void AnalysisElectronCT::initialize() {
     widthsYVsFrame = new TProfile("widthsYVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5);
     widthsYVsFrame->GetXaxis()->SetCanExtend(true);
 
+    title = "Width X vs Frame Nr. - Last 200 frames;frame;width x [px]";
+    widthsXVsFrameLast200 = new TH1F("widthsXVsFrameLast200", title.c_str(), 200, -0.5, 200 - 0.5);
+    title = "Width Y vs Frame Nr. - Last 200 frames;frame;width y [px]";
+    widthsYVsFrameLast200 = new TH1F("widthsYVsFrameLast200", title.c_str(), 200, -0.5, 200 - 0.5);
+
     title = "Hit Timestamp within Frame;time [us];hits";
     hitTimeWithinFrame = new TH1F("hitTimeWithinFrame", title.c_str(), 2000, 0, 20);
 
@@ -150,6 +155,8 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
         projectionChargeYVsFrame->ExtendAxis(m_eventNumber * 2, projectionChargeYVsFrame->GetXaxis());
         centersXVsFrame->ExtendAxis(m_eventNumber * 2, centersXVsFrame->GetXaxis());
         centersYVsFrame->ExtendAxis(m_eventNumber * 2, centersYVsFrame->GetXaxis());
+        widthsXVsFrame->ExtendAxis(m_eventNumber * 2, widthsXVsFrame->GetXaxis());
+        widthsYVsFrame->ExtendAxis(m_eventNumber * 2, widthsYVsFrame->GetXaxis());
         chargeVsFrame->ExtendAxis(m_eventNumber * 2, chargeVsFrame->GetXaxis());
     }
     if(static_cast<double>(Units::convert(frameStart, "s")) > framesVsTime->GetXaxis()->GetXmax()) {
@@ -160,6 +167,11 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
     nHitsVsFrame->Fill(m_eventNumber, static_cast<double>(nPixels));
 
     framesVsTime->Fill(static_cast<double>(Units::convert(frameStart, "s")));
+
+    if(widthsXLast200.size() == 200) {
+        widthsXLast200.erase(widthsXLast200.begin());
+        widthsYLast200.erase(widthsYLast200.begin());
+    }
 
     double total_charge = 0;
 
@@ -265,6 +277,14 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     chargePerFrame->Fill(total_charge);
     chargeVsFrame->Fill(m_eventNumber, total_charge);
+
+    // Modify running graphs
+    widthsXLast200.push_back(widthX);
+    widthsYLast200.push_back(widthY);
+    for(int i = 0; i < std::min(200, static_cast<int>(widthsXLast200.size())); ++i) {
+        widthsXVsFrameLast200->SetBinContent(i + 1, widthsXLast200.at(i));
+        widthsYVsFrameLast200->SetBinContent(i + 1, widthsYLast200.at(i));
+    }
 
     // Increment event counter
     m_eventNumber++;

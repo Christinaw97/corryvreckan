@@ -58,6 +58,9 @@ namespace corryvreckan {
 
         bool ignore_first_frame_;
 
+        std::vector<double> widthsXLast200;
+        std::vector<double> widthsYLast200;
+
         // Graphs:
         TH2F* hitMapIntegrated;
         TH2F* hitMapLastFrame;
@@ -94,6 +97,9 @@ namespace corryvreckan {
 
         TProfile* widthsXVsFrame;
         TProfile* widthsYVsFrame;
+
+        TH1F* widthsXVsFrameLast200;
+        TH1F* widthsYVsFrameLast200;
 
         TH1F* framesVsTime;
 
