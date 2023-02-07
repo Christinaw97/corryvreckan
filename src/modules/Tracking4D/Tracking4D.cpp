@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "Tracking4D.h"
@@ -129,6 +130,14 @@ void Tracking4D::initialize() {
                                                  detector->nPixels().Y(),
                                                  0,
                                                  detector->nPixels().Y());
+        global_intersects_[detectorID] = new TH2F("global_intersect",
+                                                  "global intersect, global intercept x [mm];global intercept y [mm]",
+                                                  600,
+                                                  -30,
+                                                  30,
+                                                  600,
+                                                  -30,
+                                                  30);
 
         // Do not create plots for detectors not participating in the tracking:
         if(exclude_DUT_ && detector->isDUT()) {
@@ -317,6 +326,14 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             refTrack.addCluster(clusterLast.get());
             auto averageTimestamp = calculate_average_timestamp(&refTrack);
             refTrack.setTimestamp(averageTimestamp);
+            refTrack.registerPlane(reference_first->getName(),
+                                   reference_first->displacement().z(),
+                                   reference_first->materialBudget(),
+                                   reference_first->toLocal());
+            refTrack.registerPlane(reference_last->getName(),
+                                   reference_last->displacement().z(),
+                                   reference_last->materialBudget(),
+                                   reference_last->toLocal());
 
             // Make a new track
             auto track = Track::Factory(track_model_);
@@ -329,6 +346,9 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             }
             track->setParticleMomentum(momentum_);
 
+            // Fit initial trajectory guess
+            refTrack.fit();
+
             // Loop over each subsequent plane and look for a cluster within the timing cuts
             size_t detector_nr = 2;
             // Get all detectors here to also include passive layers which might contribute to scattering
@@ -337,7 +357,11 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                     continue;
                 }
                 auto detectorID = detector->getName();
-                LOG(TRACE) << "added material budget for " << detectorID << " at z = " << detector->displacement().z();
+                LOG(TRACE) << "Registering detector " << detectorID << " at z = " << detector->displacement().z();
+
+                // Add plane to track and trigger re-fit:
+                refTrack.updatePlane(
+                    detectorID, detector->displacement().z(), detector->materialBudget(), detector->toLocal());
                 track->registerPlane(
                     detectorID, detector->displacement().z(), detector->materialBudget(), detector->toLocal());
 
@@ -383,11 +407,10 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
 
                 auto neighbors = trees[detector].getAllElementsInTimeWindow(refTrack.timestamp(), timeCut);
 
-                LOG(DEBUG) << "- found " << neighbors.size() << " neighbors within the correct time window";
+                LOG(DEBUG) << "- found " << neighbors.size() << " neighbors within the correct time window on "
+                           << detectorID;
 
                 // Now look for the spatially closest cluster on the next plane
-                refTrack.fit();
-
                 PositionVector3D<Cartesian3D<double>> interceptPoint = detector->getLocalIntercept(&refTrack);
                 double interceptX = interceptPoint.X();
                 double interceptY = interceptPoint.Y();
@@ -610,6 +633,9 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             auto col = detector->getColumn(local);
             LOG(TRACE) << "Local col/row intersect of track: " << col << "\t" << row;
             local_intersects_[det]->Fill(col, row);
+
+            auto global = detector->getIntercept(track.get());
+            global_intersects_[det]->Fill(global.X(), global.Y());
 
             if(!kinkX.count(det)) {
                 LOG(WARNING) << "Skipping writing kinks due to missing init of histograms for  " << det;

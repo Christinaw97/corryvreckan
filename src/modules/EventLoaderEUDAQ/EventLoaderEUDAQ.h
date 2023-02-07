@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef EventLoaderEUDAQ_H
@@ -43,7 +44,7 @@ namespace corryvreckan {
         // Member variables
         std::vector<std::filesystem::path> m_filenames{};
         bool m_longID;
-
+        std::map<std::string, std::string> detector_id_map_;
         std::map<std::string, TH2F*> hitmap;
     };
 } // namespace corryvreckan

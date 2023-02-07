@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_TRACK_H
@@ -18,6 +19,7 @@
 #include <TRef.h>
 
 #include "Cluster.hpp"
+#include "exceptions.h"
 
 namespace corryvreckan {
 
@@ -233,6 +235,7 @@ namespace corryvreckan {
         virtual void setVolumeScatter(double length) = 0;
 
         void registerPlane(const std::string& name, double z, double x0, Transform3D g2l);
+        void updatePlane(const std::string& name, double z, double x0, Transform3D g2l);
 
         class Plane {
         public:
@@ -291,7 +294,7 @@ namespace corryvreckan {
         void loadHistory() override;
         void petrifyHistory() override;
 
-        Plane* get_plane(std::string detetorID);
+        const Plane* get_plane(const std::string& detetorID) const;
         std::vector<PointerWrapper<Cluster>> track_clusters_;
         std::map<std::string, std::vector<PointerWrapper<Cluster>>> associated_clusters_;
         std::map<std::string, ROOT::Math::XYPoint> residual_local_;

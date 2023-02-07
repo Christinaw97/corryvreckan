@@ -1,9 +1,12 @@
-/** @file
- *  @brief Implementation of the detector model
- *  @copyright Copyright (c) 2017-2022 CERN and the Corryvreckan authors.
+/**
+ * @file
+ * @brief Implementation of the detector model
+ *
+ * @copyright Copyright (c) 2017-2022 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include <fstream>
@@ -14,6 +17,7 @@
 #include "Math/RotationY.h"
 #include "Math/RotationZ.h"
 #include "Math/RotationZYX.h"
+#include "TMatrixD.h"
 
 #include "PixelDetector.hpp"
 #include "core/utils/log.h"
@@ -24,16 +28,19 @@ using namespace corryvreckan;
 
 PixelDetector::PixelDetector(const Configuration& config) : Detector(config) {
 
-    // Set detector position and direction from configuration file
-    SetPostionAndOrientation(config);
-
-    // initialize transform
-    this->initialise();
-
+    m_orientation_mode = config.get<std::string>("orientation_mode", "xyz");
     // Auxiliary devices don't have: number_of_pixels, pixel_pitch, spatial_resolution, mask_file, region-of-interest
     if(!isAuxiliary()) {
         build_axes(config);
     }
+    // Compute the spatial resolution in the global coordinates by rotating the error ellipsis
+    TMatrixD errorMatrix(3, 3);
+    TMatrixD locToGlob(3, 3), globToLoc(3, 3);
+    errorMatrix(0, 0) = m_spatial_resolution.x() * m_spatial_resolution.x();
+    errorMatrix(1, 1) = m_spatial_resolution.y() * m_spatial_resolution.y();
+    alignment_->local2global().Rotation().GetRotationMatrix(locToGlob);
+    alignment_->global2local().Rotation().GetRotationMatrix(globToLoc);
+    m_spatial_resolution_matrix_global = locToGlob * errorMatrix * globToLoc;
 }
 
 void PixelDetector::build_axes(const Configuration& config) {
@@ -67,20 +74,6 @@ void PixelDetector::build_axes(const Configuration& config) {
         maskFile(mask_file);
         process_mask_file();
     }
-}
-
-void PixelDetector::SetPostionAndOrientation(const Configuration& config) {
-    // Detector position and orientation
-    m_displacement = config.get<ROOT::Math::XYZPoint>("position", ROOT::Math::XYZPoint());
-    m_orientation = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
-    m_orientation_mode = config.get<std::string>("orientation_mode", "xyz");
-
-    if(m_orientation_mode != "xyz" && m_orientation_mode != "zyx" && m_orientation_mode != "zxz") {
-        throw InvalidValueError(config, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
-    }
-
-    LOG(TRACE) << "  Position:    " << Units::display(m_displacement, {"mm", "um"});
-    LOG(TRACE) << "  Orientation: " << Units::display(m_orientation, {"deg"}) << " (" << m_orientation_mode << ")";
 }
 
 void PixelDetector::process_mask_file() {
@@ -144,43 +137,6 @@ bool PixelDetector::masked(int chX, int chY) const {
     return false;
 }
 
-// Function to initialise transforms
-void PixelDetector::initialise() {
-
-    // Make the local to global transform, built from a displacement and
-    // rotation
-    Translation3D translations = Translation3D(m_displacement.X(), m_displacement.Y(), m_displacement.Z());
-
-    Rotation3D rotations;
-    if(m_orientation_mode == "xyz") {
-        LOG(DEBUG) << "Interpreting Euler angles as XYZ rotation";
-        // First angle given in the configuration file is around x, second around y, last around z:
-        rotations = RotationZ(m_orientation.Z()) * RotationY(m_orientation.Y()) * RotationX(m_orientation.X());
-    } else if(m_orientation_mode == "zyx") {
-        LOG(DEBUG) << "Interpreting Euler angles as ZYX rotation";
-        // First angle given in the configuration file is around z, second around y, last around x:
-        rotations = RotationZYX(m_orientation.x(), m_orientation.y(), m_orientation.z());
-    } else if(m_orientation_mode == "zxz") {
-        LOG(DEBUG) << "Interpreting Euler angles as ZXZ rotation";
-        // First angle given in the configuration file is around z, second around x, last around z:
-        rotations = EulerAngles(m_orientation.x(), m_orientation.y(), m_orientation.z());
-    } else {
-        throw InvalidSettingError(this, "orientation_mode", "orientation_mode should be either 'zyx', xyz' or 'zxz'");
-    }
-
-    m_localToGlobal = Transform3D(rotations, translations);
-    m_globalToLocal = m_localToGlobal.Inverse();
-
-    // Find the normal to the detector surface. Build two points, the origin and a unit step in z,
-    // transform these points to the global coordinate frame and then make a vector pointing between them
-    m_origin = PositionVector3D<Cartesian3D<double>>(0., 0., 0.);
-    m_origin = m_localToGlobal * m_origin;
-    PositionVector3D<Cartesian3D<double>> localZ(0., 0., 1.);
-    localZ = m_localToGlobal * localZ;
-    m_normal = PositionVector3D<Cartesian3D<double>>(
-        localZ.X() - m_origin.X(), localZ.Y() - m_origin.Y(), localZ.Z() - m_origin.Z());
-}
-
 // Only if detector is not auxiliary
 void PixelDetector::configure_detector(Configuration& config) const {
 
@@ -203,33 +159,14 @@ void PixelDetector::configure_detector(Configuration& config) const {
 }
 
 void PixelDetector::configure_pos_and_orientation(Configuration& config) const {
-    config.set("position", m_displacement, {"um", "mm"});
+    config.set("position", alignment_->displacement(), {"um", "mm"});
     config.set("orientation_mode", m_orientation_mode);
-    config.set("orientation", m_orientation, {{"deg"}});
+    config.set("orientation", alignment_->orientation(), {{"deg"}});
 }
 
 // Function to get global intercept with a track
 PositionVector3D<Cartesian3D<double>> PixelDetector::getIntercept(const Track* track) const {
-
-    // FIXME: this is else statement can only be temporary
-    if(track->getType() == "GblTrack") {
-        return track->getState(getName());
-    } else {
-        // Get the distance from the plane to the track initial state
-        double distance = (m_origin.X() - track->getState(m_detectorName).X()) * m_normal.X();
-        distance += (m_origin.Y() - track->getState(m_detectorName).Y()) * m_normal.Y();
-        distance += (m_origin.Z() - track->getState(m_detectorName).Z()) * m_normal.Z();
-        distance /= (track->getDirection(m_detectorName).X() * m_normal.X() +
-                     track->getDirection(m_detectorName).Y() * m_normal.Y() +
-                     track->getDirection(m_detectorName).Z() * m_normal.Z());
-
-        // Propagate the track
-        PositionVector3D<Cartesian3D<double>> globalIntercept(
-            track->getState(m_detectorName).X() + distance * track->getDirection(m_detectorName).X(),
-            track->getState(m_detectorName).Y() + distance * track->getDirection(m_detectorName).Y(),
-            track->getState(m_detectorName).Z() + distance * track->getDirection(m_detectorName).Z());
-        return globalIntercept;
-    }
+    return track->getState(getName());
 }
 
 PositionVector3D<Cartesian3D<double>> PixelDetector::getLocalIntercept(const Track* track) const {
@@ -243,7 +180,7 @@ bool PixelDetector::hasIntercept(const Track* track, double pixelTolerance) cons
     PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
 
     // Convert to local coordinates
-    PositionVector3D<Cartesian3D<double>> localIntercept = this->m_globalToLocal * globalIntercept;
+    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local() * globalIntercept;
 
     // Get the row and column numbers
     double row = this->getRow(localIntercept);
@@ -267,7 +204,7 @@ bool PixelDetector::hitMasked(const Track* track, int tolerance) const {
     PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
 
     // Convert to local coordinates
-    PositionVector3D<Cartesian3D<double>> localIntercept = this->m_globalToLocal * globalIntercept;
+    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local() * globalIntercept;
 
     // Get the row and column numbers
     int row = static_cast<int>(floor(this->getRow(localIntercept) + 0.5));
@@ -439,13 +376,13 @@ bool PixelDetector::isNeighbor(const std::shared_ptr<Pixel>& neighbor,
 }
 
 std::set<std::pair<int, int>>
-PixelDetector::getNeighbors(const std::shared_ptr<Pixel>& px, const size_t distance, const bool include_corners) const {
+PixelDetector::getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const {
     std::set<std::pair<int, int>> neighbors;
 
-    for(int x = px->column() - static_cast<int>(distance); x <= px->column() + static_cast<int>(distance); x++) {
-        for(int y = px->row() - static_cast<int>(distance); y <= px->row() + static_cast<int>(distance); y++) {
+    for(int x = col - static_cast<int>(distance); x <= col + static_cast<int>(distance); x++) {
+        for(int y = row - static_cast<int>(distance); y <= row + static_cast<int>(distance); y++) {
             // Check if we have one common coordinate if corners should be excluded:
-            if(!include_corners && x != px->column() && y != px->row()) {
+            if(!include_corners && x != col && y != row) {
                 continue;
             }
             if(!isWithinMatrix(x, y)) {

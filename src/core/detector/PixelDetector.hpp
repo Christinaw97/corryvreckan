@@ -1,9 +1,12 @@
-/** @file
- *  @brief Detector model class
- *  @copyright Copyright (c) 2017-2020 CERN and the Corryvreckan authors.
+/**
+ * @file
+ * @brief Detector model class
+ *
+ * @copyright Copyright (c) 2017-2020 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_PLANARDETECTOR_H
@@ -14,10 +17,9 @@
 #include <string>
 
 #include <Math/DisplacementVector2D.h>
+#include <Math/Transform3D.h>
 #include <Math/Vector2D.h>
 #include <Math/Vector3D.h>
-#include "Math/Transform3D.h"
-#include "Math/Vector3D.h"
 
 #include "Detector.hpp"
 #include "core/config/Configuration.hpp"
@@ -63,30 +65,6 @@ namespace corryvreckan {
          * @return True if pixel index is within matrix bounds, false otherwise
          */
         bool isWithinMatrix(const int col, const int row) const override;
-
-        /**
-         * @brief Update detector position in the world
-         * @param displacement Vector with three position coordinates
-         */
-        void displacement(XYZPoint displacement) override { m_displacement = displacement; }
-
-        /**
-         * @brief Get position in the world
-         * @return Global position in Cartesian coordinates
-         */
-        XYZPoint displacement() const override { return m_displacement; }
-
-        /**
-         * @brief Get orientation in the world
-         * @return Vector with three rotation angles
-         */
-        XYZVector rotation() const override { return m_orientation; }
-
-        /**
-         * @brief Update detector orientation in the world
-         * @param rotation Vector with three rotation angles
-         */
-        void rotation(XYZVector rotation) override { m_orientation = rotation; }
 
         /**
          * @brief Mark a detector channel as masked
@@ -172,6 +150,12 @@ namespace corryvreckan {
          */
         XYVector getSpatialResolution() const override { return m_spatial_resolution; }
 
+        /**
+         * @brief Get intrinsic spatial resolution in global coordinates of the detector
+         * @return Intrinsic spatial resolution in global X and Y
+         */
+        TMatrixD getSpatialResolutionMatrixGlobal() const override { return m_spatial_resolution_matrix_global; }
+
         /*
          * @brief Get number of pixels in x and y
          * @return Number of two dimensional pixels
@@ -187,12 +171,9 @@ namespace corryvreckan {
         bool isNeighbor(const std::shared_ptr<Pixel>&, const std::shared_ptr<Cluster>&, const int, const int) const override;
 
         std::set<std::pair<int, int>>
-        getNeighbors(const std::shared_ptr<Pixel>& px, const size_t distance, const bool include_corners) const override;
+        getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const override;
 
     protected:
-        // Initialize coordinate transformations
-        void initialise() override;
-
         // Build axis, for devices which are not auxiliary
         // Different in Pixel/Strip Detector
         void build_axes(const Configuration& config) override;
@@ -215,11 +196,9 @@ namespace corryvreckan {
         // For planar detector
         XYVector m_pitch{};
         XYVector m_spatial_resolution{};
+        TMatrixD m_spatial_resolution_matrix_global{3, 3};
         ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> m_nPixels{};
         std::vector<std::vector<int>> m_roi{};
-        // Displacement and rotation in x,y,z
-        ROOT::Math::XYZPoint m_displacement;
-        ROOT::Math::XYZVector m_orientation;
         std::string m_orientation_mode;
     };
 } // namespace corryvreckan

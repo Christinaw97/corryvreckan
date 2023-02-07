@@ -1,9 +1,12 @@
-/** @file
- *  @brief Implementation of interface to the core framework
- *  @copyright Copyright (c) 2017-2022 CERN and the Corryvreckan authors.
+/**
+ * @file
+ * @brief Implementation of interface to the core framework
+ *
+ * @copyright Copyright (c) 2017-2022 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "Corryvreckan.hpp"
@@ -240,6 +243,7 @@ void Corryvreckan::add_units() {
     Units::add("kV", 1e-3);
 
     // MAGNETIC FIELD
+    Units::add("kT", 1);
     Units::add("T", 1e-3);
     Units::add("mT", 1e-6);
 

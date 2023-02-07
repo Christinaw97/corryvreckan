@@ -1,10 +1,12 @@
-/** @file
+/**
+ * @file
  * @brief Implementation of hexagonal pixel detector model
  *
  * @copyright Copyright (c) 2021-2022 CERN and the Allpix Squared authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include <fstream>
@@ -40,7 +42,7 @@ bool HexagonalPixelDetector::hasIntercept(const Track* track, double /*pixelTole
     PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
 
     // Convert to local coordinates
-    PositionVector3D<Cartesian3D<double>> localIntercept = this->m_globalToLocal * globalIntercept;
+    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local() * globalIntercept;
 
     // Get the row and column numbers
     auto hex = getInterceptPixel(localIntercept);
@@ -62,7 +64,7 @@ bool HexagonalPixelDetector::hitMasked(const Track* track, int tolerance) const 
     PositionVector3D<Cartesian3D<double>> globalIntercept = this->getIntercept(track);
 
     // Convert to local coordinates
-    PositionVector3D<Cartesian3D<double>> localIntercept = this->m_globalToLocal * globalIntercept;
+    PositionVector3D<Cartesian3D<double>> localIntercept = alignment_->global2local() * globalIntercept;
 
     // Get the row and column numbers
     auto pos = getInterceptPixel(localIntercept);
@@ -228,12 +230,12 @@ size_t HexagonalPixelDetector::hex_distance(double x1, double y1, double x2, dou
 }
 
 std::set<std::pair<int, int>>
-HexagonalPixelDetector::getNeighbors(const std::shared_ptr<Pixel>& px, const size_t distance, const bool) const {
+HexagonalPixelDetector::getNeighbors(const int col, const int row, const size_t distance, const bool) const {
     std::set<std::pair<int, int>> neighbors;
 
-    for(int x = px->column() - static_cast<int>(distance); x <= px->column() + static_cast<int>(distance); x++) {
-        for(int y = px->row() - static_cast<int>(distance); y <= px->row() + static_cast<int>(distance); y++) {
-            if(hex_distance(px->column(), px->row(), x, y) <= distance) {
+    for(int x = col - static_cast<int>(distance); x <= col + static_cast<int>(distance); x++) {
+        for(int y = row - static_cast<int>(distance); y <= row + static_cast<int>(distance); y++) {
+            if(hex_distance(col, row, x, y) <= distance) {
 
                 if(!isWithinMatrix(x, y)) {
                     continue;

@@ -6,10 +6,12 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "core/config/exceptions.h"
 #include "Configuration.hpp"
+#include "core/module/ModuleIdentifier.hpp"
 
 using namespace corryvreckan;
 
@@ -42,4 +44,14 @@ InvalidCombinationError::InvalidCombinationError(const Configuration& config,
     if(!reason.empty()) {
         error_message_ += ": " + reason;
     }
+}
+
+ModuleIdentifierNotFoundError::ModuleIdentifierNotFoundError(const ModuleIdentifier& identifier) {
+    error_message_ = "Module Identifier " + identifier.getUniqueName() + ":" + std::to_string(identifier.getPriority()) +
+                     " not found in the module identifier list";
+}
+
+ModuleIdentifierAlreadyAddedError::ModuleIdentifierAlreadyAddedError(const ModuleIdentifier& identifier) {
+    error_message_ = "Module Identifier " + identifier.getUniqueName() + ":" + std::to_string(identifier.getPriority()) +
+                     " already added to the module identifier list";
 }

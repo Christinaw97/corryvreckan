@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include <algorithm>
@@ -15,7 +16,7 @@
 
 #include "EventLoaderEUDAQ.h"
 
-#include "eudaq/PluginManager.hh"
+#include <eudaq/PluginManager.hh>
 
 using namespace corryvreckan;
 using namespace std;
@@ -63,6 +64,17 @@ void EventLoaderEUDAQ::initialize() {
                                       -0.5,
                                       detector->nPixels().Y() - 0.5);
     }
+
+    // Check if all elements of detector_id_map_ have a valid size of 2, if not throw error.
+    for(auto& det_id : config_.getMatrix<std::string>("remap_detectors", {})) {
+        if(det_id.size() != 2) {
+            throw InvalidValueError(
+                config_,
+                "remap_detectors",
+                "Parameter needs 2 values per row: [\"eudaq plane id\", \"Corryvreckan detector name\"]");
+        }
+        detector_id_map_[det_id.front()] = det_id.back();
+    }
 }
 StatusCode EventLoaderEUDAQ::run(const std::shared_ptr<Clipboard>& clipboard) {
 
@@ -97,6 +109,13 @@ StatusCode EventLoaderEUDAQ::run(const std::shared_ptr<Clipboard>& clipboard) {
             // Build Corryvreckan detector ID and check if this detector should be read:
             std::string detectorID =
                 (m_longID ? (plane.Sensor() + "_") : "plane") + std::to_string(plane.ID()); // : (plane.ID()));
+
+            // Apply re-mapping of detector names
+            if(detector_id_map_.count(detectorID)) {
+                LOG(DEBUG) << "Interpreting EUDAQ plane ID \"" << detectorID << "\" as Corryvreckan detector \""
+                           << detector_id_map_[detectorID] << "\"";
+                detectorID = detector_id_map_[detectorID];
+            }
 
             if(!has_detector(detectorID)) {
                 LOG(DEBUG) << "Skipping unknown detector " << detectorID;

@@ -1,9 +1,12 @@
-/** @file
- *  @brief Detector model class
- *  @copyright Copyright (c) 2017-2020 CERN and the Corryvreckan authors.
+/**
+ * @file
+ * @brief Detector model class
+ *
+ * @copyright Copyright (c) 2017-2020 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_HEXAGONALDETECTOR_H
@@ -120,7 +123,7 @@ namespace corryvreckan {
         bool isNeighbor(const std::shared_ptr<Pixel>&, const std::shared_ptr<Cluster>&, const int, const int) const override;
 
         std::set<std::pair<int, int>>
-        getNeighbors(const std::shared_ptr<Pixel>& px, const size_t distance, const bool include_corners) const override;
+        getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const override;
 
     private:
         std::pair<int, int> round_to_nearest_hex(double x, double y) const;

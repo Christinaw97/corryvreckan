@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "Correlations.h"
@@ -84,6 +85,10 @@ void Correlations::initialize() {
                                time_cut_ - time_binning_ / 2.);
 
     if(corr_vs_time_) {
+        if((time_cut_ / time_binning_) > 1e3)
+            LOG(WARNING) << "Very large 2D histograms are created with ((2 * time_cut_ / time_binning_ * 3e3) ="
+                         << (2 * time_cut_ / time_binning_ * 3e3)
+                         << ") bins. This might lead to crashes if limited memory is available.";
         title = m_detector->getName() + " Correlation X versus time;t [s];x_{ref}-x [mm];events";
         std::string name = "correlationXVsTime";
         correlationXVsTime = new TH2F(name.c_str(), title.c_str(), 600, -2.5, 3e3 - 2.5, 200, -10.05, 9.95);

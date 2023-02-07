@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "Track.hpp"
@@ -233,6 +234,11 @@ double Track::getMaterialBudget(const std::string& detectorID) const {
 }
 
 void Track::registerPlane(const std::string& name, double z, double x0, Transform3D g2l) {
+    if(isFitted_) {
+        throw TrackError(typeid(Track),
+                         " cannot register plane after track has been fitted. Use updatePlane to trigger track refit");
+    }
+
     Plane p(name, z, x0, g2l);
     auto pl =
         std::find_if(planes_.begin(), planes_.end(), [&p](const Plane& plane) { return plane.getName() == p.getName(); });
@@ -243,7 +249,24 @@ void Track::registerPlane(const std::string& name, double z, double x0, Transfor
     }
 }
 
-Track::Plane* Track::get_plane(std::string detetorID) {
+void Track::updatePlane(const std::string& name, double z, double x0, Transform3D g2l) {
+    if(!isFitted_) {
+        throw TrackError(typeid(Track), " cannot update plane before track has been fitted.");
+    }
+
+    Plane p(name, z, x0, g2l);
+    auto pl =
+        std::find_if(planes_.begin(), planes_.end(), [&p](const Plane& plane) { return plane.getName() == p.getName(); });
+    if(pl == planes_.end()) {
+        planes_.push_back(std::move(p));
+    } else {
+        *pl = std::move(p);
+    }
+
+    this->fit();
+}
+
+const Track::Plane* Track::get_plane(const std::string& detetorID) const {
     auto plane =
         std::find_if(planes_.begin(), planes_.end(), [&detetorID](Plane const& p) { return p.getName() == detetorID; });
     if(plane == planes_.end()) {

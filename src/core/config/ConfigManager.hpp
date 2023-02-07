@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_CONFIG_MANAGER_H
@@ -91,6 +92,12 @@ namespace corryvreckan {
         std::list<Configuration>& getInstanceConfigurations();
 
         /**
+         * @brief Drops an instance configuration from instance configuration storage
+         * @param identifier Identifier of the module instance to drop
+         */
+        void dropInstanceConfiguration(const ModuleIdentifier& identifier);
+
+        /**
          * @brief Load module options and directly apply them to the global configuration and the module configurations
          * @param options List of options to load and apply
          * @return True if any actual options where applied
@@ -125,7 +132,7 @@ namespace corryvreckan {
         std::list<Configuration> detector_configs_;
 
         std::list<Configuration> instance_configs_;
-        std::map<std::string, std::list<Configuration>::iterator> instance_name_to_config_;
+        std::map<ModuleIdentifier, std::list<Configuration>::iterator> instance_identifier_to_config_;
     };
 } // namespace corryvreckan
 

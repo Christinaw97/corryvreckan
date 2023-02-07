@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_CLUSTER_H
@@ -13,10 +14,12 @@
 
 #include <Math/Point3D.h>
 #include <Math/Vector2D.h>
+#include <TMatrixD.h>
 #include <TRef.h>
 
 #include <iostream>
 
+#include "Object.hpp"
 #include "Pixel.hpp"
 
 namespace corryvreckan {
@@ -52,6 +55,7 @@ namespace corryvreckan {
         double error() const;
         double errorX() const { return m_error.X(); }
         double errorY() const { return m_error.Y(); }
+        TMatrixD errorMatrixGlobal() const { return m_error_matrix_global; }
 
         bool isSplit() const { return m_split; }
         void setSplit(bool split);
@@ -90,6 +94,7 @@ namespace corryvreckan {
         void setErrorX(double error) { m_error.SetX(error); }
         void setErrorY(double error) { m_error.SetY(error); }
         void setError(ROOT::Math::XYVector error) { m_error = std::move(error); }
+        void setErrorMatrixGlobal(TMatrixD errorMatrix) { m_error_matrix_global = std::move(errorMatrix); }
 
         /**
          * @brief Print an ASCII representation of Cluster to the given stream
@@ -107,6 +112,7 @@ namespace corryvreckan {
         double m_row;
         double m_charge;
         ROOT::Math::XYVector m_error;
+        TMatrixD m_error_matrix_global{3, 3};
         size_t m_columnWidth{0};
         size_t m_rowWidth{0};
         bool m_split{false};
@@ -118,7 +124,7 @@ namespace corryvreckan {
         std::map<int, bool> m_columnHits;
 
         // ROOT I/O class definition - update version number when you change this class!
-        ClassDefOverride(Cluster, 14)
+        ClassDefOverride(Cluster, 15)
     };
 
     // Vector type declaration

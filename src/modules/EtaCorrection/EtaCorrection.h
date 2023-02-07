@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef EtaCorrection_H
@@ -40,14 +41,17 @@ namespace corryvreckan {
     private:
         void applyEta(Cluster* cluster);
 
-        std::shared_ptr<Detector> m_detector;
-        std::string m_etaFormulaX;
-        TF1* m_etaCorrectorX;
-        bool m_correctX;
-        std::string m_etaFormulaY;
-        TF1* m_etaCorrectorY;
-        bool m_correctY;
-        ROOT::Math::DisplacementVector2D<ROOT::Math::Cartesian2D<int>> nPixels;
+        std::shared_ptr<Detector> detector_;
+        std::string etaFormulaX_;
+        TF1* etaCorrectorX_;
+        bool correctX_;
+        std::string etaFormulaY_;
+        TF1* etaCorrectorY_;
+        bool correctY_;
+
+        // Histograms
+        TProfile* etaDistributionXprofile_;
+        TProfile* etaDistributionYprofile_;
     };
 } // namespace corryvreckan
 #endif // EtaCorrection_H

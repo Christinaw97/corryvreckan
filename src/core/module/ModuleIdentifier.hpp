@@ -5,13 +5,13 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #ifndef CORRYVRECKAN_MODULE_IDENTIFIER_H
 #define CORRYVRECKAN_MODULE_IDENTIFIER_H
 
 #include <memory>
-#include <random>
 #include <string>
 #include <vector>
 
@@ -74,14 +74,30 @@ namespace corryvreckan {
         /**
          * @brief Operators for comparing identifiers
          *
-         * Identifiers are only compared on their unique name, identifiers are not distinguished on priorities
+         * Identifiers are compared on their unique name and their priorities
          */
-        bool operator==(const ModuleIdentifier& other) const { return getUniqueName() == other.getUniqueName(); }
-        bool operator!=(const ModuleIdentifier& other) const { return getUniqueName() != other.getUniqueName(); }
-        bool operator<(const ModuleIdentifier& other) const { return getUniqueName() < other.getUniqueName(); }
-        bool operator<=(const ModuleIdentifier& other) const { return getUniqueName() <= other.getUniqueName(); }
-        bool operator>(const ModuleIdentifier& other) const { return getUniqueName() > other.getUniqueName(); }
-        bool operator>=(const ModuleIdentifier& other) const { return getUniqueName() >= other.getUniqueName(); }
+        bool operator==(const ModuleIdentifier& other) const {
+            return getUniqueName() == other.getUniqueName() && getPriority() == other.getPriority();
+        }
+        bool operator!=(const ModuleIdentifier& other) const {
+            return getUniqueName() != other.getUniqueName() || getPriority() != other.getPriority();
+        }
+        bool operator<(const ModuleIdentifier& other) const {
+            return getUniqueName() != other.getUniqueName() ? getUniqueName() < other.getUniqueName()
+                                                            : getPriority() < other.getPriority();
+        }
+        bool operator<=(const ModuleIdentifier& other) const {
+            return getUniqueName() != other.getUniqueName() ? getUniqueName() <= other.getUniqueName()
+                                                            : getPriority() <= other.getPriority();
+        }
+        bool operator>(const ModuleIdentifier& other) const {
+            return getUniqueName() != other.getUniqueName() ? getUniqueName() > other.getUniqueName()
+                                                            : getPriority() > other.getPriority();
+        }
+        bool operator>=(const ModuleIdentifier& other) const {
+            return getUniqueName() != other.getUniqueName() ? getUniqueName() >= other.getUniqueName()
+                                                            : getPriority() >= other.getPriority();
+        }
         /// @}
 
     private:

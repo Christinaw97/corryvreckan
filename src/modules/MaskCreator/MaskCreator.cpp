@@ -6,6 +6,7 @@
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "MaskCreator.h"
@@ -65,7 +66,7 @@ void MaskCreator::initialize() {
                            m_detector->nPixels().Y() - 0.5);
 
     if(m_method == MaskingMethod::LOCALDENSITY) {
-        title = m_detector->getName() + " Occupancy distance;x [px];y [px]";
+        title = m_detector->getName() + " Occupancy distribution;Occupancy;Entries";
         m_occupancyDist = new TH1D("occupancy_dist", title.c_str(), binsOccupancy, 0, 1);
 
         title = m_detector->getName() + " Density;x [px]; y [px]";
@@ -78,7 +79,7 @@ void MaskCreator::initialize() {
                              -0.5,
                              m_detector->nPixels().Y() - 0.5);
 
-        title = m_detector->getName() + " Local significance;x [px];y [px]";
+        title = m_detector->getName() + " Local significance;x [px];y [px];Local significance";
         m_significance = new TH2D("local_significance",
                                   title.c_str(),
                                   m_detector->nPixels().X(),
@@ -88,7 +89,7 @@ void MaskCreator::initialize() {
                                   -0.5,
                                   m_detector->nPixels().Y() - 0.5);
 
-        title = m_detector->getName() + " Local significance distance;x [px];y [px]";
+        title = m_detector->getName() + " Local significance distribution;Local significance ;Entries";
         m_significanceDist = new TH1D("local_significance_dist", title.c_str(), binsOccupancy, 0, 1);
     }
 
