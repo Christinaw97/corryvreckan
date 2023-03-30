@@ -17,6 +17,8 @@ AnalysisElectronCT::AnalysisElectronCT(Configuration& config, std::shared_ptr<De
     : Module(config, detector), m_detector(detector) {
 
     ignore_first_frame_ = config_.get<bool>("ignore_first_frame", false);
+    compute_xray_ = config_.get<bool>("compute_xray", false);
+    store_data_ = config_.get<bool>("store_data", false);
 }
 
 void AnalysisElectronCT::initialize() {
@@ -34,6 +36,13 @@ void AnalysisElectronCT::initialize() {
     int plot_frames = config_.get<int>("plot_frames", 1000);
     charge_weighting_ = config_.get<bool>("charge_weighting", true);
     fitted_profile_ = config_.get<bool>("fitted_profile", true);
+    compute_xray_ = config_.get<bool>("compute_xray");
+    store_data_ = config_.get<bool>("store_data");
+
+    if(compute_xray_) {
+        x_frames_ = config_.get<int>("xray_x_frames", 300);
+        chop_frames_ = config_.get<int>("xray_chop_frames", 0);
+    }
 
     std::string title = "Integrated hit map;x [px]; y [px];hits";
     hitMapIntegrated =
@@ -126,6 +135,12 @@ void AnalysisElectronCT::initialize() {
 
     title = "Pixel Charge;charge [ToT];pixels";
     pixelCharge = new TH1F("pixelCharge", title.c_str(), 1000, -0.5, 1000 - 0.5);
+
+    title = "X-Ray;x [a.u.];y [a.u.]";
+
+    if(compute_xray_) {
+        xray = new TH2F("xray", title.c_str(), x_frames_, -0.5, x_frames_, 50, -0.5, 49.5);
+    }
 }
 
 StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -284,6 +299,18 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
     for(int i = 0; i < std::min(1500, static_cast<int>(widthsXLast1500.size())); ++i) {
         widthsXVsFrameLast1500->SetBinContent(i + 1, widthsXLast1500.at(static_cast<unsigned int>(i)));
         widthsYVsFrameLast1500->SetBinContent(i + 1, widthsYLast1500.at(static_cast<unsigned int>(i)));
+    }
+
+    int n = m_eventNumber - chop_frames_;
+
+    if(compute_xray_) {
+        int ycoord = static_cast<int>(std::floor(n / x_frames_));
+        bool odd_y = static_cast<bool>(ycoord % 2);
+        int xcoord = (odd_y ? x_frames_ - n % x_frames_ : n % x_frames_);
+
+        if(n >= 0) {
+            xray->SetBinContent(xcoord + 1, ycoord + 1, (widthX + widthY) / 2);
+        }
     }
 
     // Increment event counter

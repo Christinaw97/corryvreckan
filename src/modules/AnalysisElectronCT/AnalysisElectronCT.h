@@ -57,9 +57,14 @@ namespace corryvreckan {
         bool fitted_profile_;
 
         bool ignore_first_frame_;
+        bool compute_xray_;
+        bool store_data_;
 
         std::vector<double> widthsXLast1500;
         std::vector<double> widthsYLast1500;
+
+        int x_frames_;
+        int chop_frames_;
 
         // Graphs:
         TH2F* hitMapIntegrated;
@@ -106,6 +111,8 @@ namespace corryvreckan {
         TH1F* hitTimeWithinFrame;
 
         TH1F* pixelCharge;
+
+        TH2F* xray;
     };
 
 } // namespace corryvreckan
