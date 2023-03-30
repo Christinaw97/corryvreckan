@@ -116,10 +116,10 @@ void AnalysisElectronCT::initialize() {
     widthsYVsFrame = new TProfile("widthsYVsFrame", title.c_str(), 50, -0.5, plot_frames - 0.5);
     widthsYVsFrame->GetXaxis()->SetCanExtend(true);
 
-    title = "Width X vs Frame Nr. - Last 200 frames;frame;width x [px]";
-    widthsXVsFrameLast200 = new TH1F("widthsXVsFrameLast200", title.c_str(), 200, -0.5, 200 - 0.5);
-    title = "Width Y vs Frame Nr. - Last 200 frames;frame;width y [px]";
-    widthsYVsFrameLast200 = new TH1F("widthsYVsFrameLast200", title.c_str(), 200, -0.5, 200 - 0.5);
+    title = "Width X vs Frame Nr. - Last 1500 frames;frame;width x [px]";
+    widthsXVsFrameLast1500 = new TH1F("widthsXVsFrameLast1500", title.c_str(), 1500, -0.5, 1500 - 0.5);
+    title = "Width Y vs Frame Nr. - Last 1500 frames;frame;width y [px]";
+    widthsYVsFrameLast1500 = new TH1F("widthsYVsFrameLast1500", title.c_str(), 1500, -0.5, 1500 - 0.5);
 
     title = "Hit Timestamp within Frame;time [us];hits";
     hitTimeWithinFrame = new TH1F("hitTimeWithinFrame", title.c_str(), 2000, 0, 20);
@@ -168,9 +168,9 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
 
     framesVsTime->Fill(static_cast<double>(Units::convert(frameStart, "s")));
 
-    if(widthsXLast200.size() == 200) {
-        widthsXLast200.erase(widthsXLast200.begin());
-        widthsYLast200.erase(widthsYLast200.begin());
+    if(widthsXLast1500.size() == 1500) {
+        widthsXLast1500.erase(widthsXLast1500.begin());
+        widthsYLast1500.erase(widthsYLast1500.begin());
     }
 
     double total_charge = 0;
@@ -279,11 +279,11 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
     chargeVsFrame->Fill(m_eventNumber, total_charge);
 
     // Modify running graphs
-    widthsXLast200.push_back(widthX);
-    widthsYLast200.push_back(widthY);
-    for(int i = 0; i < std::min(200, static_cast<int>(widthsXLast200.size())); ++i) {
-        widthsXVsFrameLast200->SetBinContent(i + 1, widthsXLast200.at(i));
-        widthsYVsFrameLast200->SetBinContent(i + 1, widthsYLast200.at(i));
+    widthsXLast1500.push_back(widthX);
+    widthsYLast1500.push_back(widthY);
+    for(int i = 0; i < std::min(1500, static_cast<int>(widthsXLast1500.size())); ++i) {
+        widthsXVsFrameLast1500->SetBinContent(i + 1, widthsXLast1500.at(static_cast<unsigned int>(i)));
+        widthsYVsFrameLast1500->SetBinContent(i + 1, widthsYLast1500.at(static_cast<unsigned int>(i)));
     }
 
     // Increment event counter
