@@ -141,6 +141,10 @@ void AnalysisElectronCT::initialize() {
     if(compute_xray_) {
         xray = new TH2F("xray", title.c_str(), x_frames_, -0.5, x_frames_, 50, -0.5, 49.5);
     }
+
+    if(store_data_) {
+        file_output_ = std::ofstream(config_.get<std::string>("file_name"), std::ofstream::out);
+    }
 }
 
 StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -313,6 +317,10 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
         }
     }
 
+    if(store_data_) {
+        file_output_ << n << " " << (widthX + widthY) / 2 << std::endl;
+    }
+
     // Increment event counter
     m_eventNumber++;
 
@@ -323,4 +331,7 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
 void AnalysisElectronCT::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     LOG(DEBUG) << "Analysed " << m_eventNumber << " events";
+    if(store_data_) {
+        file_output_.close();
+    }
 }

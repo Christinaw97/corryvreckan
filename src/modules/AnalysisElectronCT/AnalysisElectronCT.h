@@ -66,6 +66,8 @@ namespace corryvreckan {
         int x_frames_;
         int chop_frames_;
 
+        std::ofstream file_output_;
+
         // Graphs:
         TH2F* hitMapIntegrated;
         TH2F* hitMapLastFrame;
