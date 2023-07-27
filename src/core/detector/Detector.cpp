@@ -20,6 +20,7 @@
 
 #include "Detector.hpp"
 #include "HexagonalPixelDetector.hpp"
+#include "PixelModuleDetector.hpp"
 #include "core/utils/log.h"
 #include "exceptions.h"
 
@@ -27,6 +28,8 @@ using namespace ROOT::Math;
 using namespace corryvreckan;
 
 Detector::Detector(const Configuration& config) : m_role(DetectorRole::NONE) {
+
+    LOG(DEBUG) << "Initializing detector with role " << corryvreckan::to_string(m_role);
 
     // Role of this detector:
     auto roles = config.getArray<DetectorRole>("role", {DetectorRole::NONE});
@@ -60,6 +63,7 @@ Detector::Detector(const Configuration& config) : m_role(DetectorRole::NONE) {
     std::transform(m_detectorType.begin(), m_detectorType.end(), m_detectorType.begin(), ::tolower);
     m_detectorCoordinates = config.get<std::string>("coordinates", "cartesian");
     std::transform(m_detectorCoordinates.begin(), m_detectorCoordinates.end(), m_detectorCoordinates.begin(), ::tolower);
+
     m_timeOffset = config.get<double>("time_offset", 0.0);
     if(m_timeOffset > 0.) {
         LOG(TRACE) << "Time offset: " << m_timeOffset;
@@ -89,6 +93,8 @@ std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& c
         return std::make_shared<PixelDetector>(config);
     } else if(coordinates == "hexagonal") {
         return std::make_shared<HexagonalPixelDetector>(config);
+    } else if(coordinates == "cartesian_module") {
+        return std::make_shared<PixelModuleDetector>(config);
     } else {
         throw InvalidValueError(config, "coordinates", "Coordinates can only set to be cartesian now");
     }
@@ -328,7 +334,7 @@ Configuration Detector::getConfiguration() const {
         roles.emplace_back("auxiliary");
     }
     if(this->isPassive()) {
-        roles.push_back("passive");
+        roles.emplace_back("passive");
     }
 
     if(!roles.empty()) {

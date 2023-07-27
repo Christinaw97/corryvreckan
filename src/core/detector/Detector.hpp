@@ -200,7 +200,7 @@ namespace corryvreckan {
          * @brief Retrieve configuration object from detector, containing all (potentially updated) parameters
          * @return Configuration object for this detector
          */
-        Configuration getConfiguration() const;
+        virtual Configuration getConfiguration() const;
 
         /**
          * @brief Get the total size of the active matrix, i.e. pitch * number of pixels in both dimensions
@@ -224,16 +224,20 @@ namespace corryvreckan {
 
         /**
          * @brief Get intrinsic spatial resolution of the detector
+         * @param column Column (x-) index of the pixel to calculate the spatial resolution from
+         * @param row Row (y-) index of the pixel to calculate the spatial resolution from
          * @return Intrinsic spatial resolution in X and Y
          * @todo: this is designed for PixelDetector, find a proper interface for other Detector type
          */
-        virtual XYVector getSpatialResolution() const = 0;
+        virtual XYVector getSpatialResolution(double column = 0, double row = 0) const = 0;
 
         /**
          * @brief Get intrinsic spatial resolution in global coordinates of the detector
+         * @param column Column (x-) index of the pixel to calculate the spatial resolution from
+         * @param row Row (y-) index of the pixel to calculate the spatial resolution from
          * @return Intrinsic spatial resolution in global X and Y
          */
-        virtual TMatrixD getSpatialResolutionMatrixGlobal() const = 0;
+        virtual TMatrixD getSpatialResolutionMatrixGlobal(double column = 0, double row = 0) const = 0;
 
         /**
          * @brief Get number of pixels in x and y
