@@ -134,6 +134,13 @@ namespace corryvreckan {
         XYVector getSize() const override;
 
         /**
+         * @brief Get the size of a single pixel, accounting for "big pixels" in
+         * PixelModuleDetector or other hybrid pixel size detectors
+         * @return double with area of pixel at this index
+         */
+        double getPixelArea(int = 0, int = 0) const override { return getPitch().X() * getPitch().Y(); }
+
+        /**
          * @brief Get pitch of a single pixel
          * @return Pitch of a pixel
          */

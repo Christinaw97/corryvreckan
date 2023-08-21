@@ -224,6 +224,8 @@ namespace corryvreckan {
          */
         virtual XYVector getSize() const = 0;
 
+        virtual double getPixelArea(int column, int row) const = 0;
+
         /**
          * @brief Get pitch of a single pixel
          * @return Pitch of a pixel

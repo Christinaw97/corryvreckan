@@ -115,6 +115,13 @@ namespace corryvreckan {
         XYVector getSize() const override;
 
         /**
+         * @brief Get the size of a single pixel, accounting for "big pixels" in
+         * PixelModuleDetector or other hybrid pixel size detectors
+         * @return double with area of pixel at this index
+         */
+        double getPixelArea(int = 0, int = 0) const override { return 3 * std::sqrt(3) / 2 * getPitch().X(); }
+
+        /**
          * @brief Test whether one pixel touches the cluster
          * @return true if it fulfills the condition
          * @note users should define their specific clustering method in the detector class, for pixel detector, the default
