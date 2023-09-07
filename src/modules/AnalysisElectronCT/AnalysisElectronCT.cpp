@@ -42,6 +42,8 @@ void AnalysisElectronCT::initialize() {
     if(compute_xray_) {
         x_frames_ = config_.get<int>("xray_x_frames", 300);
         chop_frames_ = config_.get<int>("xray_chop_frames", 0);
+    }else{
+        chop_frames_ = 0;
     }
 
     std::string title = "Integrated hit map;x [px]; y [px];hits";
