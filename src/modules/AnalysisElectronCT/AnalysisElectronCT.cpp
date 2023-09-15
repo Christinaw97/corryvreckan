@@ -320,7 +320,7 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
     }
 
     if(store_data_) {
-      file_output_ << n << " " << (widthX + widthY) / 2 << " " << total_charge << std::endl;
+      file_output_ << n << " " << static_cast<double>(Units::convert(frameStart, "s"))  << " " << (widthX + widthY) / 2 << " " << total_charge << std::endl;
     }
 
     // Increment event counter
