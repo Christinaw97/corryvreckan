@@ -130,24 +130,25 @@ void AnalysisEfficiency::initialize() {
                                                      1);
 
     title = m_detector->getName() + " Global efficiency map;x [mm];y [mm];#epsilon";
-    hGlobalEfficiencyMap_trackPos_TProfile = new TProfile2D("globalEfficiencyMap_trackPos_TProfile",
-                                                            title.c_str(),
-                                                            300,
-                                                            m_detector->displacement().X() - 1.5 * m_detector->getSize().X(),
-                                                            m_detector->displacement().X() + 1.5 * m_detector->getSize().X(),
-                                                            300,
-                                                            m_detector->displacement().Y() - 1.5 * m_detector->getSize().Y(),
-                                                            m_detector->displacement().Y() + 1.5 * m_detector->getSize().Y(),
-                                                            0,
-                                                            1);
+    hGlobalEfficiencyMap_trackPos_TProfile =
+        new TProfile2D("globalEfficiencyMap_trackPos_TProfile",
+                       title.c_str(),
+                       300,
+                       m_detector->displacement().X() - 1.5 * m_detector->getLocalSize().X(),
+                       m_detector->displacement().X() + 1.5 * m_detector->getLocalSize().X(),
+                       300,
+                       m_detector->displacement().Y() - 1.5 * m_detector->getLocalSize().Y(),
+                       m_detector->displacement().Y() + 1.5 * m_detector->getLocalSize().Y(),
+                       0,
+                       1);
     hGlobalEfficiencyMap_trackPos = new TEfficiency("globalEfficiencyMap_trackPos",
                                                     title.c_str(),
                                                     300,
-                                                    m_detector->displacement().X() - 1.5 * m_detector->getSize().X(),
-                                                    m_detector->displacement().X() + 1.5 * m_detector->getSize().X(),
+                                                    m_detector->displacement().X() - 1.5 * m_detector->getLocalSize().X(),
+                                                    m_detector->displacement().X() + 1.5 * m_detector->getLocalSize().X(),
                                                     300,
-                                                    m_detector->displacement().Y() - 1.5 * m_detector->getSize().Y(),
-                                                    m_detector->displacement().Y() + 1.5 * m_detector->getSize().Y());
+                                                    m_detector->displacement().Y() - 1.5 * m_detector->getLocalSize().Y(),
+                                                    m_detector->displacement().Y() + 1.5 * m_detector->getLocalSize().Y());
     hGlobalEfficiencyMap_trackPos->SetDirectory(this->getROOTDirectory());
 
     hDistanceCluster = new TH1D("distanceTrackHit",

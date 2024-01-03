@@ -101,11 +101,11 @@ void DUTAssociation::initialize() {
     hDist2D = new TH2D("hDist_trackCluster_2D",
                        "2D distance between cluster center and track; dx [mm]; dy [mm] ",
                        500,
-                       -m_detector->getSize().X(),
-                       m_detector->getSize().X(),
+                       -m_detector->getLocalSize().X(),
+                       m_detector->getLocalSize().X(),
                        500,
-                       -m_detector->getSize().X(),
-                       m_detector->getSize().X());
+                       -m_detector->getLocalSize().X(),
+                       m_detector->getLocalSize().X());
     // Nr of associated clusters per track
     title = m_detector->getName() + ": number of associated clusters per track;associated clusters;events";
     hNoAssocCls = new TH1F("no_assoc_cls", title.c_str(), 10, -0.5, 9.5);

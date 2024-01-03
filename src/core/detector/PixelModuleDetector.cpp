@@ -74,7 +74,7 @@ double PixelModuleDetector::getRow(const PositionVector3D<Cartesian3D<double>> l
     bool is_big_y_pixel = 0;
     double row = 0;
 
-    double tempPosition = ((localPosition.Y() + getSize().Y() / 2.) / m_pitch.Y()) - 0.5;
+    double tempPosition = ((localPosition.Y() + getLocalSize().Y() / 2.) / m_pitch.Y()) - 0.5;
 
     for(unsigned int i = 0; i < transformed_big_pixel_y.size(); i++) {
         if(transformed_big_pixel_y[i] <= tempPosition) {
@@ -109,7 +109,7 @@ double PixelModuleDetector::getColumn(const PositionVector3D<Cartesian3D<double>
     bool is_big_x_pixel = 0;
     double column = 0;
 
-    double tempPosition = ((localPosition.X() + getSize().X() / 2.) / m_pitch.X()) - 0.5;
+    double tempPosition = ((localPosition.X() + getLocalSize().X() / 2.) / m_pitch.X()) - 0.5;
 
     for(unsigned int i = 0; i < transformed_big_pixel_x.size(); i++) {
         if(transformed_big_pixel_x[i] <= tempPosition) {
@@ -177,13 +177,13 @@ PositionVector3D<Cartesian3D<double>> PixelModuleDetector::getLocalPosition(doub
 
     return PositionVector3D<Cartesian3D<double>>(
         m_pitch.X() * (column + 0.5 + n_big_x_left + (is_big_x_pixel ? std::modf((column + 0.5), &col_integer) : 0)) -
-            getSize().X() / 2.,
+            getLocalSize().X() / 2.,
         m_pitch.Y() * (row + 0.5 + n_big_y_left + (is_big_y_pixel ? std::modf((row + 0.5), &row_integer) : 0)) -
-            getSize().Y() / 2.,
+            getLocalSize().Y() / 2.,
         0.);
 }
 
-XYVector PixelModuleDetector::getSize() const {
+XYVector PixelModuleDetector::getLocalSize() const {
     return XYVector(m_pitch.X() * (m_nPixels.X() + static_cast<double>(big_pixel_x.size())),
                     m_pitch.Y() * (m_nPixels.Y() + static_cast<double>(big_pixel_y.size())));
 }

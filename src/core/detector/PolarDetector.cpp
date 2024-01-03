@@ -396,7 +396,7 @@ bool PolarDetector::isWithinROI(Cluster* cluster) const {
     return true;
 }
 
-XYVector PolarDetector::getSize() const {
+XYVector PolarDetector::getLocalSize() const {
     /* The size of a polar detector is approximated as:
      * - X direction: Length of the arc defining the final (longest)
      *                strip row, as [number of strips]*[angular pitch]*[radius]
