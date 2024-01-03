@@ -51,11 +51,11 @@ void ClusteringSpatial::initialize() {
     clusterPositionGlobal = new TH2F("clusterPositionGlobal",
                                      title.c_str(),
                                      400,
-                                     -m_detector->getLocalSize().X() / 1.5,
-                                     m_detector->getLocalSize().X() / 1.5,
+                                     -m_detector->getGlobalSize().X() / 1.5,
+                                     m_detector->getGlobalSize().X() / 1.5,
                                      400,
-                                     -m_detector->getLocalSize().Y() / 1.5,
-                                     m_detector->getLocalSize().Y() / 1.5);
+                                     -m_detector->getGlobalSize().Y() / 1.5,
+                                     m_detector->getGlobalSize().Y() / 1.5);
     title = m_detector->getName() + " Cluster Position (Local);x [px];y [px];events";
     clusterPositionLocal = new TH2F("clusterPositionLocal",
                                     title.c_str(),
