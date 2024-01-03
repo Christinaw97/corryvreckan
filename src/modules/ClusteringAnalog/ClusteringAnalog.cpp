@@ -175,11 +175,11 @@ void ClusteringAnalog::initialize() {
     clusterPositionGlobal = new TH2F("clusterPositionGlobal",
                                      title.c_str(),
                                      min(500, 5 * m_detector->nPixels().X()),
-                                     -m_detector->getLocalSize().X() / 1.5 + dx,
-                                     m_detector->getLocalSize().X() / 1.5 + dx,
+                                     -m_detector->getGlobalSize().X() / 1.5 + dx,
+                                     m_detector->getGlobalSize().X() / 1.5 + dx,
                                      min(500, 5 * m_detector->nPixels().Y()),
-                                     -m_detector->getLocalSize().Y() / 1.5 + dy,
-                                     m_detector->getLocalSize().Y() / 1.5 + dy);
+                                     -m_detector->getGlobalSize().Y() / 1.5 + dy,
+                                     m_detector->getGlobalSize().Y() / 1.5 + dy);
     title = m_detector->getName() + " Cluster position (local);x [px];y [px];events";
     clusterPositionLocal = new TH2F("clusterPositionLocal",
                                     title.c_str(),
@@ -193,11 +193,11 @@ void ClusteringAnalog::initialize() {
     clusterSeedPositionGlobal = new TH2F("clusterSeedPositionGlobal",
                                          title.c_str(),
                                          min(500, 5 * m_detector->nPixels().X()),
-                                         -m_detector->getLocalSize().X() / 1.5 + dx,
-                                         m_detector->getLocalSize().X() / 1.5 + dx,
+                                         -m_detector->getGlobalSize().X() / 1.5 + dx,
+                                         m_detector->getGlobalSize().X() / 1.5 + dx,
                                          min(500, 5 * m_detector->nPixels().Y()),
-                                         -m_detector->getLocalSize().Y() / 1.5 + dy,
-                                         m_detector->getLocalSize().Y() / 1.5 + dy);
+                                         -m_detector->getGlobalSize().Y() / 1.5 + dy,
+                                         m_detector->getGlobalSize().Y() / 1.5 + dy);
     title = m_detector->getName() + " Cluster seed position (local);x [px];y [px];events";
     clusterSeedPositionLocal = new TH2F("clusterSeedPositionLocal",
                                         title.c_str(),
