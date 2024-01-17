@@ -2,7 +2,7 @@
  * @file
  * @brief Implementation of module EventLoaderATLASpix
  *
- * @copyright Copyright (c) 2017-2022 CERN and the Corryvreckan authors.
+ * @copyright Copyright (c) 2017-2024 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -335,7 +335,7 @@ bool EventLoaderATLASpix::read_caribou_data() { // return false when reaching eo
         }
         // Structure: {1'b1, column_addr[5:0], row_addr[8:0], rise_timestamp[9:0], fall_timestamp[5:0]}
         // Extract pixel data
-        long ts2 = gray_decode((datain)&0x003F);
+        long ts2 = gray_decode((datain) & 0x003F);
         // long ts2 = gray_decode((datain>>6)&0x003F);
         // TS1 counter is by default half speed of TS2. By multiplying with 2 we make it equal.
         long ts1 = (gray_decode((datain >> 6) & 0x03FF)) << 1;
@@ -473,7 +473,7 @@ bool EventLoaderATLASpix::read_caribou_data() { // return false when reaching eo
         } else if(message_type == 0b01100000) {
 
             // Timestamp from FPGA [23:0] (4/4)
-            uint64_t fpga_tsx = ((datain)&0xFFFFFF);
+            uint64_t fpga_tsx = ((datain) & 0xFFFFFF);
             if((!new_ts2_) && (fpga_tsx < fpga_ts3_)) {
                 fpga_ts2_ += 0x0000000001000000;
                 LOG(DEBUG) << "Missing TS_FPGA_2, adding one";
