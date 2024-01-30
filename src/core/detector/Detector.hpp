@@ -229,7 +229,7 @@ namespace corryvreckan {
          * @return 2D vector with the dimensions of the pixel matrix in X and Y
          * @todo: this is designed for PixelDetector, find a proper interface for other Detector type
          */
-        virtual XYZVector getGlobalSize() const;
+        virtual XYZVector getGlobalProjection() const;
 
         /**
          * @brief Get the size of a single pixel, accounting for non-uniform pixel sizes in some detectors
