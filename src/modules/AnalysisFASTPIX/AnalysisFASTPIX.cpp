@@ -33,7 +33,7 @@ AnalysisFASTPIX::AnalysisFASTPIX(Configuration& config, std::shared_ptr<Detector
     roi_margin_x_ = config_.get<double>("roi_margin_x");
     roi_margin_y_ = config_.get<double>("roi_margin_y");
 
-    auto size = m_detector->getLocalSize();
+    auto size = m_detector->getSize();
     pitch = m_detector->getPitch().X();
     height = 2. / std::sqrt(3) * pitch;
 
@@ -110,7 +110,7 @@ template <typename T> void triangle_hist(double pitch, T* profile, size_t n) {
 void AnalysisFASTPIX::initialize() {
     std::string mod_axes = "in-pixel x_{track} [#mum];in-pixel y_{track} [#mum];";
 
-    auto size = m_detector->getLocalSize();
+    auto size = m_detector->getSize();
 
     double h_width = size.X() * hist_scale_;
     double h_height = size.Y() * hist_scale_;

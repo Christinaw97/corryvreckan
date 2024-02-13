@@ -131,7 +131,7 @@ namespace corryvreckan {
          * @brief Get the total local size of the active matrix, i.e. pitch * number of pixels in both dimensions
          * @return 2D vector with the dimensions of the pixel matrix in X and Y
          */
-        XYVector getLocalSize() const override;
+        XYVector getSize() const override;
 
         /**
          * @brief Get the size of a single pixel

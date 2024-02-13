@@ -193,7 +193,7 @@ namespace corryvreckan {
          *
          * @note Due to the shape of the polar detectors, the returned dimensions are only approximate
          */
-        XYVector getLocalSize() const override;
+        XYVector getSize() const override;
 
         /**
          * @brief Get the size of a given strip, accounting for area differences in

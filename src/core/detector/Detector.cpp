@@ -350,8 +350,8 @@ Configuration Detector::getConfiguration() const {
     return config;
 }
 
-XYZVector Detector::getGlobalProjection() const {
-    auto local = getLocalSize();
+XYZVector Detector::getGlobalExtent() const {
+    auto local = getSize();
     auto global = alignment_->local2global() * XYZVector(local.X(), local.y(), 0);
     // the size should always be postive in each direction - take the abs of all components
     return XYZVector(fabs(global.X()), fabs(global.Y()), fabs(global.Z()));

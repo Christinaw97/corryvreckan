@@ -58,7 +58,7 @@ namespace corryvreckan {
          */
         TMatrixD getSpatialResolutionMatrixGlobal(double, double) const override;
 
-        XYVector getLocalSize() const override;
+        XYVector getSize() const override;
 
         /**
          * @brief Get the size of a single pixel, accounting for "big pixels"

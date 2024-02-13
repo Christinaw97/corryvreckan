@@ -86,7 +86,7 @@ bool HexagonalPixelDetector::hitMasked(const Track* track, int tolerance) const 
 
 // Functions to get row and column from local position
 double HexagonalPixelDetector::getRow(const PositionVector3D<Cartesian3D<double>> localPosition) const {
-    auto size = getLocalSize();
+    auto size = getSize();
 
     double y = localPosition.Y() + 0.5 * (size.Y() - m_height);
     double row = (y * 2.0 / std::sqrt(3)) / m_pitch.Y();
@@ -95,7 +95,7 @@ double HexagonalPixelDetector::getRow(const PositionVector3D<Cartesian3D<double>
 }
 
 double HexagonalPixelDetector::getColumn(const PositionVector3D<Cartesian3D<double>> localPosition) const {
-    auto size = getLocalSize();
+    auto size = getSize();
 
     double x = localPosition.X() + 0.5 * (size.X() - m_pitch.X());
     double y = localPosition.Y() + 0.5 * (size.Y() - m_height);
@@ -107,7 +107,7 @@ double HexagonalPixelDetector::getColumn(const PositionVector3D<Cartesian3D<doub
 // Function to get local position from row and column
 PositionVector3D<Cartesian3D<double>> HexagonalPixelDetector::getLocalPosition(double column, double row) const {
 
-    auto size = getLocalSize();
+    auto size = getSize();
 
     // Offset by 1/2 width/height of matrix and 1/2 pixel to properly center matrix on 0,0
     double x = 0.5 * (size.X() - m_pitch.X());
@@ -172,7 +172,7 @@ bool HexagonalPixelDetector::isWithinROI(Cluster* cluster) const {
     return true;
 }
 
-XYVector HexagonalPixelDetector::getLocalSize() const {
+XYVector HexagonalPixelDetector::getSize() const {
     double matrix_x = (m_nPixels.X() + 0.5) * m_pitch.X();
     double matrix_y = (3.0 / 4.0 * m_nPixels.Y() + 1.0 / 4.0) * m_height;
 
