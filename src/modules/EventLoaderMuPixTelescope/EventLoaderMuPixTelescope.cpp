@@ -309,11 +309,10 @@ std::shared_ptr<Pixel> EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint
 
     uint16_t time = 0x0;
     // TS can be sampled on both edges - keep this optional
-    auto detector = detectors_.back();
-    if((h.get_ts2() == uint16_t(-1)) || (!use_both_timestamps_)) {
-        (detector->getType() == "telepix2" ? time = (timestampMask_ & h.timestamp_raw())
-                                           : time = ((timestampMask_ & h.timestamp_raw()) << 1));
 
+    if((h.get_ts2() == uint16_t(-1)) || (!use_both_timestamps_)) {
+        ((types_.at(tag) == TELEPIX2_UNSORTED_GS1_GS2_GS3) ? time = (timestampMask_ & h.timestamp_raw())
+                                                           : time = ((timestampMask_ & h.timestamp_raw()) << 1));
     } else if(h.timestamp_raw() > h.get_ts2()) {
         time = ((timestampMask_ & h.timestamp_raw()) << 1);
     } else {
@@ -325,7 +324,7 @@ std::shared_ptr<Pixel> EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint
 
     double time_shifted = static_cast<double>(time) * static_cast<double>(ckdivend_ + 1);
 
-    auto name = detector->getName();
+    auto name = names_.at(tag);
 
     ts1_ts2[name]->Fill(h.get_ts2(), h.timestamp_raw());
     double px_timestamp =
@@ -386,14 +385,14 @@ void EventLoaderMuPixTelescope::fillBuffer() {
                 // time from fpga is using a 500MHz clock (4 times the clock used for the hit timestamp
                 corrected_fpgaTime = (tf_.timestamp() >> 2);
                 // just take 10 bits from the hit timestamp
-                raw_time = h.timestamp_raw() & 0x3FF;
+                raw_time = h.timestamp_raw() & 0x7FF;
                 // get the fpga time +1bit just for plots
                 raw_fpga_vs_chip.at(names_.at(tag))->Fill(raw_time, static_cast<double>(corrected_fpgaTime & 0x7FF));
                 chip_delay.at(names_.at(tag))->Fill(static_cast<double>((corrected_fpgaTime & 0x3FF) - raw_time));
                 // if the chip timestamp is smaller than the fpga we have a bit flip on the 11th bit
-                if(((corrected_fpgaTime & 0x3FF) < raw_time)) { // && (corrected_fpgaTime>1024)) {
-                    corrected_fpgaTime -= 1024;
-                }
+                //                if(((corrected_fpgaTime & 0x3FF) < raw_time)) { // && (corrected_fpgaTime>1024)) {
+                //                    corrected_fpgaTime -= 1024;
+                //                }
                 raw_fpga_vs_chip_corrected.at(names_.at(tag))
                     ->Fill(raw_time, static_cast<double>(corrected_fpgaTime & 0x7FF));
 
