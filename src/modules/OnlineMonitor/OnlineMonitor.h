@@ -47,8 +47,8 @@ namespace corryvreckan {
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
 
         // Application to allow display persistancy
-        TApplication* app;
-        GuiDisplay* gui;
+        TApplication* app = nullptr;
+        GuiDisplay* gui = nullptr;
 
     private:
         void AddCanvasGroup(std::string group_title);
@@ -57,6 +57,8 @@ namespace corryvreckan {
                        Matrix<std::string> canvas_plots,
                        bool ignoreDut = false,
                        std::string detector_name = "");
+        // Function specifically for adding "DUT" ButtonGroup to enable scroll bar for large number of DUTs
+        void AddDUTGroup(uint64_t num_planes);
         void AddPlots(std::string canvas_name,
                       Matrix<std::string> canvas_plots,
                       bool ignoreDut = false,
@@ -76,6 +78,10 @@ namespace corryvreckan {
         // Canvases and their plots:
         Matrix<std::string> canvas_dutplots, canvas_overview, canvas_tracking, canvas_hitmaps, canvas_residuals, canvas_cx,
             canvas_cy, canvas_cx2d, canvas_cy2d, canvas_charge, canvas_time;
+
+        // Additional methods
+        void gui_run();
+        void gui_update();
     };
 } // namespace corryvreckan
 #endif // OnlineMonitor_H

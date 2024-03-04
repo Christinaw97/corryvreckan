@@ -87,16 +87,18 @@ Detector::Detector(const Configuration& config) : m_role(DetectorRole::NONE) {
 
 std::shared_ptr<Detector> corryvreckan::Detector::factory(const Configuration& config) {
     // default coordinate is cartesian coordinate
-    auto coordinates = config.get<std::string>("coordinates", "cartesian");
-    std::transform(coordinates.begin(), coordinates.end(), coordinates.begin(), ::tolower);
-    if(coordinates == "cartesian") {
+    auto coordinates = config.get<Coordinates>("coordinates", Coordinates::CARTESIAN);
+
+    if(coordinates == Coordinates::CARTESIAN) {
         return std::make_shared<PixelDetector>(config);
-    } else if(coordinates == "hexagonal") {
+    } else if(coordinates == Coordinates::HEXAGONAL) {
         return std::make_shared<HexagonalPixelDetector>(config);
-    } else if(coordinates == "cartesian_module") {
+    } else if(coordinates == Coordinates::CARTESIAN_MODULE) {
         return std::make_shared<PixelModuleDetector>(config);
+    } else if(coordinates == Coordinates::POLAR) {
+        return std::make_shared<PolarDetector>(config);
     } else {
-        throw InvalidValueError(config, "coordinates", "Coordinates can only set to be cartesian now");
+        throw InvalidValueError(config, "coordinates", "Unrecognized coordinate system set");
     }
 }
 
@@ -107,21 +109,21 @@ Detector::Alignment::Alignment(const Configuration& config) {
 
     // Get the orientation right - we keep this constant:
     orientation_ = config.get<ROOT::Math::XYZVector>("orientation", ROOT::Math::XYZVector());
-    auto mode = config.get<std::string>("orientation_mode", "xyz");
+    mode_ = config.get<std::string>("orientation_mode", "xyz");
 
-    if(mode == "xyz") {
+    if(mode_ == "xyz") {
         LOG(DEBUG) << "Interpreting Euler angles as XYZ rotation";
         // First angle given in the configuration file is around x, second around y, last around z:
         rotation_fct_ = [](const ROOT::Math::XYZVector& rot) {
             return RotationZ(rot.Z()) * RotationY(rot.Y()) * RotationX(rot.X());
         };
-    } else if(mode == "zyx") {
+    } else if(mode_ == "zyx") {
         LOG(DEBUG) << "Interpreting Euler angles as ZYX rotation";
         // First angle given in the configuration file is around z, second around y, last around x:
         rotation_fct_ = [](const ROOT::Math::XYZVector& rot) {
             return static_cast<ROOT::Math::Rotation3D>(RotationZYX(rot.x(), rot.y(), rot.z()));
         };
-    } else if(mode == "zxz") {
+    } else if(mode_ == "zxz") {
         LOG(DEBUG) << "Interpreting Euler angles as ZXZ rotation";
         // First angle given in the configuration file is around z, second around x, last around z:
         rotation_fct_ = [](const ROOT::Math::XYZVector& rot) {
@@ -269,47 +271,27 @@ double Detector::getTimeResolution() const {
     }
 }
 
-std::string Detector::getName() const {
-    return m_detectorName;
-}
+std::string Detector::getName() const { return m_detectorName; }
 
-std::string Detector::getType() const {
-    return m_detectorType;
-}
+std::string Detector::getType() const { return m_detectorType; }
 
-bool Detector::isReference() const {
-    return static_cast<bool>(m_role & DetectorRole::REFERENCE);
-}
+bool Detector::isReference() const { return static_cast<bool>(m_role & DetectorRole::REFERENCE); }
 
-bool Detector::isDUT() const {
-    return static_cast<bool>(m_role & DetectorRole::DUT);
-}
+bool Detector::isDUT() const { return static_cast<bool>(m_role & DetectorRole::DUT); }
 
-bool Detector::isAuxiliary() const {
-    return static_cast<bool>(m_role & DetectorRole::AUXILIARY);
-}
+bool Detector::isAuxiliary() const { return static_cast<bool>(m_role & DetectorRole::AUXILIARY); }
 
-bool Detector::isPassive() const {
-    return static_cast<bool>(m_role & DetectorRole::PASSIVE);
-}
+bool Detector::isPassive() const { return static_cast<bool>(m_role & DetectorRole::PASSIVE); }
 
-DetectorRole Detector::getRoles() const {
-    return m_role;
-}
+DetectorRole Detector::getRoles() const { return m_role; }
 
-bool Detector::hasRole(DetectorRole role) const {
-    return static_cast<bool>(m_role & role);
-}
+bool Detector::hasRole(DetectorRole role) const { return static_cast<bool>(m_role & role); }
 
 // Function to set the channel maskfile
-void Detector::maskFile(std::filesystem::path file) {
-    m_maskfile = std::move(file);
-}
+void Detector::maskFile(std::filesystem::path file) { m_maskfile = std::move(file); }
 
 // Function to update transforms (such as during alignment)
-void Detector::update(double time) {
-    alignment_->update(time);
-}
+void Detector::update(double time) { alignment_->update(time); }
 
 void Detector::update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation) {
     alignment_->update(displacement, orientation);

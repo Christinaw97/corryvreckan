@@ -18,14 +18,14 @@ This module uses tracks for alignment. The module moves the detector it is insta
 * `align_position`: Boolean to select whether to align the translational displacements of the detector or not. Note that the Z displacement is never aligned. Specify the axes using `align_position_axes`. The default value is `true`.
 * `align_orientation`: Boolean to select whether to align the rotations of the detector under consideration or not. Specify the axes using `align_orientation_axes`. The default value is `true`.
 * `align_position_axes`: Define for which axes to perform translational alignment. The default value is `xy`, which means both X and Y displacements of the detector will be aligned.
-* `align_orientation_axes`: Define for which axes to perform rotational alignment if `align_orientation = true`. The default value is `xyz`, which means that rotations around X, Y and Z axis will be aligned.
+* `align_orientation_axes`: Define for which axes to perform rotational alignment if `align_orientation = true`. The default value is `012`, which means that rotations around all axis will be aligned. `012` always represent the angles in order of the geometry file, independent of the `orientation_mode`
 * `prune_tracks`: Boolean to set if tracks with a number of associated clusters > `max_associated_clusters` or with a track chi^2 > `max_track_chi2ndof` should be excluded from use in the alignment. The number of discarded tracks is written to the terminal. Default is `false`.
 * `max_associated_clusters`: Maximum number of associated clusters per track allowed when `prune_tracks = true` for the track to be used in the alignment. Default value is `1`.
 * `max_track_chi2ndof`: Maximum track chi^2 value allowed when `prune_tracks = true` for the track to be used in the alignment. Default value is `10.0`.
 * `workers`: Specify the number of workers to use in total, should be strictly larger than zero. Defaults to the number of native threads available on the system minus one, if this can be determined, otherwise one thread is used.
 * `residuals`: Array of formulas for unbiased x and y residuals. Any 2D TFormula can be used, the variables `x` and `y` represent the *track intercept* with the plane and the *cluster position* respectively. Default formulas: `x - y`. Parameters can be used (`[0]`, `[1]`, ...) and have to be separately specified (see below). It should be noted that the formula does *not* support units, values with units have to be specified as separate parameters. Both and only the functions residual_x and residual_y must be defined if used. 
 * `parameters_residuals`: Array of factors, representing the parameters of the above correction function. Defaults to an empty array, i.e. by default no parameters are needed.
-
+* `spatial_cut_sensoredge` : Define the minimal distance a track has to have from the sensors edge. Defaults to `0`
 
 ### Plots produced
 For the DUT, the following plots are produced:

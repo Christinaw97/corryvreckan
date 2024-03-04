@@ -23,6 +23,16 @@
 #include "objects/Track.hpp"
 
 namespace corryvreckan {
+    /**
+     * @brief Version of std::make_shared that does not delete the pointer
+     *
+     * This version is needed because some pointers are deleted by ROOT's MINUIT2 internally, but they are stored as
+     * std::shared_ptr in this framework.
+     */
+    template <typename T, typename... Args> static std::shared_ptr<T> make_shared_no_delete(Args... args) {
+        return std::shared_ptr<T>(new T(args...), [](T*) {});
+    }
+
     /** @ingroup Modules
      * @brief Module to do function
      *
@@ -74,9 +84,11 @@ namespace corryvreckan {
         std::string m_alignOrientation_axes;
         size_t m_maxAssocClusters;
         double m_maxTrackChi2;
-
+        double m_spatial_cut_sensoredge;
         TH1F* residualsXPlot;
         TH1F* residualsYPlot;
+        TH1F* residualsRPlot{};
+        TH1F* residualsPhiPlot{};
 
         static std::shared_ptr<TFormula> formula_residual_x;
         static std::shared_ptr<TFormula> formula_residual_y;
@@ -87,9 +99,9 @@ namespace corryvreckan {
         TProfile* profile_dX_Y;
         TGraph* align_correction_shiftX;
         TGraph* align_correction_shiftY;
-        TGraph* align_correction_rotX;
-        TGraph* align_correction_rotY;
-        TGraph* align_correction_rotZ;
+        TGraph* align_correction_rot0;
+        TGraph* align_correction_rot1;
+        TGraph* align_correction_rot2;
     };
 
 } // namespace corryvreckan

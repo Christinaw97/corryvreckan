@@ -12,8 +12,14 @@
 #ifndef CORRYVRECKAN_GBLTRACK_H
 #define CORRYVRECKAN_GBLTRACK_H 1
 
-#include <GblPoint.h>
+#include <Eigen/Core>
+
 #include "Track.hpp"
+
+// Forward-declare GblPoint to avoid exposure of the header inclusion
+namespace gbl {
+    class GblPoint;
+}
 
 namespace corryvreckan {
     /**
@@ -47,6 +53,20 @@ namespace corryvreckan {
          * @return ROOT::Math::XYZPoint state at detetcor layer
          */
         ROOT::Math::XYZPoint getState(const std::string& detectorID) const override;
+
+        /**
+         * @brief Get the track state uncertainty at a detector in global coordinates
+         * @param detectorID Name of detector
+         * @return ROOT::Math::XYZPoint state at detetcor layer
+         */
+        TMatrixD getGlobalStateUncertainty(const std::string& detectorID) const override;
+
+        /**
+         * @brief Get the track state uncertainty at a detector in global coordinates
+         * @param detectorID Name of detector
+         * @return TMatrixD stateUncertainy at detetcor layer
+         */
+        TMatrixD getLocalStateUncertainty(const std::string& detectorID) const override;
 
         /**
          * @brief Get the track direction at a detector
@@ -117,6 +137,7 @@ namespace corryvreckan {
         bool use_volume_scatter_{};
 
         std::map<std::string, ROOT::Math::XYPoint> local_track_points_{};
+        std::map<std::string, ROOT::Math::XYZPoint> local_fitted_track_points_error{};
         std::map<std::string, ROOT::Math::XYZPoint> local_fitted_track_points_{};
         std::map<std::string, ROOT::Math::XYPoint> initital_residual_{};
         std::map<std::string, ROOT::Math::XYPoint> kink_{};

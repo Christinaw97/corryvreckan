@@ -9,6 +9,9 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <chrono>
+#include <thread>
+
 #include "EventLoaderEUDAQ2.h"
 #include "eudaq/FileReader.hh"
 
@@ -35,6 +38,7 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
     config_.setDefault<int>("shift_triggers", 0);
     config_.setDefault<bool>("inclusive", true);
     config_.setDefault<std::string>("eudaq_loglevel", "ERROR");
+    config_.setDefault<bool>("wait_on_eof", false);
 
     filename_ = config_.getPath("file_name", true);
     get_time_residuals_ = config_.get<bool>("get_time_residuals");
@@ -50,6 +54,7 @@ EventLoaderEUDAQ2::EventLoaderEUDAQ2(Configuration& config, std::shared_ptr<Dete
     shift_triggers_ = config_.get<int>("shift_triggers");
     inclusive_ = config_.get<bool>("inclusive");
     sync_by_trigger_ = config_.get<bool>("sync_by_trigger");
+    wait_on_eof_ = config_.get<bool>("wait_on_eof");
 
     // Set EUDAQ log level to desired value:
     EUDAQ_LOG_LEVEL(config_.get<std::string>("eudaq_loglevel"));
@@ -227,9 +232,12 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
         if(events_raw_.empty()) {
             LOG(TRACE) << "Reading new EUDAQ event from file";
             auto new_event = reader_->GetNextEvent();
-            if(!new_event) {
+            if(!new_event && !wait_on_eof_) {
                 LOG(DEBUG) << "Reached EOF";
                 throw EndOfFile();
+            } else if(!new_event && wait_on_eof_) {
+                LOG(DEBUG) << "No new event in file";
+                throw NoNewEvent();
             }
             // Build buffer from all sub-events:
             auto subevents = new_event->GetSubEvents();
@@ -275,7 +283,7 @@ std::shared_ptr<eudaq::StandardEvent> EventLoaderEUDAQ2::get_next_std_event() {
                 events_decoded_.push(std::const_pointer_cast<eudaq::StandardEvent>(decoded_subevent));
             }
             events_decoded_.push(decoded_event);
-            LOG(DEBUG) << event->GetDescription() << ": decoding succeeded";
+            LOG(DEBUG) << event->GetDescription() << ": decoding succeeded, event ID " << decoded_event->GetEventN();
         } else {
             LOG(DEBUG) << event->GetDescription() << ": decoding failed";
         }
@@ -515,17 +523,21 @@ PixelVector EventLoaderEUDAQ2::get_pixel_data(std::shared_ptr<eudaq::StandardEve
                                 Waveform::waveform_t{plane.GetWaveform(i), plane.GetWaveformX0(i), plane.GetWaveformDX(i)})
                           : std::make_shared<Pixel>(detector_->getName(), col, row, raw, raw, ts));
 
-        hitmap->Fill(col, row);
-        hPixelTimes->Fill(static_cast<double>(Units::convert(ts, "ms")));
-        hPixelTimes_long->Fill(static_cast<double>(Units::convert(ts, "s")));
-        hPixelRawValues->Fill(raw);
-        hRawValuesMap->Fill(col, row, raw);
+        if(!detector_->isAuxiliary()) {
+            hitmap->Fill(col, row);
+            hPixelTimes->Fill(static_cast<double>(Units::convert(ts, "ms")));
+            hPixelTimes_long->Fill(static_cast<double>(Units::convert(ts, "s")));
+            hPixelRawValues->Fill(raw);
+            hRawValuesMap->Fill(col, row, raw);
+        }
 
         pixels.push_back(pixel);
     }
-    hPixelMultiplicityPerEudaqEvent->Fill(static_cast<int>(pixels.size()));
-    LOG(DEBUG) << detector_->getName() << ": Plane contains " << pixels.size() << " pixels";
+    if(!detector_->isAuxiliary()) {
+        hPixelMultiplicityPerEudaqEvent->Fill(static_cast<int>(pixels.size()));
+    }
 
+    LOG(DEBUG) << detector_->getName() << ": Plane contains " << pixels.size() << " pixels";
     return pixels;
 }
 
@@ -604,6 +616,11 @@ StatusCode EventLoaderEUDAQ2::run(const std::shared_ptr<Clipboard>& clipboard) {
                 LOG(ERROR) << "EUDAQ2 reports invalid data: " << e.what() << std::endl << "Ending run.";
                 return StatusCode::EndRun;
 #endif
+            } catch(NoNewEvent&) {
+                LOG_PROGRESS(INFO, "eudaq2_loader") << "Waiting for new events";
+                using namespace std::chrono_literals;
+                std::this_thread::sleep_for(1000ms);
+                return StatusCode::NoData;
             }
         }
 
@@ -625,21 +642,19 @@ StatusCode EventLoaderEUDAQ2::run(const std::shared_ptr<Clipboard>& clipboard) {
         if(current_position == Event::Position::DURING) {
             num_eudaq_events_per_corry++;
             LOG(DEBUG) << "Is within current Corryvreckan event, storing data";
-            // Store data on the clipboard
-            auto new_pixels = get_pixel_data(event_, plane_id);
-            hits_ += new_pixels.size();
-            pixels.insert(pixels.end(), new_pixels.begin(), new_pixels.end());
-
+            if(!detector_->isAuxiliary()) {
+                // Store data on the clipboard
+                auto new_pixels = get_pixel_data(event_, plane_id);
+                hits_ += new_pixels.size();
+                pixels.insert(pixels.end(), new_pixels.begin(), new_pixels.end());
+            }
             // Add eudaq tags to the event
             auto eudaq_tags = event_->GetTags();
             clipboard->getEvent()->addTags(eudaq_tags);
         }
 
         // If this event was after the current event or if we have not enough information, stop reading:
-        if(current_position == Event::Position::AFTER) {
-            break;
-        } else if(current_position == Event::Position::UNKNOWN) {
-            event_.reset();
+        if(current_position == Event::Position::AFTER || current_position == Event::Position::UNKNOWN) {
             break;
         }
 

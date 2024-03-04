@@ -10,7 +10,6 @@
  */
 
 #include "StraightLineTrack.hpp"
-#include "Eigen/Dense"
 #include "Track.hpp"
 #include "core/utils/log.h"
 #include "exceptions.h"
@@ -30,9 +29,7 @@ ROOT::Math::XYPoint StraightLineTrack::distance(const Cluster* cluster) const {
     return ROOT::Math::XYPoint(dist.x(), dist.y());
 }
 
-ROOT::Math::XYPoint StraightLineTrack::getKinkAt(const std::string&) const {
-    return ROOT::Math::XYPoint(0, 0);
-}
+ROOT::Math::XYPoint StraightLineTrack::getKinkAt(const std::string&) const { return ROOT::Math::XYPoint(0, 0); }
 
 ROOT::Math::XYZPoint StraightLineTrack::getState(const std::string& detectorID) const {
     LOG(TRACE) << "Requesting state at: " << detectorID;
@@ -53,13 +50,9 @@ ROOT::Math::XYZPoint StraightLineTrack::getState(const std::string& detectorID) 
     return position;
 }
 
-ROOT::Math::XYZVector StraightLineTrack::getDirection(const std::string&) const {
-    return m_direction;
-}
+ROOT::Math::XYZVector StraightLineTrack::getDirection(const std::string&) const { return m_direction; }
 
-ROOT::Math::XYZVector StraightLineTrack::getDirection(const double&) const {
-    return m_direction;
-}
+ROOT::Math::XYZVector StraightLineTrack::getDirection(const double&) const { return m_direction; }
 
 void StraightLineTrack::calculateChi2() {
 
@@ -104,6 +97,29 @@ void StraightLineTrack::calculateResiduals() {
     }
 }
 
+TMatrixD StraightLineTrack::getUncertainyPos(const double& z) const {
+    if(!isFitted_) {
+        throw TrackError(typeid(StraightLineTrack), " has no uncertainty for z = " + std::to_string(z) + " before fitting");
+    }
+    TMatrixD error(3, 3);
+    error(0, 0) = uncertainties_(0) + z * z * uncertainties_(1);
+    error(1, 1) = uncertainties_(2) + z * z * uncertainties_(3);
+
+    return error;
+}
+TMatrixD StraightLineTrack::getLocalStateUncertainty(const std::string& detectorID) const {
+    auto p = std::find_if(
+        planes_.begin(), planes_.end(), [detectorID](const auto& plane) { return (plane.getName() == detectorID); });
+    TMatrixD gtl(3, 3);
+    p->getToLocal().Rotation().GetRotationMatrix(gtl);
+    return (gtl * getGlobalStateUncertainty(detectorID));
+}
+
+TMatrixD StraightLineTrack::getGlobalStateUncertainty(const std::string& detectorID) const {
+    auto p = std::find_if(
+        planes_.begin(), planes_.end(), [detectorID](const auto& plane) { return (plane.getName() == detectorID); });
+    return (getUncertainyPos(p->getPosition()));
+}
 double StraightLineTrack::operator()(const double* parameters) {
 
     // Update the StraightLineTrack gradient and intercept
@@ -124,6 +140,7 @@ void StraightLineTrack::fit() {
     isFitted_ = false;
     Eigen::Matrix4d mat(Eigen::Matrix4d::Zero());
     Eigen::Vector4d vec(Eigen::Vector4d::Zero());
+    uncertainties_ = Eigen::Vector4d::Zero();
 
     // Loop over all clusters and fill the matrices
     for(auto& cl : track_clusters_) {
@@ -142,14 +159,21 @@ void StraightLineTrack::fit() {
         V << errorMatrix(0, 0), errorMatrix(0, 1), errorMatrix(1, 0), errorMatrix(1, 1);
         Eigen::Matrix<double, 2, 4> C;
         C << 1., z, 0., 0., 0., 0., 1., z;
-
         // Fill the matrices
         if(fabs(V.determinant()) < std::numeric_limits<double>::epsilon()) {
             throw TrackFitError(typeid(this), "Error matrix inversion in straight line fit failed");
         }
         vec += C.transpose() * V.inverse() * pos;
         mat += C.transpose() * V.inverse() * C;
+        // Fill the 1/uncertainties per layers:
+        uncertainties_ += Eigen::Vector4d((1) / (errorMatrix(0, 0)),
+                                          (z * z) / (errorMatrix(0, 0)),
+                                          (1) / (errorMatrix(1, 1)),
+                                          (z * z) / (errorMatrix(1, 1)));
     }
+
+    uncertainties_ =
+        Eigen::Vector4d(1 / uncertainties_(0), 1 / uncertainties_(1), 1 / uncertainties_(2), 1 / uncertainties_(3));
 
     // Check for singularities.
     if(fabs(mat.determinant()) < std::numeric_limits<double>::epsilon()) {
@@ -173,9 +197,7 @@ void StraightLineTrack::fit() {
     isFitted_ = true;
 }
 
-ROOT::Math::XYZPoint StraightLineTrack::getIntercept(double z) const {
-    return m_state + m_direction * z;
-}
+ROOT::Math::XYZPoint StraightLineTrack::getIntercept(double z) const { return m_state + m_direction * z; }
 
 void StraightLineTrack::print(std::ostream& out) const {
     out << "StraightLineTrack " << this->m_state << ", " << this->m_direction << ", " << this->chi2_ << ", " << this->ndof_

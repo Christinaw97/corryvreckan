@@ -49,6 +49,16 @@ namespace corryvreckan {
         PASSIVE = (1 << 3),   ///< Passive device which only acts as scatterer. This is ignored for detector modules
     };
 
+    /**
+     * @brief Detector coordinate system
+     */
+    enum class Coordinates {
+        CARTESIAN = 1,    ///< Cartesian coordinates
+        HEXAGONAL,        ///< Hexagonal pixel coordinates, axial coordinate system
+        CARTESIAN_MODULE, ///< Cartesian coordinates for detector modules
+        POLAR,            ///< Polar coordinates
+    };
+
     inline constexpr DetectorRole operator&(DetectorRole x, DetectorRole y) {
         return static_cast<DetectorRole>(static_cast<int>(x) & static_cast<int>(y));
     }
@@ -92,6 +102,8 @@ namespace corryvreckan {
 
             const ROOT::Math::XYZVector& orientation() const { return orientation_; };
 
+            const std::string& mode() const { return mode_; };
+
             void update(double time, bool force = false);
 
             void update(const ROOT::Math::XYZPoint& displacement, const ROOT::Math::XYZVector& orientation);
@@ -102,6 +114,9 @@ namespace corryvreckan {
             void recalculate();
 
             std::array<std::shared_ptr<TFormula>, 3> parse_formulae(const Configuration& config, const std::string& key);
+
+            // Cache for the orientation mode:
+            std::string mode_{};
 
             // Cache for last time the transformations were renewed, in ns:
             double last_time_{};
@@ -253,6 +268,12 @@ namespace corryvreckan {
         double timeOffset() const { return m_timeOffset; }
 
         /**
+         * @brief Set the time offset of the detector
+         * @param time New time offset of the detector
+         */
+        void setTimeOffset(double time) { m_timeOffset = time; }
+
+        /**
          * @brief Get detector time resolution, used for timing cuts during clustering, track formation, etc.
          * @return Time resolutiom of respective detector
          */
@@ -275,6 +296,11 @@ namespace corryvreckan {
          * @return Normal vector to sensor surface
          */
         ROOT::Math::XYZVector normal() const { return alignment_->normal(); }
+        /**
+         * @brief Get orientation mode
+         * @return string with mode
+         */
+        std::string orientation_mode() const { return alignment_->mode(); }
 
         /**
          * @brief Get origin vector to sensor surface
@@ -460,6 +486,14 @@ namespace corryvreckan {
         virtual std::set<std::pair<int, int>>
         getNeighbors(const int col, const int row, const size_t distance, const bool include_corners) const = 0;
 
+        /**
+         * @brief Helper method to determine if this detector is of a given type
+         * The template parameter needs to be specified specifically, i.e.
+         *     if(model->is<PolarDetector>()) { }
+         * @return Boolean indication whether this detector is of the given type or not
+         */
+        template <class T> bool is() { return dynamic_cast<T*>(this) != nullptr; }
+
     protected:
         // Roles of the detector
         DetectorRole m_role;
@@ -499,5 +533,6 @@ namespace corryvreckan {
 } // namespace corryvreckan
 
 #include "PixelDetector.hpp"
-//#include "HexagonalPixelDetector.hpp"
+// #include "HexagonalPixelDetector.hpp"
+#include "PolarDetector.hpp"
 #endif // CORRYVRECKAN_DETECTOR_H

@@ -80,96 +80,10 @@ OnlineMonitor::OnlineMonitor(Configuration& config, std::vector<std::shared_ptr<
     canvas_time = config_.getMatrix<std::string>("event_times");
 }
 
-void OnlineMonitor::initialize() {
-
-    // TApplication keeps the canvases persistent
-    app = new TApplication("example", nullptr, nullptr);
-
-    // Make the GUI
-    gui = new GuiDisplay(gClient->GetRoot(), 1200, 600);
-
-    // Make the main window object and set the attributes
-    gui->buttonMenu = new TGHorizontalFrame(gui, 1200, 50);
-    gui->canvas = new TRootEmbeddedCanvas("canvas", gui, 1200, 600);
-    gui->AddFrame(gui->canvas, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10, 10, 10, 10));
-    gui->SetCleanup(kDeepCleanup);
-    gui->DontCallClose();
-
-    // Add canvases and histograms
-    AddCanvasGroup("Tracking");
-    AddCanvas("Overview", "Tracking", canvas_overview);
-    AddCanvas("Tracking Performance", "Tracking", canvas_tracking);
-    AddCanvas("Residuals", "Tracking", canvas_residuals, true);
-
-    AddCanvasGroup("Detectors");
-    AddCanvas("Hitmaps", "Detectors", canvas_hitmaps);
-    AddCanvas("Event Times", "Detectors", canvas_time);
-    AddCanvas("Charge Distributions", "Detectors", canvas_charge);
-
-    AddCanvasGroup("Correlations 1D");
-    AddCanvas("1D X", "Correlations 1D", canvas_cx);
-    AddCanvas("1D Y", "Correlations 1D", canvas_cy);
-
-    AddCanvasGroup("Correlations 2D");
-    AddCanvas("2D X", "Correlations 2D", canvas_cx2d);
-    AddCanvas("2D Y", "Correlations 2D", canvas_cy2d);
-
-    if(!get_duts().empty()) {
-        AddCanvasGroup("DUTs");
-        for(auto& detector : get_duts()) {
-            AddCanvas(detector->getName(), "DUTs", canvas_dutplots, false, detector->getName());
-        }
-    }
-
-    // Set up the main frame before drawing
-    AddCanvasGroup("Controls");
-    ULong_t color;
-
-    // Pause button
-    gClient->GetColorByName("green", color);
-    gui->buttons["pause"] = new TGTextButton(gui->buttonGroups["Controls"], "   &Pause Monitoring   ");
-    gui->buttons["pause"]->ChangeBackground(color);
-    gui->buttons["pause"]->Connect("Pressed()", "corryvreckan::GuiDisplay", gui, "TogglePause()");
-    gui->buttonGroups["Controls"]->AddFrame(gui->buttons["pause"], new TGLayoutHints(kLHintsTop | kLHintsExpandX));
-
-    // Exit button
-    gClient->GetColorByName("yellow", color);
-    gui->buttons["exit"] = new TGTextButton(gui->buttonGroups["Controls"], "&Exit Monitor");
-    gui->buttons["exit"]->ChangeBackground(color);
-    gui->buttons["exit"]->Connect("Pressed()", "corryvreckan::GuiDisplay", gui, "Exit()");
-    gui->buttonGroups["Controls"]->AddFrame(gui->buttons["exit"], new TGLayoutHints(kLHintsTop | kLHintsExpandX));
-
-    // Main frame resizing
-    gui->AddFrame(gui->buttonMenu, new TGLayoutHints(kLHintsLeft, 10, 10, 10, 10));
-    gui->SetWindowName(canvasTitle.c_str());
-    gui->MapSubwindows();
-    gui->Resize(gui->GetDefaultSize());
-
-    // Draw the main frame
-    gui->MapWindow();
-
-    // Plot the overview tab (if it exists)
-    if(gui->histograms["OverviewCanvas"].size() != 0) {
-        gui->Display(const_cast<char*>(std::string("OverviewCanvas").c_str()));
-    }
-
-    gui->canvas->GetCanvas()->Paint();
-    gui->canvas->GetCanvas()->Update();
-    gSystem->ProcessEvents();
-
-    // Initialise member variables
-    eventNumber = 0;
-}
+void OnlineMonitor::initialize() { gui_run(); }
 
 StatusCode OnlineMonitor::run(const std::shared_ptr<Clipboard>&) {
-
-    if(!gui->isPaused()) {
-        // Draw all histograms
-        if(eventNumber % updateNumber == 0) {
-            gui->Update();
-        }
-    }
-    gSystem->ProcessEvents();
+    gui_update();
 
     // Increase the event number
     eventNumber++;
@@ -179,6 +93,33 @@ StatusCode OnlineMonitor::run(const std::shared_ptr<Clipboard>&) {
 void OnlineMonitor::AddCanvasGroup(std::string group_title) {
     gui->buttonGroups[group_title] = new TGVButtonGroup(gui->buttonMenu, group_title.c_str());
     gui->buttonMenu->AddFrame(gui->buttonGroups[group_title], new TGLayoutHints(kLHintsLeft | kLHintsTop, 10, 10, 10, 10));
+    gui->buttonGroups[group_title]->Show();
+}
+
+// Need special function to get scroll bar working
+void OnlineMonitor::AddDUTGroup(uint64_t num_planes) {
+    std::string group_title = "DUTs";
+
+    // Dynamic sizing of DUT section for less than 3 planes
+    auto vert_size = static_cast<UInt_t>((num_planes >= 3) ? 150 : 40 + num_planes * 40);
+
+    // Adding an outer frame to place canvas inside
+    gui->dutFrame = new TGMainFrame(gui->buttonMenu, 150, vert_size, kVerticalFrame | kFixedSize);
+    gui->dutFrame->SetCleanup(kDeepCleanup);
+    gui->buttonMenu->AddFrame(gui->dutFrame, new TGLayoutHints(kLHintsLeft, 10, 10, 10, 10));
+
+    // Create canvas to attach to scrollbar
+    gui->dutCanvas = new TGCanvas(gui->dutFrame, 71, 28, kFixedSize);
+    gui->dutFrame->AddFrame(gui->dutCanvas, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+
+    // Creat Inner Frame
+    gui->dutInnerFrame = new TGVerticalFrame(gui->dutCanvas->GetViewPort(), 71, 28);
+    gui->dutCanvas->SetContainer(gui->dutInnerFrame);
+
+    // Create ButtonGroup
+    gui->buttonGroups[group_title] = new TGVButtonGroup(gui->dutInnerFrame, group_title.c_str());
+    gui->dutInnerFrame->AddFrame(gui->buttonGroups[group_title], new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+
     gui->buttonGroups[group_title]->Show();
 }
 
@@ -290,4 +231,98 @@ void OnlineMonitor::AddHisto(string canvasName, string histoName, string style, 
     } else {
         LOG(WARNING) << "Histogram " << histoName << " does not exist";
     }
+}
+
+void OnlineMonitor::gui_run() {
+
+    // TApplication keeps the canvases persistent
+    app = new TApplication("example", nullptr, nullptr);
+
+    // Make the GUI
+    gui = new GuiDisplay(gClient->GetRoot(), 1200, 600);
+
+    // Make the main window object and set the attributes
+    gui->buttonMenu = new TGHorizontalFrame(gui, 1200, 50);
+    gui->canvas = new TRootEmbeddedCanvas("canvas", gui, 1200, 600);
+    gui->AddFrame(gui->canvas, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 10, 10, 10, 10));
+    gui->SetCleanup(kDeepCleanup);
+    gui->DontCallClose();
+
+    // Add canvases and histograms
+    AddCanvasGroup("Tracking");
+    AddCanvas("Overview", "Tracking", canvas_overview);
+    AddCanvas("Tracking Performance", "Tracking", canvas_tracking);
+    AddCanvas("Residuals", "Tracking", canvas_residuals, true);
+
+    AddCanvasGroup("Detectors");
+    AddCanvas("Hitmaps", "Detectors", canvas_hitmaps);
+    AddCanvas("Event Times", "Detectors", canvas_time);
+    AddCanvas("Charge Distributions", "Detectors", canvas_charge);
+
+    AddCanvasGroup("Correlations 1D");
+    AddCanvas("1D X", "Correlations 1D", canvas_cx);
+    AddCanvas("1D Y", "Correlations 1D", canvas_cy);
+
+    AddCanvasGroup("Correlations 2D");
+    AddCanvas("2D X", "Correlations 2D", canvas_cx2d);
+    AddCanvas("2D Y", "Correlations 2D", canvas_cy2d);
+
+    if(!get_duts().empty()) {
+        AddDUTGroup(get_duts().size());
+        for(auto& detector : get_duts()) {
+            AddCanvas(detector->getName(), "DUTs", canvas_dutplots, false, detector->getName());
+        }
+    }
+
+    gui->buttonGroups["DUTs"]->SetWidth(55);
+    gui->buttonGroups["DUTs"]->SetHeight(8);
+    // Set up the main frame before drawing
+    AddCanvasGroup("Controls");
+    ULong_t color;
+
+    // Pause button
+    gClient->GetColorByName("green", color);
+    gui->buttons["pause"] = new TGTextButton(gui->buttonGroups["Controls"], "   &Pause Monitoring   ");
+    gui->buttons["pause"]->ChangeBackground(color);
+    gui->buttons["pause"]->Connect("Pressed()", "corryvreckan::GuiDisplay", gui, "TogglePause()");
+    gui->buttonGroups["Controls"]->AddFrame(gui->buttons["pause"], new TGLayoutHints(kLHintsTop | kLHintsExpandX));
+
+    // Exit button
+    gClient->GetColorByName("yellow", color);
+    gui->buttons["exit"] = new TGTextButton(gui->buttonGroups["Controls"], "&Exit Monitor");
+    gui->buttons["exit"]->ChangeBackground(color);
+    gui->buttons["exit"]->Connect("Pressed()", "corryvreckan::GuiDisplay", gui, "Exit()");
+    gui->buttonGroups["Controls"]->AddFrame(gui->buttons["exit"], new TGLayoutHints(kLHintsTop | kLHintsExpandX));
+
+    // Main frame resizing
+    gui->AddFrame(gui->buttonMenu, new TGLayoutHints(kLHintsLeft, 10, 10, 10, 10));
+    gui->SetWindowName(canvasTitle.c_str());
+    gui->MapSubwindows();
+    gui->Resize(gui->GetDefaultSize());
+
+    // Draw the main frame
+    gui->MapWindow();
+
+    // Plot the overview tab (if it exists)
+    if(gui->histograms["OverviewCanvas"].size() != 0) {
+        gui->Display(const_cast<char*>(std::string("OverviewCanvas").c_str()));
+    }
+
+    gui->canvas->GetCanvas()->Paint();
+    gui->canvas->GetCanvas()->Update();
+    gSystem->ProcessEvents();
+
+    // Initialise member variables
+    eventNumber = 0;
+}
+
+void OnlineMonitor::gui_update() {
+    // Updating the histograms
+    if(!gui->isPaused()) {
+        if(eventNumber % updateNumber == 0) {
+            gui->Update();
+        }
+    }
+
+    gSystem->ProcessEvents();
 }
