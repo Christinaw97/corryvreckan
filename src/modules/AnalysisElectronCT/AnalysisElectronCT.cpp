@@ -173,9 +173,13 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
         widthsYLast1500.erase(widthsYLast1500.begin());
     }
 
+    auto cluster = std::make_shared<Cluster>();
+
     double total_charge = 0;
 
     for(auto& pixel : pixels) {
+        cluster->addPixel(pixel.get());
+
         int pxcol = pixel->column();
         int pxrow = pixel->row();
         double pxcharge = pixel->charge();
@@ -285,6 +289,25 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
         widthsXVsFrameLast1500->SetBinContent(i + 1, widthsXLast1500.at(static_cast<unsigned int>(i)));
         widthsYVsFrameLast1500->SetBinContent(i + 1, widthsYLast1500.at(static_cast<unsigned int>(i)));
     }
+
+    // Calculate local cluster position
+    auto positionLocal = m_detector->getLocalPosition(centerX, centerY);
+
+    // Calculate global cluster position
+    auto positionGlobal = m_detector->localToGlobal(positionLocal);
+
+    cluster->setColumn(centerX);
+    cluster->setRow(centerY);
+    cluster->setClusterCentre(positionGlobal);
+    cluster->setClusterCentreLocal(positionLocal);
+    cluster->setCharge(total_charge);
+    cluster->setErrorX(widthX);
+    cluster->setErrorY(widthY);
+
+    // Put the only cluster to the clipboard
+    ClusterVector deviceClusters;
+    deviceClusters.push_back(cluster);
+    clipboard->putData(deviceClusters, m_detector->getName());
 
     // Increment event counter
     m_eventNumber++;

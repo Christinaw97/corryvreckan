@@ -4,7 +4,7 @@
 **Status**: Immature
 
 ### Description
-This is a module analyzing data for electron CT measurements. It interprets individual events (or frames) of individual detector planes as beam profiles and analyses these profiles with respect to the center position, widths and the number of hit pixels.
+This is a module analyzing data for electron CT measurements. It interprets individual events (or frames) of individual detector planes as beam profiles and analyses these profiles with respect to the center position, widths and the number of hit pixels. As a result, it produces clusters, representing the beam properties. Caveat: these clusters do not correspond to clusters created in other clustering algorithms.
 
 ### Parameters
 * `charge_weighting`: Use charge as weighting for profile measurements. Defaults to `true`.
