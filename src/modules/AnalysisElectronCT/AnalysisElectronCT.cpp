@@ -55,12 +55,12 @@ void AnalysisElectronCT::initialize() {
 
     title = "Hit column (projection X);x [px];hits";
     projectionX = new TH1F("projectionX", title.c_str(), xpixels, -0.5, xpixels - 0.5);
-    title = "Hit column (projection Y);y [px];hits";
+    title = "Hit row (projection Y);y [px];hits";
     projectionY = new TH1F("projectionY", title.c_str(), ypixels, -0.5, ypixels - 0.5);
 
     title = "Charge column (projection X);x [px];charge [ke]";
     projectionChargeX = new TH1F("projectionChargeX", title.c_str(), xpixels, -0.5, xpixels - 0.5);
-    title = "Charge column (projection Y);y [px];charge [ke]";
+    title = "Charge row (projection Y);y [px];charge [ke]";
     projectionChargeY = new TH1F("projectionChargeY", title.c_str(), ypixels, -0.5, ypixels - 0.5);
 
     title = "centers (RMS) X;RMS X [px];frames";
