@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Implementation of module AnalysisElectronCT
+ * @brief Implementation of module AnalysisBeamProfile
  *
  * @copyright Copyright (c) 2020-2023 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
@@ -8,18 +8,18 @@
  * Intergovernmental Organization or submit itself to any jurisdiction.
  */
 
-#include "AnalysisElectronCT.h"
+#include "AnalysisBeamProfile.h"
 #include "TF1.h"
 
 using namespace corryvreckan;
 
-AnalysisElectronCT::AnalysisElectronCT(Configuration& config, std::shared_ptr<Detector> detector)
+AnalysisBeamProfile::AnalysisBeamProfile(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector) {
 
     ignore_first_frame_ = config_.get<bool>("ignore_first_frame", false);
 }
 
-void AnalysisElectronCT::initialize() {
+void AnalysisBeamProfile::initialize() {
 
     for(auto& detector : get_detectors()) {
         LOG(DEBUG) << "Initialise for detector " + detector->getName();
@@ -128,7 +128,7 @@ void AnalysisElectronCT::initialize() {
     pixelCharge = new TH1F("pixelCharge", title.c_str(), 1000, -0.5, 1000 - 0.5);
 }
 
-StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) {
+StatusCode AnalysisBeamProfile::run(const std::shared_ptr<Clipboard>& clipboard) {
 
     hitMapLastFrame->Reset();
     chargeMapLastFrame->Reset();
@@ -316,7 +316,7 @@ StatusCode AnalysisElectronCT::run(const std::shared_ptr<Clipboard>& clipboard) 
     return StatusCode::Success;
 }
 
-void AnalysisElectronCT::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
+void AnalysisBeamProfile::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     LOG(DEBUG) << "Analysed " << m_eventNumber << " events";
 }

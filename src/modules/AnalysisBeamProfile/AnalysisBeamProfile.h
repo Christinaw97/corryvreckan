@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Definition of module AnalysisElectronCT
+ * @brief Definition of module AnalysisBeamProfile
  *
  * @copyright Copyright (c) 2020-2023 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
@@ -24,7 +24,7 @@ namespace corryvreckan {
      *
      * More detailed explanation of module
      */
-    class AnalysisElectronCT : public Module {
+    class AnalysisBeamProfile : public Module {
 
     public:
         /**
@@ -32,7 +32,7 @@ namespace corryvreckan {
          * @param config Configuration object for this module as retrieved from the steering file
          * @param detector Pointer to the detector for this module instance
          */
-        AnalysisElectronCT(Configuration& config, std::shared_ptr<Detector> detector);
+        AnalysisBeamProfile(Configuration& config, std::shared_ptr<Detector> detector);
 
         /**
          * @brief [Initialise this module]

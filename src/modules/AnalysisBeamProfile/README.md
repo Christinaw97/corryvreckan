@@ -2,13 +2,13 @@
 # SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
-# AnalysisElectronCT
+# AnalysisBeamProfile
 **Maintainer**: Paul Schuetze (paul.schuetze@desy.de)
 **Module Type**: *DETECTOR* **Detector Type**: *all*  
 **Status**: Functional
 
 ### Description
-This is a module analyzing data for electronCT measurements. It interprets individual events of individual detector planes as beam profiles and analyses these profiles with respect to their center position, widths and the total charge.
+This is a module analyzing the beam profile seen by a detector. It interprets individual events of individual detector planes as beam profiles and analyses these profiles with respect to their center position, widths and the total charge.
 
 As a result, it produces a single cluster per event representing the beam properties. Note that these clusters do not correspond well to clusters created in other clustering algorithms as this algorithm does not consider the proximity of pixel hits but assigns all pixel hits of an event to a single cluster.
 
@@ -27,6 +27,6 @@ For each detector the following plots are produced:
 
 ### Usage
 ```toml
-[AnalysisElectronCT]
+[AnalysisBeamProfile]
 
 ```

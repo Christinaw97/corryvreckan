@@ -4,7 +4,7 @@ CORRYVRECKAN_EXCLUDE_AUX(${MODULE_NAME})
 
 # Add source files to library
 CORRYVRECKAN_MODULE_SOURCES(${MODULE_NAME}
-    AnalysisElectronCT.cpp
+    AnalysisBeamProfile.cpp
     # ADD SOURCE FILES HERE...
 )
 
