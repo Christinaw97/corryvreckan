@@ -125,7 +125,7 @@ double PixelModuleDetector::getColumn(const PositionVector3D<Cartesian3D<double>
 
     if(is_big_x_pixel == true) {
         for(unsigned int i = 0; i < transformed_big_pixel_x.size(); i = i + 2) {
-            if(abs(tempPosition - transformed_big_pixel_x[i] - 0.5) <= 2) {
+            if(fabs(tempPosition - static_cast<double>(transformed_big_pixel_x[i]) - 0.5) <= 2) {
                 column = (tempPosition - transformed_big_pixel_x[i]) / 2. + big_pixel_x[i / 2] - 0.25;
             }
         }
