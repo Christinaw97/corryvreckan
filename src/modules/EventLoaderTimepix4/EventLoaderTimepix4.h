@@ -53,10 +53,9 @@ namespace corryvreckan {
         TH1F* hTriggerTime;
 
         bool decodeNextWord();
+        bool decodePacket(uint64_t packet, uint64_t ratio_VCO_CKDLL);
         void fillBuffer();
         bool loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector&, SpidrSignalVector&);
-        void loadCalibration(std::string path, char delim, std::vector<std::vector<float>>& dat);
-        void maskPixels(std::string);
 
         // configuration parameters:
         std::string m_inputDirectory;
@@ -68,16 +67,40 @@ namespace corryvreckan {
         std::vector<std::vector<float>> vtot;
         std::vector<std::vector<float>> vtoa;
 
+
+        // pixel packet variables
+        uint64_t m_addr;
+        uint64_t m_pileup;
+        uint64_t m_tot;
+        uint64_t m_ftoa_fall;
+        uint64_t m_ftoa_rise;
+        uint64_t m_uftoa_start;
+        uint64_t m_uftoa_stop;
+        uint64_t m_toa;
+        uint64_t m_pixel;
+        uint64_t m_sPixel;
+        uint64_t m_sPGroup;
+        uint64_t m_fullTot;
+        uint64_t m_fullToa;
+        uint64_t m_row;
+        uint64_t m_col;
+        uint64_t m_heartbeat;
+
+
         // Member variables
         std::vector<std::unique_ptr<std::ifstream>> m_files;
         std::vector<std::unique_ptr<std::ifstream>>::iterator m_file_iterator;
 
         bool eof_reached;
         size_t m_buffer_depth;
+        std::vector<uint64_t> m_dataBuffer;
+        uint64_t m_dataPacket;
         unsigned long long int m_syncTime;
         bool m_clearedHeader;
         long long int m_syncTimeTDC;
         int m_TDCoverflowCounter;
+
+
 
         long long int m_currentEvent;
 
@@ -95,6 +118,54 @@ namespace corryvreckan {
         std::priority_queue<std::shared_ptr<Pixel>, PixelVector, CompareTimeGreater<Pixel>> sorted_pixels_;
         std::priority_queue<std::shared_ptr<SpidrSignal>, SpidrSignalVector, CompareTimeGreater<SpidrSignal>>
             sorted_signals_;
+
+        //======================================================================================================================
+        // Unpack the header of the data packet (original, kepler)
+        //======================================================================================================================
+        std::array<unsigned, 5> decode_header(uint64_t packet) const {
+          return {unsigned(0xF & (packet >> 60)), unsigned(0x3 & (packet >> 58)), unsigned(0x3FF & (packet >> 48)),
+                  unsigned(0x1FFF & (packet >> 32)), unsigned(0xFFFFFFFF & (packet >> 0))};
+        }
+
+        uint64_t decode_tot(uint64_t ftoa_rise, uint64_t ftoa_fall, uint64_t uftoa_start, uint64_t uftoa_stop, uint64_t tot, uint64_t ratio_VCO_CKDLL=16) {
+            //Decode TOT. Units are period of 40MHz (25ns)
+            return (tot + (ftoa_rise - ftoa_fall)/ratio_VCO_CKDLL - (uftoa_start-uftoa_stop)/(8 * ratio_VCO_CKDLL));
+        }
+
+        uint64_t decode_toa(uint64_t toa, uint64_t uftoa_start, uint64_t uftoa_stop, uint64_t ftoa_rise, uint64_t ratio_VCO_CKDLL=16){
+          //Decode TOA. Units are period of 40MHz (25ns)
+          return (toa - ftoa_rise/ratio_VCO_CKDLL + (uftoa_start-uftoa_stop)/(8 * ratio_VCO_CKDLL));
+        }
+
+        uint64_t toa_clkdll_correction(uint64_t spgroup_addr=0){
+          //Corrects latency delay due to DDLL clock distribution. Units are period of 40MHz (25ns)
+          uint64_t clk_dll_step=1/32;
+          return (15-spgroup_addr)*clk_dll_step;
+        }
+
+        bool decodeColRow(uint64_t pix, uint64_t superPix, unsigned header, bool top){
+            if (top){
+                header = 223 - header;
+                superPix = 15 - superPix;
+                pix = 31-pix;
+            }
+            m_col=2*header + (pix%8/4);
+            m_row=pix%4 + (pix/8)*4 + superPix*16 + top*256;
+            if ( m_row > 550 || m_col > 550){
+                return false;
+            }
+            return true;
+        }
+
+        //========================================
+        // uftoa encoding change to acutal values (original, TPX4TOOLS by kevin)
+        // =======================================
+        uint64_t uftoaBin[16] = {4, 5, 8, 6, 8, 8, 8, 7, 3, 8, 8, 8, 2, 8, 1, 0};
+        uint64_t UftoaStart(uint64_t value){ return uftoaBin[value >> 26 & 0x000F]; }
+        uint64_t UftoaStop(uint64_t value){ return uftoaBin[value >> 22 & 0x000F]; }
+
+
+
     };
 } // namespace corryvreckan
 #endif // Timepix4EVENTLOADER_H

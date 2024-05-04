@@ -1,6 +1,7 @@
 /**
  * @file
  * @brief Implementation of module EventLoaderTimepix4
+ * For now using code from the Kepler TPX4 data decoder
  *
  * @copyright Copyright (c) 2017-2022 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
@@ -62,22 +63,17 @@ void EventLoaderTimepix4::initialize() {
 
     // Buffer for file names:
     std::vector<std::string> detector_files;
-    LOG(TRACE) << "Debg 1";
     // Read the entries in the folder
     while((entry = readdir(directory))) {
-        LOG(TRACE) << "Debg 2";
 
         // Ignore UNIX functional directories:
         if(std::string(entry->d_name).at(0) == '.') {
             continue;
         }
-        LOG(TRACE) << "Debg 3 " << entry->d_name;
-        LOG(TRACE) << "Debg 3.1 " << entry->d_type;
 
         // If these are folders then the name is the chip ID
         // For some dt_type is empty for the data entries so currently identifying files by name
         if(entry->d_type == DT_DIR || (entry->d_type == DT_UNKNOWN && std::string(entry->d_name).at(0) == 'T')) {
-            LOG(TRACE) << "Debg 4 " << m_detector->getName();
 
             // Only read files from correct directory: Note: currently doesn't work? maybe some weird metadata that determines this that isn't set in the tpx4 data file unlike the tpx3 data?
             if(entry->d_name != m_detector->getName()) {
@@ -97,12 +93,6 @@ void EventLoaderTimepix4::initialize() {
                 if(string(file->d_name).find(".dat") != string::npos) {
                     LOG(INFO) << "Enqueuing data file for " << entry->d_name << ": " << filename;
                     detector_files.push_back(filename);
-                }
-
-                // If not a data file, it might be a trimdac file, with the list of masked pixels etc.
-                if(string(file->d_name).find("trimdac") != string::npos) {
-                    // Apply the pixel masking
-                    maskPixels(filename);
                 }
             }
         }
@@ -140,25 +130,17 @@ void EventLoaderTimepix4::initialize() {
             LOG(DEBUG) << "Opened data file for " << m_detector->getName() << ": " << filename;
 
             // The header is repeated in every new data file, thus skip it for all.
-            uint32_t headerID;
+            uint64_t headerID;
+
             if(!new_file->read(reinterpret_cast<char*>(&headerID), sizeof headerID)) {
-                throw ModuleError("Cannot read header ID for " + m_detector->getName() + " in file " + filename);
+                  throw ModuleError("Cannot read header ID for " + m_detector->getName() + " in file " + filename);
             }
-            if(headerID != 1145655379) {
+            LOG(WARNING) << "Header ID: \"" << headerID << "\"";
+            // comparing 8 byte header with headerID of the file, should be SPIDR4\0\0 which is flipped into 4RDIPS which is 57527937618003
+            if(headerID != 57527937618003) {
                 throw ModuleError("Incorrect header ID for " + m_detector->getName() + " in file " + filename + ": " +
                                   std::to_string(headerID));
             }
-            LOG(TRACE) << "Header ID: \"" << headerID << "\"";
-
-            // Skip the rest of the file header
-            uint32_t headerSize;
-            if(!new_file->read(reinterpret_cast<char*>(&headerSize), sizeof headerSize)) {
-                throw ModuleError("Cannot read header size for " + m_detector->getName() + " in file " + filename);
-            }
-
-            // Skip the full header:
-            new_file->seekg(headerSize);
-            LOG(TRACE) << "Skipped header (" << headerSize << "b)";
 
             // Store the file in the data vector:
             m_files.push_back(std::move(new_file));
@@ -175,58 +157,6 @@ void EventLoaderTimepix4::initialize() {
 
     // Calibration
     pixelToT_beforecalibration = new TH1F("pixelToT", "pixelToT", 100, -0.5, 199.5);
-
-    if(m_detector->isDUT() && config_.has("calibration_path") && config_.has("threshold")) {
-        LOG(INFO) << "Applying calibration from " << calibrationPath;
-        applyCalibration = true;
-
-        // get DUT plane name
-        std::string DUT = m_detector->getName();
-
-        // make paths to calibration files and read
-        std::string tmp;
-        tmp = calibrationPath + "/" + DUT + "/cal_thr_" + threshold + "_ik_10/" + DUT + "_cal_tot.txt";
-        loadCalibration(tmp, ' ', vtot);
-        tmp = calibrationPath + "/" + DUT + "/cal_thr_" + threshold + "_ik_10/" + DUT + "_cal_toa.txt";
-        loadCalibration(tmp, ' ', vtoa);
-
-        // make graphs of calibration parameters
-        LOG(DEBUG) << "Creating calibration graphs";
-        pixelTOTParameterA = new TH2F("hist_par_a_tot", "hist_par_a_tot", 256, -0.5, 255.5, 256, -0.5, 255.5);
-        pixelTOTParameterB = new TH2F("hist_par_b_tot", "hist_par_b_tot", 256, -0.5, 255.5, 256, -0.5, 255.5);
-        pixelTOTParameterC = new TH2F("hist_par_c_tot", "hist_par_c_tot", 256, -0.5, 255.5, 256, -0.5, 255.5);
-        pixelTOTParameterT = new TH2F("hist_par_t_tot", "hist_par_t_tot", 256, -0.5, 255.5, 256, -0.5, 255.5);
-        pixelTOAParameterC = new TH2F("hist_par_c_toa", "hist_par_c_toa", 256, -0.5, 255.5, 256, -0.5, 255.5);
-        pixelTOAParameterD = new TH2F("hist_par_d_toa", "hist_par_d_toa", 256, -0.5, 255.5, 256, -0.5, 255.5);
-        pixelTOAParameterT = new TH2F("hist_par_t_toa", "hist_par_t_toa", 256, -0.5, 255.5, 256, -0.5, 255.5);
-        timeshiftPlot = new TH1F("timeshift", "timeshift (/ns)", 1000, -10, 80);
-        pixelToT_aftercalibration = new TH1F("pixelToT_aftercalibration", "pixelToT_aftercalibration", 2000, -0.5, 19999.5);
-
-        for(size_t row = 0; row < 256; row++) {
-            for(size_t col = 0; col < 256; col++) {
-                float a = vtot.at(256 * row + col).at(2);
-                float b = vtot.at(256 * row + col).at(3);
-                float c = vtot.at(256 * row + col).at(4);
-                float t = vtot.at(256 * row + col).at(5);
-                float toa_c = vtoa.at(256 * row + col).at(2);
-                float toa_t = vtoa.at(256 * row + col).at(3);
-                float toa_d = vtoa.at(256 * row + col).at(4);
-
-                double cold = static_cast<double>(col);
-                double rowd = static_cast<double>(row);
-                pixelTOTParameterA->Fill(cold, rowd, a);
-                pixelTOTParameterB->Fill(cold, rowd, b);
-                pixelTOTParameterC->Fill(cold, rowd, c);
-                pixelTOTParameterT->Fill(cold, rowd, t);
-                pixelTOAParameterC->Fill(cold, rowd, toa_c);
-                pixelTOAParameterD->Fill(cold, rowd, toa_d);
-                pixelTOAParameterT->Fill(cold, rowd, toa_t);
-            }
-        }
-    } else {
-        LOG(INFO) << "No calibration file path or no DUT name given; data will be uncalibrated.";
-        applyCalibration = false;
-    }
     // Make debugging plots
     std::string title = m_detector->getName() + " Hit map;x [px];y [px];# entries";
     hHitMap = new TH2F("hitMap",
@@ -278,75 +208,14 @@ StatusCode EventLoaderTimepix4::run(const std::shared_ptr<Clipboard>& clipboard)
     return StatusCode::Success;
 }
 
-// Function to load the pixel mask file
-void EventLoaderTimepix4::maskPixels(string trimdacfile) {
-
-    // Open the mask file
-    ifstream trimdacs;
-    trimdacs.open(trimdacfile.c_str());
-
-    // Ignore the file header
-    string line;
-    getline(trimdacs, line);
-    int t_col, t_row, t_trim, t_mask, t_tpen;
-
-    // Loop through the pixels in the file and apply the mask
-    for(int col = 0; col < 256; col++) {
-        for(int row = 0; row < 256; row++) {
-            trimdacs >> t_col >> t_row >> t_trim >> t_mask >> t_tpen;
-            if(t_mask)
-                m_detector->maskChannel(t_col, t_row);
-        }
-    }
-
-    // Close the files when finished
-    trimdacs.close();
-}
-
-// Function to load calibration data
-void EventLoaderTimepix4::loadCalibration(std::string path, char delim, std::vector<std::vector<float>>& dat) {
-    std::ifstream f;
-    f.open(path);
-    dat.clear();
-
-    // check if file is open
-    if(!f.is_open()) {
-        LOG(ERROR) << "Cannot open input file:\n\t" << path;
-        throw InvalidValueError(config_, "calibration_path", "Parsing error in calibration file.");
-    }
-
-    // read file line by line
-    int i = 0;
-    std::string line;
-    while(!f.eof()) {
-        std::getline(f, line);
-
-        // check if line is empty or a comment
-        // if not write to output vector
-        if(line.size() > 0 && isdigit(line.at(0))) {
-            std::stringstream ss(line);
-            std::string word;
-            std::vector<float> row;
-            while(std::getline(ss, word, delim)) {
-                i += 1;
-                row.push_back(stof(word));
-            }
-            dat.push_back(row);
-        }
-    }
-
-    // warn if too few entries
-    if(dat.size() != 256 * 256) {
-        LOG(ERROR) << "Something went wrong. Found only " << i << " entries. Not enough for TPX3.\n\t";
-        throw InvalidValueError(config_, "calibration_path", "Parsing error in calibration file.");
-    }
-
-    f.close();
-}
 
 bool EventLoaderTimepix4::decodeNextWord() {
     std::string detectorID = m_detector->getName();
 
+    // Clearing databuffer off data from previous word.
+    m_dataBuffer.clear();
+
+    LOG(DEBUG) << "Starting word decoding";
     // Check if current file is at its end and move to the next:
     if((*m_file_iterator)->eof()) {
         m_file_iterator++;
@@ -361,282 +230,139 @@ bool EventLoaderTimepix4::decodeNextWord() {
     }
 
     // Now read the data packets.
-    ULong64_t pixdata = 0;
+    uint64_t header = 0;
 
     // If we can't read data anymore, jump to begin of loop:
-    if(!(*m_file_iterator)->read(reinterpret_cast<char*>(&pixdata), sizeof pixdata)) {
+    if(!(*m_file_iterator)->read(reinterpret_cast<char*>(&header), sizeof header)) {
         LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
         return true;
     }
 
-    LOG(TRACE) << "0x" << hex << pixdata << dec << " - " << pixdata;
-
-    // Get the header (first 4 bits) and do things depending on what it is
-    // 0x4 is the "heartbeat" signal, 0xA and 0xB are pixel data
-    const UChar_t header = static_cast<UChar_t>((pixdata & 0xF000000000000000) >> 60) & 0xF;
-
-    // Use header 0x4 to get the long timestamps (called syncTime here)
-    if(header == 0x4) {
-        LOG(TRACE) << "Found syncTime data";
-
-        // The 0x4 header tells us that it is part of the timestamp
-        // There is a second 4-bit header that says if it is the most
-        // or least significant part of the timestamp
-        const UChar_t header2 = ((pixdata & 0x0F00000000000000) >> 56) & 0xF;
-
-        // This is a bug fix. There appear to be errant packets with garbage data
-        // - source to be tracked down.
-        // Between the data and the header the intervening bits should all be 0,
-        // check if this is the case
-        const UChar_t intermediateBits = ((pixdata & 0x00FF000000000000) >> 48) & 0xFF;
-        if(intermediateBits != 0x00) {
-            LOG(DEBUG) << "Detector " << detectorID << ": intermediateBits error";
+    LOG(TRACE) << "0x" << hex << header << dec << " - " << header;
+    auto [groupID, encoding, contentID, streamID, contentSize] = decode_header(header);
+//    LOG(WARNING) << "Group ID " << groupID;
+//    LOG(WARNING) << "Content Encoding " << encoding;
+//    LOG(WARNING) << "Content ID " << contentID;
+//    LOG(WARNING) << "Stream ID " << streamID;
+//    LOG(WARNING) << "Content size " << contentSize;
+    // Group id 0x7 is undefined non SPIDR user data added via RC
+    contentSize = contentSize << 3; // multiplying by 8
+    if (m_dataBuffer.size()*8 < contentSize)
+        m_dataBuffer.resize(contentSize/8);
+    if (groupID == 0x7){
+        LOG(TRACE) << "Found user defined data";
+        if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+            LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
             return true;
         }
-
-        // 0x4 is the least significant part of the timestamp
-        if(header2 == 0x4) {
-            // The data is shifted 16 bits to the right, then 12 to the left in
-            // order to match the timestamp format (net 4 right)
-            m_syncTime = (m_syncTime & 0xFFFFF00000000000) + ((pixdata & 0x0000FFFFFFFF0000) >> 4);
-        }
-        // 0x5 is the most significant part of the timestamp
-        if(header2 == 0x5) {
-            // The data is shifted 16 bits to the right, then 44 to the left in
-            // order to match the timestamp format (net 28 left)
-            m_syncTime = (m_syncTime & 0x00000FFFFFFFFFFF) + ((pixdata & 0x00000000FFFF0000) << 28);
-            if(!m_clearedHeader && static_cast<double>(m_syncTime) / (4096. * 40000000.) < 6.) {
-                m_clearedHeader = true;
-                LOG(DEBUG) << detectorID << ": Cleared header";
-            }
-        }
+        LOG(TRACE) << "User information, skipping!";
     }
-
-    // In data taking during 2015 there was sometimes still data left in the buffers at the start of
-    // a run. For that reason we keep skipping data until this "header" data has been cleared, when
-    // the heart beat signal starts from a low number (~few seconds max)
-    if(!m_clearedHeader) {
-        LOG(TRACE) << "Header not cleared, skipping data block.";
-        return true;
-    }
-
-    // Header 0x06 and 0x07 are the start and stop signals for power pulsing
-    if(header == 0x0) {
-        // These packets should only come from the DUT. Otherwise ignore and throw warning.
-        // (We observed these packets a few times per run in various telescope planes in the
-        // November 2018 test beam.)
-        if(!m_detector->isDUT()) {
-            LOG(WARNING)
-                /* << "Current time: " << Units::display(event->start(), {"s", "ms", "us", "ns"}) */
-                << " detector " << detectorID << " "
-                << "header == 0x0! (indicates power pulsing.) Ignoring this.";
-            return true;
-        }
-        // Note that the following code is probably outdated and/or not much tested
-        // (Estel used her private code for her power-pulsing studies.) To be fixed!
-
-        // Get the second part of the header
-        const UChar_t header2 = ((pixdata & 0x0F00000000000000) >> 56) & 0xF;
-
-        // New implementation of power pulsing signals from Adrian
-        if(header2 == 0x6) {
-            LOG(TRACE) << "Found power pulsing - start";
-
-            // Read time stamp and convert to nanoseconds
-            const double timestamp = static_cast<double>((pixdata & 0x0000000FFFFFFFFF) << 12) / (4096 * 0.04);
-            const uint64_t controlbits = ((pixdata & 0x00F0000000000000) >> 52) & 0xF;
-
-            const uint64_t powerOn = ((controlbits & 0x2) >> 1);
-            const uint64_t shutterClosed = ((controlbits & 0x1));
-
-            auto powerSignal = (powerOn ? std::make_shared<SpidrSignal>("powerOn", timestamp)
-                                        : std::make_shared<SpidrSignal>("powerOff", timestamp));
-
-            sorted_signals_.push(powerSignal);
-            LOG(DEBUG) << "Power is " << (powerOn ? "on" : "off") << " power! Time: " << Units::display(timestamp, "ns");
-
-            LOG(TRACE) << "Shutter closed: " << hex << shutterClosed << dec;
-
-            auto shutterSignal = (shutterClosed ? std::make_shared<SpidrSignal>("shutterClosed", timestamp)
-                                                : std::make_shared<SpidrSignal>("shutterOpen", timestamp));
-            if(!shutterClosed) {
-                sorted_signals_.push(shutterSignal);
-                m_shutterOpen = true;
-                LOG(TRACE) << "Have opened shutter with signal " << shutterSignal->type() << " at time "
-                           << Units::display(timestamp, "ns");
-            }
-
-            if(shutterClosed && m_shutterOpen) {
-                sorted_signals_.push(shutterSignal);
-                m_shutterOpen = false;
-                LOG(TRACE) << "Have closed shutter with signal " << shutterSignal->type() << " at time "
-                           << Units::display(timestamp, "ns");
-            }
-
-            LOG(DEBUG) << "Shutter is " << (shutterClosed ? "closed" : "open")
-                       << ". Time: " << Units::display(timestamp, "ns");
-        }
-
-        /*
-        // 0x6 is power on
-        if(header2 == 0x6){
-            const double timestamp = ((pixdata & 0x0000000FFFFFFFFF) << 12 ) / (4096 * 0.04);
-            auto signal = std::make_shared<SpidrSignal>("powerOn",timestamp);
-            spidrData.push_back(signal);
-            LOG(DEBUG) <<"Turned on power! Time: " << Units::display(timestamp, "ns");
-        }
-        // 0x7 is power off
-        if(header2 == 0x7){
-            const double timestamp = ((pixdata & 0x0000000FFFFFFFFF) << 12 ) / (4096 * 0.04);
-            auto signal = std::make_shared<SpidrSignal>("powerOff",timestamp);
-            spidrData.push_back(signal);
-            LOG(DEBUG) <<"Turned off power! Time: " << Units::display(timestamp, "ns");
-        }
-            */
-    }
-
-    // Header 0x6 indicate trigger data
-    if(header == 0x6) {
-        const UChar_t header2 = ((pixdata & 0x0F00000000000000) >> 56) & 0xF;
-        if(header2 == 0xF) {
-            unsigned int stamp = (pixdata & 0x1E0) >> 5;
-            long long int timestamp_raw = static_cast<long long int>(pixdata & 0xFFFFFFFFE00) >> 9;
-            long long int timestamp = 0;
-            int triggerNumber = ((pixdata & 0xFFF00000000000) >> 44);
-
-            int intermediate = (pixdata & 0x1F);
-            if(intermediate != 0) {
+    else if (groupID == 0x0){
+        LOG(TRACE) << "Found pixel data";
+        if (encoding == 0b00){
+            if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+                LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
                 return true;
             }
-
-            if(triggerNumber < m_prevTriggerNumber) {
-                m_triggerOverflowCounter++;
+            LOG(TRACE) << "Found " << m_dataBuffer.size() << " data packets." << std::endl;
+            for (ulong i = 0; i < m_dataBuffer.size(); i++){
+                m_dataPacket = m_dataBuffer[i];
+                if (decodePacket(m_dataPacket, 16)){
+                    LOG(WARNING) << "Found pixel data!";
+                }
+                else{
+                    LOG(TRACE) << "Found heartbeat data!";
+                }
             }
 
-            // if jump back in time is larger than 1 sec, overflow detected...
-            if((m_syncTimeTDC - timestamp_raw) > 0x1312d000) {
-                m_TDCoverflowCounter++;
-            }
-
-            timestamp = timestamp_raw + (static_cast<long long int>(m_TDCoverflowCounter) << 35);
-
-            double triggerTime =
-                (static_cast<double>(timestamp) + static_cast<double>(stamp) / 12) / (8. * 0.04); // 320 MHz clock
-            hTriggerTime->Fill(triggerTime);
-            LOG(TRACE) << "Trigger time value of: " << triggerTime;
-            m_syncTimeTDC = timestamp_raw;
-
-            int triggerID = triggerNumber + (m_triggerOverflowCounter << 12);
-            m_prevTriggerNumber = triggerNumber;
-
-            auto triggerSignal = std::make_shared<SpidrSignal>("trigger", triggerTime, triggerID);
-            sorted_signals_.push(triggerSignal);
+        }
+        else {
+            LOG(TRACE) << "Pixel encoding wrong, skipping!";
         }
     }
-
-    // Header 0xA and 0xB indicate pixel data
-    if(header == 0xA || header == 0xB) {
-        LOG(TRACE) << "Found pixel data";
-
-        // Decode the pixel information from the relevant bits
-        const UShort_t dcol = static_cast<UShort_t>((pixdata & 0x0FE0000000000000) >> 52);
-        const UShort_t spix = static_cast<UShort_t>((pixdata & 0x001F800000000000) >> 45);
-        const UShort_t pix = static_cast<UShort_t>((pixdata & 0x0000700000000000) >> 44);
-        const UShort_t col = static_cast<UShort_t>(dcol + pix / 4);
-        const UShort_t row = static_cast<UShort_t>(spix + (pix & 0x3));
-
-        // Check if this pixel is masked
-        if(m_detector->masked(col, row)) {
-            LOG(DEBUG) << "Detector " << detectorID << ": pixel " << col << "," << row << " masked";
+    else if (groupID == 0x2){
+        LOG(TRACE) << "Found sensor data";
+        if (encoding == 0b01){
+            LOG(TRACE) << "Lol no clue yet what to do";
+            if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+                LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
+                return true;
+            }
+        }
+        else {
+            LOG(TRACE) << "Sensor encoding wrong, skipping!";
+        }
+    }
+    else if (groupID == 0x1){
+        LOG(INFO) << "Found configuration data";
+        if (encoding == 0b00){
+            LOG(TRACE) << "Lol no clue yet what to do";
+            if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+                LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
+                return true;
+            }
+        }
+        else {
+            LOG(TRACE) << "Configuration encoding wrong, skipping!";
+        }
+    }
+    else{
+        if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+            LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
             return true;
         }
-
-        // Get the rest of the data from the pixel
-        // const UShort_t pixno = col * 256 + row;
-        const UInt_t data = static_cast<UInt_t>((pixdata & 0x00000FFFFFFF0000) >> 16);
-        const unsigned int tot = (data & 0x00003FF0) >> 4;
-        const uint64_t spidrTime(pixdata & 0x000000000000FFFF);
-        const uint64_t ftoa(data & 0x0000000F);
-        const uint64_t toa((data & 0x0FFFC000) >> 14);
-
-        // Calculate the timestamp.
-        unsigned long long int time =
-            (((spidrTime << 18) + (toa << 4) + (15 - ftoa)) << 8) + (m_syncTime & 0xFFFFFC0000000000);
-
-        // Adjusting phases for double column shift
-        time += ((static_cast<unsigned long long int>(col) / 2 - 1) % 16) * 256;
-
-        // The time from the pixels has a maximum value of ~26 seconds. We compare the pixel time to the "heartbeat"
-        // signal (which has an overflow of ~4 years) and check if the pixel time has wrapped back around to 0
-
-        // If the counter overflow happens before reading the new heartbeat
-        //      while( abs(m_syncTime-time) > 0x0000020000000000 ){
-        while(static_cast<long long>(m_syncTime) - static_cast<long long>(time) > 0x0000020000000000) {
-            time += 0x0000040000000000;
-        }
-
-        // Convert final timestamp into ns and add the timing offset (in nano seconds) from the detectors file (if any)
-        const double timestamp = static_cast<double>(time) / (4096. / 25.) + m_detector->timeOffset();
-
-        pixelToT_beforecalibration->Fill(static_cast<int>(tot));
-
-        // Apply calibration if applyCalibration is true
-        if(applyCalibration && m_detector->isDUT()) {
-            LOG(DEBUG) << "Applying calibration to DUT";
-            size_t scol = static_cast<size_t>(col);
-            size_t srow = static_cast<size_t>(row);
-            float a = vtot.at(256 * srow + scol).at(2);
-            float b = vtot.at(256 * srow + scol).at(3);
-            float c = vtot.at(256 * srow + scol).at(4);
-            float t = vtot.at(256 * srow + scol).at(5);
-
-            float toa_c = vtoa.at(256 * srow + scol).at(2);
-            float toa_t = vtoa.at(256 * srow + scol).at(3);
-            float toa_d = vtoa.at(256 * srow + scol).at(4);
-
-            // Calculating calibrated tot and toa
-            float fvolts = (sqrt(a * a * t * t + 2 * a * b * t + 4 * a * c - 2 * a * t * static_cast<float>(tot) + b * b -
-                                 2 * b * static_cast<float>(tot) + static_cast<float>(tot * tot)) +
-                            a * t - b + static_cast<float>(tot)) /
-                           (2 * a);
-            double fcharge = fvolts * 1e-3 * 3e-15 * 6241.509 * 1e15; // capacitance is 3 fF or 18.7 e-/mV
-
-            /* Note 1: fvolts is the inverse to f(x) = a*x + b - c/(x-t). Note the +/- signs! */
-            /* Note 2: The capacitance is actually smaller than 3 fC, more like 2.5 fC. But there is an offset when when
-             * using testpulses. Multiplying the voltage value with 20 [e-/mV] is a good approximation but means one is
-             * over estimating the input capacitance to compensate the missing information of the offset. */
-
-            float t_shift = toa_c / (fvolts - toa_t) + toa_d;
-            timeshiftPlot->Fill(static_cast<double>(Units::convert(t_shift, "ns")));
-            const double ftimestamp = timestamp - t_shift;
-            LOG(DEBUG) << "Time shift= " << Units::display(t_shift, {"s", "ns"});
-            LOG(DEBUG) << "Timestamp calibrated = " << Units::display(ftimestamp, {"s", "ns"});
-
-            if(col >= m_detector->nPixels().X() || row >= m_detector->nPixels().Y()) {
-                LOG(WARNING) << "Pixel address " << col << ", " << row << " is outside of pixel matrix.";
-            }
-            // creating new pixel object with calibrated values of tot and toa
-            // when calibration is not available, set charge = tot
-            auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(tot), tot, ftimestamp);
-            pixel->setCharge(fcharge);
-            sorted_pixels_.push(pixel);
-            hHitMap->Fill(col, row);
-            LOG(DEBUG) << "Pixel Charge = " << fcharge << "; ToT value = " << tot;
-            pixelToT_aftercalibration->Fill(fcharge);
-        } else {
-            LOG(DEBUG) << "Pixel hit at " << Units::display(timestamp, {"s", "ns"});
-            // creating new pixel object with non-calibrated values of tot and toa
-            // when calibration is not available, set charge = tot
-            auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(tot), tot, timestamp);
-            sorted_pixels_.push(pixel);
-            hHitMap->Fill(col, row);
-        }
-
-        m_prevTime = time;
+        LOG(WARNING) << "Nothing fits, shit is weird";
     }
+
 
     return true;
 }
+
+bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_CKDLL=16){
+    uint64_t top = (dataPacket >> 63) & 0x1;
+    const unsigned header = (dataPacket >> 55) & 0xFF;
+    if (header > 0xDF) { // heartbeat data
+        m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
+        LOG(TRACE) << "Heartbeat data: " << m_heartbeat;
+        return false;
+    }
+    else { // pixel data
+        m_addr = (dataPacket>>46) & 0x3ffff; // address including pixel, super pixel and super pixel group values
+        m_sPGroup = (dataPacket >> 51) & 0xf; // super pixel group address
+        m_sPixel = (dataPacket >> 49) & 0x3; // super pixel address
+        m_pixel = (dataPacket >> 46) & 0x7; // pixel address
+
+        m_toa = (dataPacket >> 30) & 0xffff; // time of arrival (ToA)
+        m_ftoa_rise = (dataPacket >> 17) & 0x1f; // fine toa rising edge
+        m_ftoa_fall = (dataPacket >> 12) & 0x1f; // fine toa falling edge
+        m_tot = (dataPacket>>1) & 0x7ff; // tot
+        m_pileup = dataPacket & 0x1; // bit to register whether another hit was coming in while pixel was busy
+        m_uftoa_start = UftoaStart(dataPacket); // ultra fine toa start encoding
+        m_uftoa_stop = UftoaStop(dataPacket); // ultra fine toa stop encoding
+
+        m_fullTot=decode_tot(m_ftoa_rise, m_ftoa_fall, m_uftoa_start, m_uftoa_stop, m_tot, ratio_VCO_CKDLL); // real tot
+        m_fullToa=decode_toa(m_toa ,m_uftoa_start, m_uftoa_stop, m_ftoa_rise, ratio_VCO_CKDLL) - toa_clkdll_correction(m_sPGroup); // real toa
+        if (!decodeColRow(m_pixel, m_sPixel, header, top)) LOG(WARNING) << "Illogical col/row " << m_col << "/" << m_row; // decodes the row and col value from the address
+
+        LOG(TRACE) << "Col " << m_col;
+        LOG(TRACE) << "Row " << m_row;
+        LOG(TRACE) << "tot " << m_tot;
+        LOG(TRACE) << "ftoa_fall " << m_ftoa_fall;
+        LOG(TRACE) << "ftoa_rise " << m_ftoa_rise;
+        LOG(TRACE) << "uftoa_start " << m_uftoa_start;
+        LOG(TRACE) << "uftoa_stop " << m_uftoa_stop;
+        LOG(TRACE) << "toa " << m_toa;
+        LOG(TRACE) << "pixel " << m_pixel;
+        LOG(TRACE) << "super pixel " << m_sPixel;
+        LOG(TRACE) << "fullTot " << m_fullTot;
+        LOG(TRACE) << "fullToa " << m_fullToa;
+        LOG(TRACE) << "Super Pixel group " << m_sPGroup;
+    }
+    return true;
+
+}
+
+
 
 void EventLoaderTimepix4::fillBuffer() {
     // read data from file and fill timesorted buffer
