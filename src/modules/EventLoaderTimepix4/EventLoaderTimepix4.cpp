@@ -31,14 +31,12 @@ EventLoaderTimepix4::EventLoaderTimepix4(Configuration& config, std::shared_ptr<
     config_.setDefault<size_t>("buffer_depth", 1000);
     m_buffer_depth = config_.get<size_t>("buffer_depth");
 
+
     // Take input directory from global parameters
     m_inputDirectory = config_.getPath("input_directory");
 
-    // Calibration parameters
-    if(config_.has("calibration_path")) {
-        calibrationPath = config_.getPath("calibration_path");
-        threshold = config_.get<std::string>("threshold", "");
-    }
+    m_numOfEvents = config_.get<long>("number_of_events");
+
 }
 
 void EventLoaderTimepix4::initialize() {
@@ -127,7 +125,7 @@ void EventLoaderTimepix4::initialize() {
 
         auto new_file = std::make_unique<std::ifstream>(filename);
         if(new_file->is_open()) {
-            LOG(DEBUG) << "Opened data file for " << m_detector->getName() << ": " << filename;
+            LOG(INFO) << "Opened data file for " << m_detector->getName() << ": " << filename;
 
             // The header is repeated in every new data file, thus skip it for all.
             uint64_t headerID;
@@ -212,6 +210,8 @@ StatusCode EventLoaderTimepix4::run(const std::shared_ptr<Clipboard>& clipboard)
 bool EventLoaderTimepix4::decodeNextWord() {
     std::string detectorID = m_detector->getName();
 
+
+
     // Clearing databuffer off data from previous word.
     m_dataBuffer.clear();
 
@@ -221,6 +221,8 @@ bool EventLoaderTimepix4::decodeNextWord() {
         m_file_iterator++;
         LOG(INFO) << "Starting to read next file for " << detectorID << ": " << (*m_file_iterator).get();
     }
+
+    //(*m_file_iterator)->seekg(m_stream_pos[m_file_index]);
 
     // Check if the last file is finished:
     if(m_file_iterator == m_files.end()) {
@@ -240,15 +242,16 @@ bool EventLoaderTimepix4::decodeNextWord() {
 
     LOG(TRACE) << "0x" << hex << header << dec << " - " << header;
     auto [groupID, encoding, contentID, streamID, contentSize] = decode_header(header);
-//    LOG(WARNING) << "Group ID " << groupID;
-//    LOG(WARNING) << "Content Encoding " << encoding;
-//    LOG(WARNING) << "Content ID " << contentID;
-//    LOG(WARNING) << "Stream ID " << streamID;
-//    LOG(WARNING) << "Content size " << contentSize;
+    LOG(DEBUG) << "Group ID " << groupID;
+    LOG(DEBUG) << "Content Encoding " << encoding;
+    LOG(DEBUG) << "Content ID " << contentID;
+    LOG(DEBUG) << "Stream ID " << streamID;
+    LOG(DEBUG) << "Content size " << contentSize;
     // Group id 0x7 is undefined non SPIDR user data added via RC
     contentSize = contentSize << 3; // multiplying by 8
     if (m_dataBuffer.size()*8 < contentSize)
         m_dataBuffer.resize(contentSize/8);
+
     if (groupID == 0x7){
         LOG(TRACE) << "Found user defined data";
         if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
@@ -258,52 +261,31 @@ bool EventLoaderTimepix4::decodeNextWord() {
         LOG(TRACE) << "User information, skipping!";
     }
     else if (groupID == 0x0){
-        LOG(TRACE) << "Found pixel data";
+        LOG(DEBUG) << "Found pixel data";
         if (encoding == 0b00){
             if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
                 LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
                 return true;
             }
-            LOG(TRACE) << "Found " << m_dataBuffer.size() << " data packets." << std::endl;
+            LOG(DEBUG) << "Found " << m_dataBuffer.size() << " data packets." << std::endl;
             for (ulong i = 0; i < m_dataBuffer.size(); i++){
                 m_dataPacket = m_dataBuffer[i];
-                if (decodePacket(m_dataPacket, 16)){
-                    LOG(WARNING) << "Found pixel data!";
+                if (decodePacket(m_dataPacket, 16, true)){
+                    LOG(TRACE) << "Found pixel data!";
+                    uint32_t col = std::get<0>(m_colrow);
+                    uint32_t row = std::get<1>(m_colrow);
+                    auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(m_tot), m_tot, m_heartbeat);
+                    pixel->setCharge(m_tot);
+                    sorted_pixels_.push(pixel);
+                    hHitMap->Fill(col, row);
                 }
                 else{
                     LOG(TRACE) << "Found heartbeat data!";
                 }
             }
-
         }
         else {
-            LOG(TRACE) << "Pixel encoding wrong, skipping!";
-        }
-    }
-    else if (groupID == 0x2){
-        LOG(TRACE) << "Found sensor data";
-        if (encoding == 0b01){
-            LOG(TRACE) << "Lol no clue yet what to do";
-            if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
-                LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
-                return true;
-            }
-        }
-        else {
-            LOG(TRACE) << "Sensor encoding wrong, skipping!";
-        }
-    }
-    else if (groupID == 0x1){
-        LOG(INFO) << "Found configuration data";
-        if (encoding == 0b00){
-            LOG(TRACE) << "Lol no clue yet what to do";
-            if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
-                LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
-                return true;
-            }
-        }
-        else {
-            LOG(TRACE) << "Configuration encoding wrong, skipping!";
+            LOG(TRACE) << "Pixel encoding wrong, skipping!";        
         }
     }
     else{
@@ -314,13 +296,29 @@ bool EventLoaderTimepix4::decodeNextWord() {
         LOG(WARNING) << "Nothing fits, shit is weird";
     }
 
+    // noting down original position within file stream before switching
 
+//    m_stream_pos[m_file_index] = (*m_file_iterator)->tellg();
+    LOG(DEBUG) << "Current stream index position " << m_stream_pos[m_file_index];
+    LOG(DEBUG) << "Finished reading event from file " << m_file_index;
+    if (m_file_index == 0){
+        m_file_index = 1;
+        m_file_iterator++;
+    }
+    else if (m_file_index == 1){
+        m_file_index = 0;
+        m_file_iterator--;
+    }
+    else {
+        LOG(WARNING) << "File index in non sensical position";
+    }
     return true;
 }
 
-bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_CKDLL=16){
+bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_CKDLL=16, bool gray=true){
     uint64_t top = (dataPacket >> 63) & 0x1;
-    const unsigned header = (dataPacket >> 55) & 0xFF;
+    uint64_t header = (dataPacket >> 55) & 0xFF;
+//    if (!top) LOG(WARNING) << "Top? " << top;
     if (header > 0xDF) { // heartbeat data
         m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
         LOG(TRACE) << "Heartbeat data: " << m_heartbeat;
@@ -333,6 +331,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_C
         m_pixel = (dataPacket >> 46) & 0x7; // pixel address
 
         m_toa = (dataPacket >> 30) & 0xffff; // time of arrival (ToA)
+        if (gray) m_toa = GrayToBin(m_toa);
         m_ftoa_rise = (dataPacket >> 17) & 0x1f; // fine toa rising edge
         m_ftoa_fall = (dataPacket >> 12) & 0x1f; // fine toa falling edge
         m_tot = (dataPacket>>1) & 0x7ff; // tot
@@ -342,10 +341,10 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_C
 
         m_fullTot=decode_tot(m_ftoa_rise, m_ftoa_fall, m_uftoa_start, m_uftoa_stop, m_tot, ratio_VCO_CKDLL); // real tot
         m_fullToa=decode_toa(m_toa ,m_uftoa_start, m_uftoa_stop, m_ftoa_rise, ratio_VCO_CKDLL) - toa_clkdll_correction(m_sPGroup); // real toa
-        if (!decodeColRow(m_pixel, m_sPixel, header, top)) LOG(WARNING) << "Illogical col/row " << m_col << "/" << m_row; // decodes the row and col value from the address
+        m_colrow = decodeColRow(m_pixel, m_sPixel, m_sPGroup, header, top); // decodes the row and col value from the address
 
-        LOG(TRACE) << "Col " << m_col;
-        LOG(TRACE) << "Row " << m_row;
+        LOG(TRACE) << "Col " << std::get<0>(m_colrow);
+        LOG(TRACE) << "Row " << std::get<1>(m_colrow);
         LOG(TRACE) << "tot " << m_tot;
         LOG(TRACE) << "ftoa_fall " << m_ftoa_fall;
         LOG(TRACE) << "ftoa_rise " << m_ftoa_rise;

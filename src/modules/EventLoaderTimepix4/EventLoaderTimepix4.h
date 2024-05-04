@@ -37,6 +37,7 @@ namespace corryvreckan {
 
     private:
         std::shared_ptr<Detector> m_detector;
+        long m_numOfEvents;
 
         // ROOT graphs
         TH2F* hHitMap;
@@ -52,8 +53,9 @@ namespace corryvreckan {
         TH1F* timeshiftPlot;
         TH1F* hTriggerTime;
 
+
         bool decodeNextWord();
-        bool decodePacket(uint64_t packet, uint64_t ratio_VCO_CKDLL);
+        bool decodePacket(uint64_t packet, uint64_t ratio_VCO_CKDLL, bool gray);
         void fillBuffer();
         bool loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector&, SpidrSignalVector&);
 
@@ -82,9 +84,12 @@ namespace corryvreckan {
         uint64_t m_sPGroup;
         uint64_t m_fullTot;
         uint64_t m_fullToa;
-        uint64_t m_row;
-        uint64_t m_col;
         uint64_t m_heartbeat;
+        uint64_t m_oldside;
+        std::tuple<uint32_t, uint32_t> m_colrow;
+
+        std::streampos m_stream_pos[2] = {0};
+        uint m_file_index = 0;
 
 
         // Member variables
@@ -143,18 +148,28 @@ namespace corryvreckan {
           return (15-spgroup_addr)*clk_dll_step;
         }
 
-        bool decodeColRow(uint64_t pix, uint64_t superPix, unsigned header, bool top){
-            if (top){
-                header = 223 - header;
-                superPix = 15 - superPix;
-                pix = 31-pix;
+        std::tuple<uint32_t, uint32_t> decodeColRow(uint64_t pix, uint64_t sPix, uint64_t spixgrp, uint64_t header, bool top){ // taken from spidr4tools
+            uint32_t col;
+            uint32_t row;
+            col = header << 1 | pix >> 2;
+            row = spixgrp << 4 | sPix << 2 | (pix & 0x3);
+            if(top) // top half counting is inverted
+            {
+                col  = 448 - 1 - col;
+                row  = 512 - 1 - row;
             }
-            m_col=2*header + (pix%8/4);
-            m_row=pix%4 + (pix/8)*4 + superPix*16 + top*256;
-            if ( m_row > 550 || m_col > 550){
-                return false;
-            }
-            return true;
+
+            return {col,row};
+        }
+
+        inline uint16_t GrayToBin(uint16_t val) // taken from spidr4tools
+        {
+            val ^= val >> 8;
+            val ^= val >> 4;
+            val ^= val >> 2;
+            val ^= val >> 1;
+
+            return val;
         }
 
         //========================================
