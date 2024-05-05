@@ -28,14 +28,12 @@ using namespace std;
 EventLoaderTimepix4::EventLoaderTimepix4(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector), m_currentEvent(0), m_prevTime(0), m_shutterOpen(false) {
 
-    config_.setDefault<size_t>("buffer_depth", 1000);
+    config_.setDefault<size_t>("buffer_depth", 10000);
     m_buffer_depth = config_.get<size_t>("buffer_depth");
 
 
     // Take input directory from global parameters
     m_inputDirectory = config_.getPath("input_directory");
-
-    m_numOfEvents = config_.get<long>("number_of_events");
 
 }
 
@@ -150,11 +148,17 @@ void EventLoaderTimepix4::initialize() {
     // Set the file iterator to the first file for every detector:
     m_file_iterator = m_files.begin();
 
-    // Trigger time
-    hTriggerTime = new TH1F("triggerTime", "triggerTime", 100, -0.5, 1e12);
+    // Hit time (in s)
+    hHitTime = new TH1F("hitTime", "hitTime", 1000, -0.5, 999.5);
 
-    // Calibration
-    pixelToT_beforecalibration = new TH1F("pixelToT", "pixelToT", 100, -0.5, 199.5);
+    // ToA
+    hRawToA = new TH1F("RawToA", "RawToA", 1 << 16, -0.5, (1 << 16)-0.5);
+    hRawExtendedToA = new TH1F("RawExtendedToA", "RawExtendedToA", 1000, 0, 1E9);
+    hRawFullToA = new TH1F("RawFullToA", "RawFullToA", 1000, 0, 1E9);
+    // ToT
+    hRawToT = new TH1F("rawToT", "rawToT", 1000, -0.5, 999.5);
+    hRawFullToT = new TH1F("rawFullToT", "rawFullToT", 1000, -0.5, 999.5);
+    hToT = new TH1F("ToT", "ToT", 1000, -0.5E-9, 999.5E-9);
     // Make debugging plots
     std::string title = m_detector->getName() + " Hit map;x [px];y [px];# entries";
     hHitMap = new TH2F("hitMap",
@@ -216,19 +220,21 @@ bool EventLoaderTimepix4::decodeNextWord() {
     m_dataBuffer.clear();
 
     LOG(DEBUG) << "Starting word decoding";
-    // Check if current file is at its end and move to the next:
+    // Check if current file is at its end and move to other one
     if((*m_file_iterator)->eof()) {
-        m_file_iterator++;
+        if (!m_file_index){
+            m_file_iterator++;
+        }
+        else{
+            m_file_iterator--;
+        }
+        // If that file also has reached eof then stop here
+        if ((*m_file_iterator)->eof()){
+            LOG(INFO) << "EOF for all files of " << detectorID;
+            eof_reached = true;
+            return false;
+        }
         LOG(INFO) << "Starting to read next file for " << detectorID << ": " << (*m_file_iterator).get();
-    }
-
-    //(*m_file_iterator)->seekg(m_stream_pos[m_file_index]);
-
-    // Check if the last file is finished:
-    if(m_file_iterator == m_files.end()) {
-        LOG(INFO) << "EOF for all files of " << detectorID;
-        eof_reached = true;
-        return false;
     }
 
     // Now read the data packets.
@@ -261,7 +267,7 @@ bool EventLoaderTimepix4::decodeNextWord() {
         LOG(TRACE) << "User information, skipping!";
     }
     else if (groupID == 0x0){
-        LOG(DEBUG) << "Found pixel data";
+        LOG(DEBUG) << "Found timepix4 data";
         if (encoding == 0b00){
             if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
                 LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
@@ -272,12 +278,29 @@ bool EventLoaderTimepix4::decodeNextWord() {
                 m_dataPacket = m_dataBuffer[i];
                 if (decodePacket(m_dataPacket, 16, true)){
                     LOG(TRACE) << "Found pixel data!";
-                    uint32_t col = std::get<0>(m_colrow);
-                    uint32_t row = std::get<1>(m_colrow);
-                    auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(m_tot), m_tot, m_heartbeat);
-                    pixel->setCharge(m_tot);
-                    sorted_pixels_.push(pixel);
-                    hHitMap->Fill(col, row);
+                    bool digCompare = false;
+                    for (const auto &digColRow: m_digColRow){
+                        digCompare = compareTupleEq(digColRow, m_colrow);
+                        if (digCompare) break;
+                    }
+                    if (!digCompare){
+                        uint32_t col = std::get<0>(m_colrow);
+                        uint32_t row = std::get<1>(m_colrow);
+                        double correctedTime = static_cast<double>(m_fullToa) * 1/(8*640E6); // time in s
+                        double correctedToT = static_cast<double>(m_fullTot) * 1/(8*640E6); // tot in s
+                        auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(m_fullTot), correctedToT, m_heartbeat);
+                        pixel->setCharge(correctedToT);
+                        sorted_pixels_.push(pixel);
+                        hRawToT->Fill(m_tot);
+                        hRawFullToT->Fill(m_fullTot);
+                        hToT->Fill(correctedToT);
+                        hHitMap->Fill(col, row);
+                        hRawToA->Fill(m_toa);
+                        hRawExtendedToA->Fill(m_ext_toa);
+                        hRawFullToA->Fill(m_fullToa);
+                        hHitTime->Fill(correctedTime);
+
+                    }
                 }
                 else{
                     LOG(TRACE) << "Found heartbeat data!";
@@ -293,12 +316,12 @@ bool EventLoaderTimepix4::decodeNextWord() {
             LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
             return true;
         }
-        LOG(WARNING) << "Nothing fits, shit is weird";
+        LOG(WARNING) << "Other type of data, ignored for now";
     }
 
     // noting down original position within file stream before switching
 
-//    m_stream_pos[m_file_index] = (*m_file_iterator)->tellg();
+    m_stream_pos[m_file_index] = (*m_file_iterator)->tellg();
     LOG(DEBUG) << "Current stream index position " << m_stream_pos[m_file_index];
     LOG(DEBUG) << "Finished reading event from file " << m_file_index;
     if (m_file_index == 0){
@@ -320,7 +343,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_C
     uint64_t header = (dataPacket >> 55) & 0xFF;
 //    if (!top) LOG(WARNING) << "Top? " << top;
     if (header > 0xDF) { // heartbeat data
-        m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
+        m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFFull;
         LOG(TRACE) << "Heartbeat data: " << m_heartbeat;
         return false;
     }
@@ -330,19 +353,23 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_C
         m_sPixel = (dataPacket >> 49) & 0x3; // super pixel address
         m_pixel = (dataPacket >> 46) & 0x7; // pixel address
 
-        m_toa = (dataPacket >> 30) & 0xffff; // time of arrival (ToA)
+        m_toa = (dataPacket >> 30) & 0xffff; // Time of Arrival (ToA) | units of 25 ns (1/(40 MHz))
         if (gray) m_toa = GrayToBin(m_toa);
-        m_ftoa_rise = (dataPacket >> 17) & 0x1f; // fine toa rising edge
-        m_ftoa_fall = (dataPacket >> 12) & 0x1f; // fine toa falling edge
-        m_tot = (dataPacket>>1) & 0x7ff; // tot
+        m_ftoa_rise = (dataPacket >> 17) & 0x1f; // fine ToA rising edge | units of ~1.56 ns (1/(640 MHz)
+        m_ftoa_fall = (dataPacket >> 12) & 0x1f; // fine ToA falling edge | units of ~1.56 ns (1/(640 MHz)
+        m_tot = (dataPacket>>1) & 0x7ff; // Time over Threshold | units of 25 ns  (1/(40 MHz))
         m_pileup = dataPacket & 0x1; // bit to register whether another hit was coming in while pixel was busy
-        m_uftoa_start = UftoaStart(dataPacket); // ultra fine toa start encoding
-        m_uftoa_stop = UftoaStop(dataPacket); // ultra fine toa stop encoding
 
-        m_fullTot=decode_tot(m_ftoa_rise, m_ftoa_fall, m_uftoa_start, m_uftoa_stop, m_tot, ratio_VCO_CKDLL); // real tot
-        m_fullToa=decode_toa(m_toa ,m_uftoa_start, m_uftoa_stop, m_ftoa_rise, ratio_VCO_CKDLL) - toa_clkdll_correction(m_sPGroup); // real toa
+        m_uftoa_start = UftoaStart(dataPacket); // ultra fine ToA start encoding | units of ~195 ps (1/(640*8 MHz))
+        m_uftoa_stop = UftoaStop(dataPacket); // ultra fine ToA stop encoding | units of ~195 ps (1/(640*8 MHz))
+
+
+        m_ext_toa = extendToa(m_toa, m_heartbeat, m_tot);
+        m_fullTot=fullTot(m_ftoa_rise, m_ftoa_fall, m_uftoa_start, m_uftoa_stop, m_tot); // full corrected ToT | units of ~195 ps (1/(640*8 MHz))
+        m_fullToa=fullToa(m_ext_toa ,m_uftoa_start, m_uftoa_stop, m_ftoa_rise) - toa_clkdll_correction(m_sPGroup); // rfull corrected ToA | units of ~195 ps (1/(640*8 MHz))
         m_colrow = decodeColRow(m_pixel, m_sPixel, m_sPGroup, header, top); // decodes the row and col value from the address
 
+        LOG(TRACE) << " ";
         LOG(TRACE) << "Col " << std::get<0>(m_colrow);
         LOG(TRACE) << "Row " << std::get<1>(m_colrow);
         LOG(TRACE) << "tot " << m_tot;

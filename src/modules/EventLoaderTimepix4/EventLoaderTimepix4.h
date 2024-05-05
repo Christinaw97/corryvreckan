@@ -41,17 +41,15 @@ namespace corryvreckan {
 
         // ROOT graphs
         TH2F* hHitMap;
-        TH1F* pixelToT_beforecalibration;
-        TH1F* pixelToT_aftercalibration;
-        TH2F* pixelTOTParameterA;
-        TH2F* pixelTOTParameterB;
-        TH2F* pixelTOTParameterC;
-        TH2F* pixelTOTParameterT;
-        TH2F* pixelTOAParameterC;
-        TH2F* pixelTOAParameterD;
-        TH2F* pixelTOAParameterT;
         TH1F* timeshiftPlot;
-        TH1F* hTriggerTime;
+        TH1F* hRawToT;
+        TH1F* hRawFullToT;
+        TH1F* hToT;
+        TH1F* hRawToA;
+        TH1F* hRawExtendedToA;
+        TH1F* hRawFullToA;
+        TH1F* hHitTime;
+
 
 
         bool decodeNextWord();
@@ -78,6 +76,7 @@ namespace corryvreckan {
         uint64_t m_ftoa_rise;
         uint64_t m_uftoa_start;
         uint64_t m_uftoa_stop;
+        uint64_t m_ext_toa;
         uint64_t m_toa;
         uint64_t m_pixel;
         uint64_t m_sPixel;
@@ -87,6 +86,17 @@ namespace corryvreckan {
         uint64_t m_heartbeat;
         uint64_t m_oldside;
         std::tuple<uint32_t, uint32_t> m_colrow;
+
+        //conversion factor from:
+        // heartbeat tdc (25ns)
+        // fine tdc (~1.56ns | 1/640 MHz^-1)
+        // ultrafine tdc (~195 ps | 1/(8*640) MHz^-1)
+        double hbtdc = 25E-9;
+        double ftdc = 1/(640E6);
+        double uftdc = 1/(8*640E6);
+
+        // location of the digital pixels
+        std::tuple<uint32_t, uint32_t> m_digColRow[8] ={{0,0}, {4,1}, {441,2}, {445,3}, {2,508}, {6,509}, {443,510}, {447,511}};
 
         std::streampos m_stream_pos[2] = {0};
         uint m_file_index = 0;
@@ -132,19 +142,19 @@ namespace corryvreckan {
                   unsigned(0x1FFF & (packet >> 32)), unsigned(0xFFFFFFFF & (packet >> 0))};
         }
 
-        uint64_t decode_tot(uint64_t ftoa_rise, uint64_t ftoa_fall, uint64_t uftoa_start, uint64_t uftoa_stop, uint64_t tot, uint64_t ratio_VCO_CKDLL=16) {
-            //Decode TOT. Units are period of 40MHz (25ns)
-            return (tot + (ftoa_rise - ftoa_fall)/ratio_VCO_CKDLL - (uftoa_start-uftoa_stop)/(8 * ratio_VCO_CKDLL));
+        uint64_t fullTot(uint64_t ftoa_rise, uint64_t ftoa_fall, uint64_t uftoa_start, uint64_t uftoa_stop, uint64_t tot, uint64_t ratio_VCO_CKDLL=16) {
+            //Decode TOT. Units are period of 8*640MHz (195 ps)
+            return ((tot << 7) + ((ftoa_rise - ftoa_fall) << 3) - (uftoa_start-uftoa_stop));
         }
 
-        uint64_t decode_toa(uint64_t toa, uint64_t uftoa_start, uint64_t uftoa_stop, uint64_t ftoa_rise, uint64_t ratio_VCO_CKDLL=16){
-          //Decode TOA. Units are period of 40MHz (25ns)
-          return (toa - ftoa_rise/ratio_VCO_CKDLL + (uftoa_start-uftoa_stop)/(8 * ratio_VCO_CKDLL));
+        uint64_t fullToa(uint64_t toa, uint64_t uftoa_start, uint64_t uftoa_stop, uint64_t ftoa_rise){
+          //Decode TOA. Units are period of 8*640MHz (195 ps)
+          return ((toa << 7) - (ftoa_rise << 3) + (uftoa_start-uftoa_stop));
         }
 
         uint64_t toa_clkdll_correction(uint64_t spgroup_addr=0){
           //Corrects latency delay due to DDLL clock distribution. Units are period of 40MHz (25ns)
-          uint64_t clk_dll_step=1/32;
+          uint64_t clk_dll_step= 1>>5;
           return (15-spgroup_addr)*clk_dll_step;
         }
 
@@ -161,6 +171,29 @@ namespace corryvreckan {
 
             return {col,row};
         }
+
+        bool compareTupleEq(std::tuple<uint32_t, uint32_t> tuple1, std::tuple<uint32_t, uint32_t> tuple2){
+            if (std::get<0>(tuple1) == std::get<0>(tuple2) && std::get<1>(tuple1) == std::get<1>(tuple2)){
+                return true;
+            }
+            else{
+                return false;
+            }
+        }
+
+
+        uint64_t extendToa(uint64_t toa, uint64_t heartbeat, uint64_t tot){
+            // extending toa by heartbeat counter
+            uint64_t extToa = toa | ( heartbeat & ~0xFFFF);
+
+            // toa vs heartbeat latency correction
+            if (extToa + 0x8000 < heartbeat) toa += 0x10000;
+            else if (extToa > heartbeat + 0x8000 && toa >= 0x10000) toa -= 0x10000;
+
+            if (!tot) extToa++;
+            return extToa;
+        }
+
 
         inline uint16_t GrayToBin(uint16_t val) // taken from spidr4tools
         {
