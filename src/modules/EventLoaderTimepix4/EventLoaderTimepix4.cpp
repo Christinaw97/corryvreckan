@@ -280,7 +280,6 @@ bool EventLoaderTimepix4::decodeNextWord() {
 
 
 
-
                     // Filtering out digital pixel data
                     bool digCompare = false;
                     for (const auto &digColRow: m_digColRow){
@@ -311,6 +310,7 @@ bool EventLoaderTimepix4::decodeNextWord() {
                 }
                 else{
                     LOG(TRACE) << "Found heartbeat data!";
+                    m_hbDataBuffer.push_back(m_hbData);
                 }
             }
         }
@@ -349,6 +349,9 @@ bool EventLoaderTimepix4::decodeNextWord() {
             LOG(TRACE) << "Accumulating further data";
         }
     }
+//    if (m_hbDataBuffer.size() > 1000){
+
+//    }
     return true;
 }
 
@@ -364,8 +367,14 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
         switch(header){
             case ctrl_heartbeat:
                 m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
+                m_hbData.bufferID = m_hbIndex;
+                m_hbData.time = dataPacket & 0x7FFFFFFFFFFFFF;
+                m_hbIndex++;
                 LOG(TRACE) << "Heartbeat data: " << m_heartbeat;
-                if (m_heartbeat < m_oldbeat) LOG(WARNING) << "Previous heartbeat data is below current heartbeat data new/old " << m_heartbeat << "/" << m_oldbeat;
+                if (m_heartbeat < m_oldbeat){
+                    LOG(WARNING) << "1) Previous heartbeat data is below current heartbeat data (hex) || new/old " << hex << m_heartbeat << "/" << hex << m_oldbeat;
+                    LOG(WARNING) << "2) Previous heartbeat data is below current heartbeat data (dec) || new/old " << m_heartbeat << "/" << m_oldbeat;
+                }
             break;
             case t0_sync:
                 m_t0 = dataPacket & 0x7FFFFFFFFFFFFF;
@@ -390,7 +399,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
         m_uftoa_stop = UftoaStop(dataPacket); // ultra fine ToA stop encoding | units of ~195 ps (1/(640*8 MHz))
 
 
-        m_ext_toa = extendToa(m_toa, m_heartbeat, m_tot);
+        m_ext_toa = extendToa(m_toa, m_hbData.time, m_tot);
         m_fullTot=fullTot(m_ftoa_rise, m_ftoa_fall, m_uftoa_start, m_uftoa_stop, m_tot); // full corrected ToT | units of ~195 ps (1/(640*8 MHz))
         m_fullToa=fullToa(m_ext_toa ,m_uftoa_start, m_uftoa_stop, m_ftoa_rise) - toa_clkdll_correction(m_sPGroup); // rfull corrected ToA | units of ~195 ps (1/(640*8 MHz))
         m_colrow = decodeColRow(m_pixel, m_sPixel, m_sPGroup, header, top); // decodes the row and col value from the address

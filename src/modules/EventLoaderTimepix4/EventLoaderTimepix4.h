@@ -57,26 +57,26 @@ namespace corryvreckan {
         };
 
         struct pixelData {
-            uint64_t addr;
-            uint64_t pileup;
-            uint64_t rTot;
-            uint64_t ftoaFall;
-            uint64_t ftoaRise;
-            uint64_t uftoaStart;
-            uint64_t uftoaStop;
-            uint64_t extToa;
-            uint64_t rToa;
-            uint64_t pixelID;
-            uint64_t sPixelID;
-            uint64_t sPGroupID;
+//            uint64_t addr;
+//            uint64_t pileup;
+//            uint64_t rTot;
+//            uint64_t ftoaFall;
+//            uint64_t ftoaRise;
+//            uint64_t uftoaStart;
+//            uint64_t uftoaStop;
+//            uint64_t extToa;
+//            uint64_t rToa;
+//            uint64_t pixelID;
+//            uint64_t sPixelID;
+//            uint64_t sPGroupID;
             uint64_t fullTot;
             uint64_t fullToa;
             bool isDigital;
-            uint64_t bufferID;
+            uint16_t bufferID;
         };
 
         struct heartbeatData{
-            uint64_t heartbeat;
+            uint64_t time;
             uint64_t bufferID;
         };
 
@@ -111,6 +111,9 @@ namespace corryvreckan {
         std::vector<std::vector<float>> vtot;
         std::vector<std::vector<float>> vtoa;
 
+        heartbeatData m_hbData;
+        uint16_t m_hbIndex = 0;
+        std::vector<heartbeatData> m_hbDataBuffer;
 
         // pixel packet variables
         uint64_t m_addr;
