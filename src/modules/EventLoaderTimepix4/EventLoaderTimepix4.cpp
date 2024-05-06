@@ -157,7 +157,7 @@ void EventLoaderTimepix4::initialize() {
     // ToT
     hRawToT = new TH1F("rawToT", "rawToT", 1000, -0.5, 999.5);
     hRawFullToT = new TH1F("rawFullToT", "rawFullToT", 1000, -0.5, 999.5);
-    hToT = new TH1F("ToT", "ToT", 1000, -0.5E-9, 999.5E-9);
+    hToT = new TH1F("ToT", "ToT", 1000, -0.5, 999.5);
     // Make debugging plots
     std::string title = m_detector->getName() + " Hit map;x [px];y [px];# entries";
     hHitMap = new TH2F("hitMap",
@@ -275,8 +275,13 @@ bool EventLoaderTimepix4::decodeNextWord() {
             LOG(DEBUG) << "Found " << m_dataBuffer.size() << " data packets." << std::endl;
             for (ulong i = 0; i < m_dataBuffer.size(); i++){
                 m_dataPacket = m_dataBuffer[i];
-                if (decodePacket(m_dataPacket, 16, true)){
+                if (decodePacket(m_dataPacket)){
                     LOG(TRACE) << "Found pixel data!";
+
+
+
+
+                    // Filtering out digital pixel data
                     bool digCompare = false;
                     for (const auto &digColRow: m_digColRow){
                         digCompare = compareTupleEq(digColRow, m_colrow);
@@ -300,6 +305,9 @@ bool EventLoaderTimepix4::decodeNextWord() {
                         hRawFullToA->Fill(m_fullToa);
                         hHitTime->Fill(static_cast<double>(Units::convert(correctedTime, "s")));
                     }
+
+
+
                 }
                 else{
                     LOG(TRACE) << "Found heartbeat data!";
@@ -317,29 +325,37 @@ bool EventLoaderTimepix4::decodeNextWord() {
         }
         LOG(WARNING) << "Other type of data, ignored for now";
     }
-
+    m_contentSum[m_file_index] += contentSize;
     // noting down original position within file stream before switching
 
     m_stream_pos[m_file_index] = (*m_file_iterator)->tellg();
     LOG(DEBUG) << "Current stream index position " << m_stream_pos[m_file_index];
     LOG(DEBUG) << "Finished reading event from file " << m_file_index;
-    if (m_file_index == 0){
-        m_file_index = 1;
-        m_file_iterator++;
-    }
-    else if (m_file_index == 1){
-        m_file_index = 0;
-        m_file_iterator--;
-    }
-    else {
-        LOG(WARNING) << "File index in non sensical position";
+
+    // if the sum of the data read in from one file is above 1000 x 64bit then swap to the other file
+    // implemented in the hope that it removes the weird clustering issues that can otherwise only be removed via a massive buffer
+    if (m_contentSum[m_file_index] > 0){
+        if (m_file_index == 0){
+            m_contentSum[m_file_index] = 0;
+            m_file_index = 1;
+            m_file_iterator++;
+        }
+        else if (m_file_index == 1){
+            m_contentSum[m_file_index] = 0;
+            m_file_index = 0;
+            m_file_iterator--;
+        }
+        else {
+            LOG(TRACE) << "Accumulating further data";
+        }
     }
     return true;
 }
 
-bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_CKDLL=16, bool gray=true){
+bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
     uint64_t top = (dataPacket >> 63) & 0x1;
     uint64_t header = (dataPacket >> 55) & 0xFF;
+    m_oldbeat = m_heartbeat;
 //    if (!top) LOG(WARNING) << "Top? " << top;
     if (header > 0xDF) { // heartbeat data
 //        m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
@@ -348,7 +364,8 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_C
         switch(header){
             case ctrl_heartbeat:
                 m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
-//                LOG(WARNING) << "Heartbeat data: " << m_heartbeat;
+                LOG(TRACE) << "Heartbeat data: " << m_heartbeat;
+                if (m_heartbeat < m_oldbeat) LOG(WARNING) << "Previous heartbeat data is below current heartbeat data new/old " << m_heartbeat << "/" << m_oldbeat;
             break;
             case t0_sync:
                 m_t0 = dataPacket & 0x7FFFFFFFFFFFFF;
@@ -363,7 +380,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_C
         m_pixel = (dataPacket >> 46) & 0x7; // pixel address
 
         m_toa = (dataPacket >> 30) & 0xffff; // Time of Arrival (ToA) | units of 25 ns (1/(40 MHz))
-        if (gray) m_toa = GrayToBin(m_toa);
+        m_toa = GrayToBin(m_toa); // gray to binary conversion
         m_ftoa_rise = (dataPacket >> 17) & 0x1f; // fine ToA rising edge | units of ~1.56 ns (1/(640 MHz)
         m_ftoa_fall = (dataPacket >> 12) & 0x1f; // fine ToA falling edge | units of ~1.56 ns (1/(640 MHz)
         m_tot = (dataPacket>>1) & 0x7ff; // Time over Threshold | units of 25 ns  (1/(40 MHz))

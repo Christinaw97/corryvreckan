@@ -56,6 +56,30 @@ namespace corryvreckan {
             header_invalid = 0xFF
         };
 
+        struct pixelData {
+            uint64_t addr;
+            uint64_t pileup;
+            uint64_t rTot;
+            uint64_t ftoaFall;
+            uint64_t ftoaRise;
+            uint64_t uftoaStart;
+            uint64_t uftoaStop;
+            uint64_t extToa;
+            uint64_t rToa;
+            uint64_t pixelID;
+            uint64_t sPixelID;
+            uint64_t sPGroupID;
+            uint64_t fullTot;
+            uint64_t fullToa;
+            bool isDigital;
+            uint64_t bufferID;
+        };
+
+        struct heartbeatData{
+            uint64_t heartbeat;
+            uint64_t bufferID;
+        };
+
         std::shared_ptr<Detector> m_detector;
         long m_numOfEvents;
 
@@ -73,7 +97,7 @@ namespace corryvreckan {
 
 
         bool decodeNextWord();
-        bool decodePacket(uint64_t packet, uint64_t ratio_VCO_CKDLL, bool gray);
+        bool decodePacket(uint64_t packet);
         void fillBuffer();
         bool loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector&, SpidrSignalVector&);
 
@@ -104,6 +128,7 @@ namespace corryvreckan {
         uint64_t m_fullTot;
         uint64_t m_fullToa;
         uint64_t m_heartbeat;
+        uint64_t m_oldbeat;
         uint64_t m_t0;
 
         std::tuple<uint32_t, uint32_t> m_colrow;
@@ -120,6 +145,7 @@ namespace corryvreckan {
         std::tuple<uint32_t, uint32_t> m_digColRow[8] ={{0,0}, {4,1}, {441,2}, {445,3}, {2,508}, {6,509}, {443,510}, {447,511}};
 
         std::streampos m_stream_pos[2] = {0};
+        uint m_contentSum[2] = {};
         uint m_file_index = 0;
 
 
