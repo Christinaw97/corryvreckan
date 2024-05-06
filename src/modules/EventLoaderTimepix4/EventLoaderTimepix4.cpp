@@ -298,8 +298,7 @@ bool EventLoaderTimepix4::decodeNextWord() {
                         hRawToA->Fill(m_toa);
                         hRawExtendedToA->Fill(m_ext_toa);
                         hRawFullToA->Fill(m_fullToa);
-                        hHitTime->Fill(correctedTime);
-
+                        hHitTime->Fill(static_cast<double>(Units::convert(correctedTime, "s")));
                     }
                 }
                 else{
@@ -343,18 +342,18 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_C
     uint64_t header = (dataPacket >> 55) & 0xFF;
 //    if (!top) LOG(WARNING) << "Top? " << top;
     if (header > 0xDF) { // heartbeat data
-        m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
-        LOG(WARNING) << "Heartbeat data: " << m_heartbeat;
+//        m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
+//        LOG(WARNING) << "Heartbeat data: " << m_heartbeat;
 
-//        switch(header){
-//            case ctrl_heartbeat:
-//                m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
+        switch(header){
+            case ctrl_heartbeat:
+                m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
 //                LOG(WARNING) << "Heartbeat data: " << m_heartbeat;
-//            break;
-//            case t0_sync:
-//                m_t0 = dataPacket & 0x7FFFFFFFFFFFFF;
-//            break;
-//        }
+            break;
+            case t0_sync:
+                m_t0 = dataPacket & 0x7FFFFFFFFFFFFF;
+            break;
+        }
         return false;
     }
     else { // pixel data
@@ -431,13 +430,13 @@ bool EventLoaderTimepix4::loadData(const std::shared_ptr<Clipboard>& clipboard,
 
         auto position = event->getTimestampPosition(pixel->timestamp());
 
-        if(position == Event::Position::AFTER || event->getTimestampPosition(m_heartbeat) == Event::Position::AFTER) {
+        if(position == Event::Position::AFTER) {
             LOG(DEBUG) << "Stopping processing event, pixel is after "
                           "event window ("
                        << Units::display(pixel->timestamp(), {"s", "us", "ns"}) << " > "
                        << Units::display(event->end(), {"s", "us", "ns"}) << ")";
             break;
-        } else if(position == Event::Position::BEFORE || event->getTimestampPosition(m_heartbeat) == Event::Position::BEFORE) {
+        } else if(position == Event::Position::BEFORE) {
             LOG(TRACE) << "Skipping pixel, is before event window (" << Units::display(pixel->timestamp(), {"s", "us", "ns"})
                        << " < " << Units::display(event->start(), {"s", "us", "ns"}) << ")";
             sorted_pixels_.pop();
