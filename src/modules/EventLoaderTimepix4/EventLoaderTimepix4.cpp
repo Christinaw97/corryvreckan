@@ -145,7 +145,6 @@ void EventLoaderTimepix4::initialize() {
     }
 
     // Set the file iterator to the first file for every detector:
-    m_file_iterator = m_files.begin();
 
     // Hit time (in s)
     hHitTime = new TH1F("hitTime", "hitTime", 1000, -0.5, 999.5);
@@ -182,7 +181,7 @@ StatusCode EventLoaderTimepix4::run(const std::shared_ptr<Clipboard>& clipboard)
     LOG(TRACE) << "== New event";
 
     // If all files for this detector have been read, end the run:
-    if(m_file_iterator == m_files.end()) {
+    if(eof_reached) {
         return StatusCode::Failure;
     }
 
@@ -199,12 +198,12 @@ StatusCode EventLoaderTimepix4::run(const std::shared_ptr<Clipboard>& clipboard)
         clipboard->putData(deviceData, m_detector->getName());
     }
 
-    if(!spidrData.empty()) {
-        clipboard->putData(spidrData, m_detector->getName());
-    }
+//    if(!spidrData.empty()) {
+//        clipboard->putData(spidrData, m_detector->getName());
+//    }
 
     // Otherwise tell event loop to keep running
-    LOG_PROGRESS(DEBUG, "tpx3_loader") << "Current time: " << Units::display(event->start(), {"s", "ms", "us", "ns"});
+    LOG_PROGRESS(DEBUG, "tpx4_loader") << "Current time: " << Units::display(event->start(), {"s", "ms", "us", "ns"});
 
     return StatusCode::Success;
 }
@@ -220,28 +219,22 @@ bool EventLoaderTimepix4::decodeNextWord() {
 
     LOG(DEBUG) << "Starting word decoding";
     // Check if current file is at its end and move to other one
-    if((*m_file_iterator)->eof()) {
-        if (!m_file_index){
-            m_file_iterator++;
-        }
-        else{
-            m_file_iterator--;
-        }
-        // If that file also has reached eof then stop here
-        if ((*m_file_iterator)->eof()){
-            LOG(INFO) << "EOF for all files of " << detectorID;
+    if (m_files[m_half]->eof()){
+        m_half = !m_half; // go to opposite half if current half is full
+        if (m_files[m_half]->eof()){
+            LOG(INFO) << "EOF for all halfs of " << detectorID << " reached";
             eof_reached = true;
             return false;
         }
-        LOG(INFO) << "Starting to read next file for " << detectorID << ": " << (*m_file_iterator).get();
+        LOG(INFO) << "Continuing to read other half for " << detectorID;
     }
 
     // Now read the data packets.
     uint64_t header = 0;
 
     // If we can't read data anymore, jump to begin of loop:
-    if(!(*m_file_iterator)->read(reinterpret_cast<char*>(&header), sizeof header)) {
-        LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
+    if(!m_files[m_half]->read(reinterpret_cast<char*>(&header), sizeof header)) {
+        LOG(INFO) << "No more data in current file for " << detectorID;
         return true;
     }
 
@@ -259,8 +252,8 @@ bool EventLoaderTimepix4::decodeNextWord() {
 
     if (groupID == 0x7){
         LOG(TRACE) << "Found user defined data";
-        if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
-            LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
+        if(!(m_files[m_half])->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+            LOG(INFO) << "No more data in current file for " << detectorID;
             return true;
         }
         LOG(TRACE) << "User information, skipping!";
@@ -268,8 +261,8 @@ bool EventLoaderTimepix4::decodeNextWord() {
     else if (groupID == 0x0){
         LOG(DEBUG) << "Found timepix4 data";
         if (encoding == 0b00){
-            if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
-                LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
+            if(!(m_files[m_half])->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+                LOG(INFO) << "No more data in current file for " << detectorID;
                 return true;
             }
             LOG(DEBUG) << "Found " << m_dataBuffer.size() << " data packets." << std::endl;
@@ -281,7 +274,7 @@ bool EventLoaderTimepix4::decodeNextWord() {
 
 
                     // Filtering out digital pixel data
-                    if (!m_unsynced[m_file_index]){
+                    if (!m_unsynced[m_half]){
                         bool digCompare = false;
                         for (const auto &digColRow: m_digColRow){
                             digCompare = compareTupleEq(digColRow, m_colrow);
@@ -320,45 +313,34 @@ bool EventLoaderTimepix4::decodeNextWord() {
         }
     }
     else{
-        if(!(*m_file_iterator)->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
-            LOG(INFO) << "No more data in current file for " << detectorID << ": " << (*m_file_iterator).get();
+        if(!m_files[m_half]->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+            LOG(INFO) << "No more data in current file for " << detectorID;
             return true;
         }
         LOG(WARNING) << "Other type of data, ignored for now";
     }
-    m_contentSum[m_file_index] += contentSize;
+    m_stream_pos[m_half] = m_files[m_half]->tellg();
+    m_contentSum[m_half] += contentSize;
     // noting down original position within file stream before switching
 
-    m_stream_pos[m_file_index] = (*m_file_iterator)->tellg();
-    LOG(DEBUG) << "Current stream index position " << m_stream_pos[m_file_index];
-    LOG(DEBUG) << "Finished reading event from file " << m_file_index;
+    LOG(WARNING) << "Current stream index position " << m_stream_pos[m_half];
+    LOG(DEBUG) << "Finished reading event from file " << m_half;
 
     // if the sum of the data read in from one file is above 1000 x 64bit then swap to the other file
     // implemented in the hope that it removes the weird clustering issues that can otherwise only be removed via a massive buffer
     // it doesn't... I need to do time checks.
-    if (m_unsynced[m_file_index]){
+    if (m_unsynced[m_half]){
         LOG(WARNING) << "Yet to find t0 signal, continuing";
         return true;
     }
     else {
 //        if (m_time[0] < m_time[1]) {
-//            m_file_index = 0;
+//            m_half = 0;
 //            m_file_iterator
 //        }
-        LOG(WARNING) << "File iterator " << &m_file_iterator;
-        if (m_file_index == 0){
-            m_contentSum[m_file_index] = 0;
-            m_file_index = 1;
-            m_file_iterator++;
-        }
-        else if (m_file_index == 1){
-            m_contentSum[m_file_index] = 0;
-            m_file_index = 0;
-            m_file_iterator--;
-        }
-        else {
-            LOG(TRACE) << "Accumulating further data";
-        }
+        m_contentSum[m_half] = 0;
+        m_half = !m_half;
+        LOG(WARNING) << m_half;
     }
 //    if (m_hbDataBuffer.size() > 1000){
 
@@ -382,13 +364,13 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
                 m_hbData.time = dataPacket & 0x7FFFFFFFFFFFFF;
                 m_hbIndex++;
                 LOG(TRACE) << "Heartbeat data: " << m_heartbeat;
-                if (m_heartbeat < m_oldbeat && !m_unsynced[0] && !m_unsynced[1]){
-                    LOG(WARNING) << "1) Previous heartbeat data is below current heartbeat data (hex) || new/old " << hex << m_heartbeat << "/" << hex << m_oldbeat;
-                    LOG(WARNING) << "2) Previous heartbeat data is below current heartbeat data (dec) || new/old " << m_heartbeat << "/" << m_oldbeat;
-                }
+//                if (m_heartbeat < m_oldbeat && !m_unsynced[0] && !m_unsynced[1]){
+//                    LOG(WARNING) << "1) Previous heartbeat data is below current heartbeat data (hex) || new/old " << hex << m_heartbeat << "/" << hex << m_oldbeat;
+//                    LOG(WARNING) << "2) Previous heartbeat data is below current heartbeat data (dec) || new/old " << m_heartbeat << "/" << m_oldbeat;
+//                }
             break;
             case t0_sync:
-                m_unsynced[m_file_index] = dataPacket & 0x7FFFFFFFFFFFFF;
+                m_unsynced[m_half] = dataPacket & 0x7FFFFFFFFFFFFF;
 //                LOG(WARNING) << "t0 sync signal " << m_t0;
             break;
         }

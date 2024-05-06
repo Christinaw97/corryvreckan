@@ -153,7 +153,7 @@ namespace corryvreckan {
 
         std::streampos m_stream_pos[2] = {0};
         uint m_contentSum[2] = {};
-        uint m_file_index = 0;
+        uint m_half = 0;
 
 
         // Member variables
