@@ -221,7 +221,7 @@ bool EventLoaderTimepix4::decodeNextWord() {
     LOG(DEBUG) << "Starting word decoding";
     // Check if current file is at its end and move to other one
     if((*m_file_iterator)->eof()) {
-        if (!m_file_index){
+        if (!m_fIndex){
             m_file_iterator++;
         }
         else{
@@ -325,33 +325,33 @@ bool EventLoaderTimepix4::decodeNextWord() {
         }
         LOG(WARNING) << "Other type of data, ignored for now";
     }
-    m_contentSum[m_file_index] += contentSize;
+    m_contentSum[m_fIndex] += contentSize;
     // noting down original position within file stream before switching
 
-    m_stream_pos[m_file_index] = (*m_file_iterator)->tellg();
-    LOG(DEBUG) << "Current stream index position " << m_stream_pos[m_file_index];
-    LOG(DEBUG) << "Finished reading event from file " << m_file_index;
+    m_stream_pos[m_fIndex] = (*m_file_iterator)->tellg();
+    LOG(DEBUG) << "Current stream index position " << m_stream_pos[m_fIndex];
+    LOG(DEBUG) << "Finished reading event from file " << m_fIndex;
 
     // if the sum of the data read in from one file is above 1000 x 64bit then swap to the other file
     // implemented in the hope that it removes the weird clustering issues that can otherwise only be removed via a massive buffer
-    if (m_contentSum[m_file_index] > 0){
-        if (m_file_index == 0){
-            m_contentSum[m_file_index] = 0;
-            m_file_index = 1;
+
+    if (m_fIndex == 0){
+        if (m_packetTime[0] > m_packetTime[1]){
+            m_contentSum[m_fIndex] = 0;
+            m_fIndex = 1;
             m_file_iterator++;
         }
-        else if (m_file_index == 1){
-            m_contentSum[m_file_index] = 0;
-            m_file_index = 0;
+    }
+    else if (m_fIndex == 1){
+        if (m_packetTime[0] < m_packetTime[1]){
+            m_contentSum[m_fIndex] = 0;
+            m_fIndex = 0;
             m_file_iterator--;
         }
-        else {
-            LOG(TRACE) << "Accumulating further data";
-        }
     }
-//    if (m_hbDataBuffer.size() > 1000){
-
-//    }
+    else {
+        LOG(TRACE) << "Accumulating further data";
+    }
     return true;
 }
 
@@ -370,6 +370,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
                 m_hbData.bufferID = m_hbIndex;
                 m_hbData.time = dataPacket & 0x7FFFFFFFFFFFFF;
                 m_hbIndex++;
+                m_packetTime[m_fIndex] = m_hbData.time;
                 LOG(TRACE) << "Heartbeat data: " << m_heartbeat;
                 if (m_heartbeat < m_oldbeat){
                     LOG(WARNING) << "1) Previous heartbeat data is below current heartbeat data (hex) || new/old " << hex << m_heartbeat << "/" << hex << m_oldbeat;
@@ -377,7 +378,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
                 }
             break;
             case t0_sync:
-                m_t0 = dataPacket & 0x7FFFFFFFFFFFFF;
+                m_t0[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
             break;
         }
         return false;
