@@ -281,30 +281,31 @@ bool EventLoaderTimepix4::decodeNextWord() {
 
 
                     // Filtering out digital pixel data
-                    bool digCompare = false;
-                    for (const auto &digColRow: m_digColRow){
-                        digCompare = compareTupleEq(digColRow, m_colrow);
-                        if (digCompare) break;
+                    if (!m_unsynced[m_file_index]){
+                        bool digCompare = false;
+                        for (const auto &digColRow: m_digColRow){
+                            digCompare = compareTupleEq(digColRow, m_colrow);
+                            if (digCompare) break;
+                        }
+                        if (!digCompare){
+                            uint32_t col = std::get<0>(m_colrow);
+                            uint32_t row = std::get<1>(m_colrow);
+                            long double correctedTime = static_cast<long double>(m_fullToa) * 1/(8*640e-3); // time in ns
+                            long double correctedToT = static_cast<double>(m_fullTot) * 1/(8*640e-3); // tot in ns
+                            //                        LOG(WARNING) << "Time of pixel data: " << correctedTime;
+                            auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(m_fullTot), correctedToT, correctedTime);
+                            pixel->setCharge(correctedToT);
+                            sorted_pixels_.push(pixel);
+                            hRawToT->Fill(m_tot);
+                            hRawFullToT->Fill(m_fullTot);
+                            hToT->Fill(correctedToT);
+                            hHitMap->Fill(col, row);
+                            hRawToA->Fill(m_toa);
+                            hRawExtendedToA->Fill(m_ext_toa);
+                            hRawFullToA->Fill(m_fullToa);
+                            hHitTime->Fill(static_cast<double>(Units::convert(correctedTime, "s")));
+                        }
                     }
-                    if (!digCompare){
-                        uint32_t col = std::get<0>(m_colrow);
-                        uint32_t row = std::get<1>(m_colrow);
-                        long double correctedTime = static_cast<long double>(m_fullToa) * 1/(8*640e-3); // time in ns
-                        long double correctedToT = static_cast<double>(m_fullTot) * 1/(8*640e-3); // tot in ns
-//                        LOG(WARNING) << "Time of pixel data: " << correctedTime;
-                        auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(m_fullTot), correctedToT, correctedTime);
-                        pixel->setCharge(correctedToT);                      
-                        sorted_pixels_.push(pixel);
-                        hRawToT->Fill(m_tot);
-                        hRawFullToT->Fill(m_fullTot);
-                        hToT->Fill(correctedToT);
-                        hHitMap->Fill(col, row);
-                        hRawToA->Fill(m_toa);
-                        hRawExtendedToA->Fill(m_ext_toa);
-                        hRawFullToA->Fill(m_fullToa);
-                        hHitTime->Fill(static_cast<double>(Units::convert(correctedTime, "s")));
-                    }
-
 
 
                 }
@@ -334,7 +335,17 @@ bool EventLoaderTimepix4::decodeNextWord() {
 
     // if the sum of the data read in from one file is above 1000 x 64bit then swap to the other file
     // implemented in the hope that it removes the weird clustering issues that can otherwise only be removed via a massive buffer
-    if (m_contentSum[m_file_index] > 0){
+    // it doesn't... I need to do time checks.
+    if (m_unsynced[m_file_index]){
+        LOG(WARNING) << "Yet to find t0 signal, continuing";
+        return true;
+    }
+    else {
+//        if (m_time[0] < m_time[1]) {
+//            m_file_index = 0;
+//            m_file_iterator
+//        }
+        LOG(WARNING) << "File iterator " << &m_file_iterator;
         if (m_file_index == 0){
             m_contentSum[m_file_index] = 0;
             m_file_index = 1;
@@ -371,13 +382,14 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
                 m_hbData.time = dataPacket & 0x7FFFFFFFFFFFFF;
                 m_hbIndex++;
                 LOG(TRACE) << "Heartbeat data: " << m_heartbeat;
-                if (m_heartbeat < m_oldbeat){
+                if (m_heartbeat < m_oldbeat && !m_unsynced[0] && !m_unsynced[1]){
                     LOG(WARNING) << "1) Previous heartbeat data is below current heartbeat data (hex) || new/old " << hex << m_heartbeat << "/" << hex << m_oldbeat;
                     LOG(WARNING) << "2) Previous heartbeat data is below current heartbeat data (dec) || new/old " << m_heartbeat << "/" << m_oldbeat;
                 }
             break;
             case t0_sync:
-                m_t0 = dataPacket & 0x7FFFFFFFFFFFFF;
+                m_unsynced[m_file_index] = dataPacket & 0x7FFFFFFFFFFFFF;
+//                LOG(WARNING) << "t0 sync signal " << m_t0;
             break;
         }
         return false;

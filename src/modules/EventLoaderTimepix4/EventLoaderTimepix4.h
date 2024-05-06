@@ -71,8 +71,9 @@ namespace corryvreckan {
 //            uint64_t sPGroupID;
             uint64_t fullTot;
             uint64_t fullToa;
+            uint64_t hb;
+            bool t0;
             bool isDigital;
-            uint16_t bufferID;
         };
 
         struct heartbeatData{
@@ -111,6 +112,7 @@ namespace corryvreckan {
         std::vector<std::vector<float>> vtot;
         std::vector<std::vector<float>> vtoa;
 
+        pixelData m_pixData;
         heartbeatData m_hbData;
         uint16_t m_hbIndex = 0;
         std::vector<heartbeatData> m_hbDataBuffer;
@@ -132,7 +134,9 @@ namespace corryvreckan {
         uint64_t m_fullToa;
         uint64_t m_heartbeat;
         uint64_t m_oldbeat;
-        uint64_t m_t0;
+
+        uint64_t m_unsynced[2] = {1};
+        uint64_t m_time[2] = {0};
 
         std::tuple<uint32_t, uint32_t> m_colrow;
 
@@ -184,6 +188,8 @@ namespace corryvreckan {
         std::priority_queue<std::shared_ptr<SpidrSignal>, SpidrSignalVector, CompareTimeGreater<SpidrSignal>>
             sorted_signals_;
 
+
+
         //======================================================================================================================
         // Unpack the header of the data packet (original, kepler)
         //======================================================================================================================
@@ -208,6 +214,7 @@ namespace corryvreckan {
           return (15-spgroup_addr)*clk_dll_step;
         }
 
+        // decodes the row and column position from the address dat etc.
         std::tuple<uint32_t, uint32_t> decodeColRow(uint64_t pix, uint64_t sPix, uint64_t spixgrp, uint64_t header, bool top){ // taken from spidr4tools
             uint32_t col;
             uint32_t row;
