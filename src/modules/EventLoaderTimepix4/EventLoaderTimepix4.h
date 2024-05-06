@@ -36,6 +36,26 @@ namespace corryvreckan {
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
 
     private:
+
+        enum uint8_t{
+            pixel_data     = 0x00,
+
+            ctrl_heartbeat = 0xE0,
+            shutter_rise   = 0xE1,
+            shutter_fall   = 0xE2,
+            t0_sync        = 0xE3,
+            signal_rise    = 0xE4,
+            signal_fall    = 0xE5,
+            ctrl_data_test = 0xEA,
+
+            frame_start    = 0xF0,
+            frame_end      = 0xF1,
+            segment_start  = 0xF2,
+            segment_end    = 0xF3,
+
+            header_invalid = 0xFF
+        };
+
         std::shared_ptr<Detector> m_detector;
         long m_numOfEvents;
 
@@ -84,7 +104,8 @@ namespace corryvreckan {
         uint64_t m_fullTot;
         uint64_t m_fullToa;
         uint64_t m_heartbeat;
-        uint64_t m_oldside;
+        uint64_t m_t0;
+
         std::tuple<uint32_t, uint32_t> m_colrow;
 
         //conversion factor from:

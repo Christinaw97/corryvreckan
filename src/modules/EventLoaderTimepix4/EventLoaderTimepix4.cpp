@@ -27,7 +27,6 @@ using namespace std;
 
 EventLoaderTimepix4::EventLoaderTimepix4(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector), m_currentEvent(0), m_prevTime(0), m_shutterOpen(false) {
-
     config_.setDefault<size_t>("buffer_depth", 10000);
     m_buffer_depth = config_.get<size_t>("buffer_depth");
 
@@ -286,10 +285,11 @@ bool EventLoaderTimepix4::decodeNextWord() {
                     if (!digCompare){
                         uint32_t col = std::get<0>(m_colrow);
                         uint32_t row = std::get<1>(m_colrow);
-                        double correctedTime = static_cast<double>(m_fullToa) * 1/(8*640E6); // time in s
-                        double correctedToT = static_cast<double>(m_fullTot) * 1/(8*640E6); // tot in s
-                        auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(m_fullTot), correctedToT, m_heartbeat);
-                        pixel->setCharge(correctedToT);
+                        long double correctedTime = static_cast<long double>(m_fullToa) * 1/(8*640e-3); // time in ns
+                        long double correctedToT = static_cast<double>(m_fullTot) * 1/(8*640e-3); // tot in ns
+//                        LOG(WARNING) << "Time of pixel data: " << correctedTime;
+                        auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(m_fullTot), correctedToT, correctedTime);
+                        pixel->setCharge(correctedToT);                      
                         sorted_pixels_.push(pixel);
                         hRawToT->Fill(m_tot);
                         hRawFullToT->Fill(m_fullTot);
@@ -343,8 +343,18 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_C
     uint64_t header = (dataPacket >> 55) & 0xFF;
 //    if (!top) LOG(WARNING) << "Top? " << top;
     if (header > 0xDF) { // heartbeat data
-        m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFFull;
-        LOG(TRACE) << "Heartbeat data: " << m_heartbeat;
+        m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
+        LOG(WARNING) << "Heartbeat data: " << m_heartbeat;
+
+//        switch(header){
+//            case ctrl_heartbeat:
+//                m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
+//                LOG(WARNING) << "Heartbeat data: " << m_heartbeat;
+//            break;
+//            case t0_sync:
+//                m_t0 = dataPacket & 0x7FFFFFFFFFFFFF;
+//            break;
+//        }
         return false;
     }
     else { // pixel data
@@ -393,6 +403,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket, uint64_t ratio_VCO_C
 void EventLoaderTimepix4::fillBuffer() {
     // read data from file and fill timesorted buffer
     while(sorted_pixels_.size() < m_buffer_depth && !eof_reached) {
+//        LOG(WARNING) << "Stored data/Buffer size = " << sorted_pixels_.size() << "/" << m_buffer_depth;
         // decodeNextWord returns false when EOF is reached and true otherwise
         if(!decodeNextWord()) {
             LOG(TRACE) << "decodeNextWord returns false: reached EOF.";
@@ -420,13 +431,13 @@ bool EventLoaderTimepix4::loadData(const std::shared_ptr<Clipboard>& clipboard,
 
         auto position = event->getTimestampPosition(pixel->timestamp());
 
-        if(position == Event::Position::AFTER) {
+        if(position == Event::Position::AFTER || event->getTimestampPosition(m_heartbeat) == Event::Position::AFTER) {
             LOG(DEBUG) << "Stopping processing event, pixel is after "
                           "event window ("
                        << Units::display(pixel->timestamp(), {"s", "us", "ns"}) << " > "
                        << Units::display(event->end(), {"s", "us", "ns"}) << ")";
             break;
-        } else if(position == Event::Position::BEFORE) {
+        } else if(position == Event::Position::BEFORE || event->getTimestampPosition(m_heartbeat) == Event::Position::BEFORE) {
             LOG(TRACE) << "Skipping pixel, is before event window (" << Units::display(pixel->timestamp(), {"s", "us", "ns"})
                        << " < " << Units::display(event->start(), {"s", "us", "ns"}) << ")";
             sorted_pixels_.pop();
