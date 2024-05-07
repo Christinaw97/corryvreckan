@@ -135,7 +135,7 @@ namespace corryvreckan {
         uint64_t m_fullToa;
         uint64_t m_heartbeat;
         uint64_t m_oldbeat;
-        uint64_t m_t0[2] = {1};
+        uint64_t m_unsynced[2] = {1};
 
         uint64_t m_packetTime[2] = {0};
 
@@ -233,6 +233,19 @@ namespace corryvreckan {
             }
             else{
                 return false;
+            }
+        }
+
+        std::tuple<uint, std::vector<std::unique_ptr<std::ifstream>>::iterator>  switchHalf(uint fIndex, std::vector<std::unique_ptr<std::ifstream>>::iterator fIterator){
+            if (fIndex){
+                fIterator--;
+                fIndex = 0;
+                return {fIndex, fIterator};
+            }
+            else{
+                fIterator++;
+                fIndex = 1;
+                return {fIndex, fIterator};
             }
         }
 

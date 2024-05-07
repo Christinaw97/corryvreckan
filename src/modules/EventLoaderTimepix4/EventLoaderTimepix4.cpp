@@ -27,7 +27,7 @@ using namespace std;
 
 EventLoaderTimepix4::EventLoaderTimepix4(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector), m_currentEvent(0), m_prevTime(0), m_shutterOpen(false) {
-    config_.setDefault<size_t>("buffer_depth", 10000);
+    config_.setDefault<size_t>("buffer_depth", 1000);
     m_buffer_depth = config_.get<size_t>("buffer_depth");
 
 
@@ -101,6 +101,8 @@ void EventLoaderTimepix4::initialize() {
 
     // Initialise null values for later
     m_syncTime = 0;
+    m_unsynced[0] = 1;
+    m_unsynced[1] = 1;
     m_clearedHeader = false;
     m_syncTimeTDC = 0;
     m_TDCoverflowCounter = 0;
@@ -178,6 +180,8 @@ StatusCode EventLoaderTimepix4::run(const std::shared_ptr<Clipboard>& clipboard)
 
     // Check if event frame is defined:
     auto event = clipboard->getEvent();
+
+
 
     LOG(TRACE) << "== New event";
 
@@ -278,33 +282,32 @@ bool EventLoaderTimepix4::decodeNextWord() {
                 if (decodePacket(m_dataPacket)){
                     LOG(TRACE) << "Found pixel data!";
 
-
-
-                    // Filtering out digital pixel data
-                    bool digCompare = false;
-                    for (const auto &digColRow: m_digColRow){
-                        digCompare = compareTupleEq(digColRow, m_colrow);
-                        if (digCompare) break;
+                    if (!m_unsynced[m_fIndex]){
+                        // Filtering out digital pixel data
+                        bool digCompare = false;
+                        for (const auto &digColRow: m_digColRow){
+                            digCompare = compareTupleEq(digColRow, m_colrow);
+                            if (digCompare) break;
+                        }
+                        if (!digCompare){
+                            uint32_t col = std::get<0>(m_colrow);
+                            uint32_t row = std::get<1>(m_colrow);
+                            long double correctedTime = static_cast<long double>(m_fullToa) * 1/(8*640e-3); // time in ns
+                            long double correctedToT = static_cast<double>(m_fullTot) * 1/(8*640e-3); // tot in ns
+                            //                        LOG(WARNING) << "Time of pixel data: " << correctedTime;
+                            auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(m_fullTot), correctedToT, correctedTime);
+                            pixel->setCharge(correctedToT);
+                            sorted_pixels_.push(pixel);
+                            hRawToT->Fill(m_tot);
+                            hRawFullToT->Fill(m_fullTot);
+                            hToT->Fill(correctedToT);
+                            hHitMap->Fill(col, row);
+                            hRawToA->Fill(m_toa);
+                            hRawExtendedToA->Fill(m_ext_toa);
+                            hRawFullToA->Fill(m_fullToa);
+                            hHitTime->Fill(static_cast<double>(Units::convert(correctedTime, "s")));
+                        }
                     }
-                    if (!digCompare){
-                        uint32_t col = std::get<0>(m_colrow);
-                        uint32_t row = std::get<1>(m_colrow);
-                        long double correctedTime = static_cast<long double>(m_fullToa) * 1/(8*640e-3); // time in ns
-                        long double correctedToT = static_cast<double>(m_fullTot) * 1/(8*640e-3); // tot in ns
-//                        LOG(WARNING) << "Time of pixel data: " << correctedTime;
-                        auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(m_fullTot), correctedToT, correctedTime);
-                        pixel->setCharge(correctedToT);                      
-                        sorted_pixels_.push(pixel);
-                        hRawToT->Fill(m_tot);
-                        hRawFullToT->Fill(m_fullTot);
-                        hToT->Fill(correctedToT);
-                        hHitMap->Fill(col, row);
-                        hRawToA->Fill(m_toa);
-                        hRawExtendedToA->Fill(m_ext_toa);
-                        hRawFullToA->Fill(m_fullToa);
-                        hHitTime->Fill(static_cast<double>(Units::convert(correctedTime, "s")));
-                    }
-
 
 
                 }
@@ -332,28 +335,32 @@ bool EventLoaderTimepix4::decodeNextWord() {
     LOG(DEBUG) << "Current stream index position " << m_stream_pos[m_fIndex];
     LOG(DEBUG) << "Finished reading event from file " << m_fIndex;
 
-    // if the sum of the data read in from one file is above 1000 x 64bit then swap to the other file
-    // implemented in the hope that it removes the weird clustering issues that can otherwise only be removed via a massive buffer
-
-    if (m_fIndex == 0){
-        if (m_packetTime[0] > m_packetTime[1]){
-            m_contentSum[m_fIndex] = 0;
-            m_fIndex = 1;
-            m_file_iterator++;
+//    if (m_unsynced[m_fIndex]){
+//        std::tie(m_fIndex, m_file_iterator) = switchHalf(m_fIndex, m_file_iterator);
+//        return true;
+//    }
+    LOG(TRACE) << "Sync check " << m_unsynced[0] << " | " << m_unsynced[1];
+    if (!m_unsynced[0] && !m_unsynced[1]){
+        if (m_packetTime[0] >= m_packetTime[1] && m_fIndex == 0){
+            std::tie(m_fIndex, m_file_iterator) = switchHalf(m_fIndex, m_file_iterator);
+            LOG(TRACE) << "Switching to file 1";
         }
-    }
-    else if (m_fIndex == 1){
-        if (m_packetTime[0] < m_packetTime[1]){
-            m_contentSum[m_fIndex] = 0;
-            m_fIndex = 0;
-            m_file_iterator--;
+        else if (m_packetTime[0] <= m_packetTime[1] && m_fIndex == 1){
+            std::tie(m_fIndex, m_file_iterator) = switchHalf(m_fIndex, m_file_iterator);
+            LOG(TRACE) << "Switching to file 0";
         }
+        LOG(DEBUG) << "File 0 timer " << m_packetTime[0] << " || File 1 timer " << m_packetTime[1];
     }
-    else {
-        LOG(TRACE) << "Accumulating further data";
+    else{
+        LOG(TRACE) << "Switching to file " << !m_fIndex;
+        std::tie(m_fIndex, m_file_iterator) = switchHalf(m_fIndex, m_file_iterator);
     }
+//    LOG(WARNING) << "Unsynced = " << m_unsynced[m_fIndex];
+//    LOG(WARNING) << "File index = " << m_fIndex;
+    // switch the file to the other half
     return true;
 }
+
 
 bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
     uint64_t top = (dataPacket >> 63) & 0x1;
@@ -373,12 +380,13 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
                 m_packetTime[m_fIndex] = m_hbData.time;
                 LOG(TRACE) << "Heartbeat data: " << m_heartbeat;
                 if (m_heartbeat < m_oldbeat){
-                    LOG(WARNING) << "1) Previous heartbeat data is below current heartbeat data (hex) || new/old " << hex << m_heartbeat << "/" << hex << m_oldbeat;
-                    LOG(WARNING) << "2) Previous heartbeat data is below current heartbeat data (dec) || new/old " << m_heartbeat << "/" << m_oldbeat;
+                    LOG(DEBUG) << "1) Previous heartbeat data is below current heartbeat data (hex) || new/old " << hex << m_heartbeat << "/" << hex << m_oldbeat;
+                    LOG(DEBUG) << "2) Previous heartbeat data is below current heartbeat data (dec) || new/old " << m_heartbeat << "/" << m_oldbeat;
                 }
             break;
             case t0_sync:
-                m_t0[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
+                m_unsynced[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
+                m_packetTime[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
             break;
         }
         return false;
@@ -401,6 +409,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
 
 
         m_ext_toa = extendToa(m_toa, m_hbData.time, m_tot);
+        m_packetTime[m_fIndex] = m_ext_toa;
         m_fullTot=fullTot(m_ftoa_rise, m_ftoa_fall, m_uftoa_start, m_uftoa_stop, m_tot); // full corrected ToT | units of ~195 ps (1/(640*8 MHz))
         m_fullToa=fullToa(m_ext_toa ,m_uftoa_start, m_uftoa_stop, m_ftoa_rise) - toa_clkdll_correction(m_sPGroup); // rfull corrected ToA | units of ~195 ps (1/(640*8 MHz))
         m_colrow = decodeColRow(m_pixel, m_sPixel, m_sPGroup, header, top); // decodes the row and col value from the address
