@@ -117,6 +117,9 @@ namespace corryvreckan {
         uint16_t m_hbIndex = 0;
         std::vector<heartbeatData> m_hbDataBuffer;
 
+        pixelData m_pData;
+        std::vector<pixelData> m_pDataBuffer;
+
         // pixel packet variables
         uint64_t m_addr;
         uint64_t m_pileup;
@@ -134,9 +137,9 @@ namespace corryvreckan {
         uint64_t m_fullToa;
         uint64_t m_heartbeat;
         uint64_t m_oldbeat;
-
         uint64_t m_unsynced[2] = {1};
-        uint64_t m_time[2] = {0};
+
+        uint64_t m_packetTime[2] = {0};
 
         std::tuple<uint32_t, uint32_t> m_colrow;
 
@@ -144,16 +147,16 @@ namespace corryvreckan {
         // heartbeat tdc (25ns)
         // fine tdc (~1.56ns | 1/640 MHz^-1)
         // ultrafine tdc (~195 ps | 1/(8*640) MHz^-1)
-        double hbtdc = 25E-9;
-        double ftdc = 1/(640E6);
-        double uftdc = 1/(8*640E6);
+        double hbtdc = 25; // in ns
+        double ftdc = 1/(640E-3); // in ns
+        double uftdc = 1/(8*640E-3); // in ns
 
         // location of the digital pixels
         std::tuple<uint32_t, uint32_t> m_digColRow[8] ={{0,0}, {4,1}, {441,2}, {445,3}, {2,508}, {6,509}, {443,510}, {447,511}};
 
         std::streampos m_stream_pos[2] = {0};
         uint m_contentSum[2] = {};
-        uint m_half = 0;
+        uint m_fIndex = 0;
 
 
         // Member variables
@@ -235,6 +238,19 @@ namespace corryvreckan {
             }
             else{
                 return false;
+            }
+        }
+
+        std::tuple<uint, std::vector<std::unique_ptr<std::ifstream>>::iterator>  switchHalf(uint fIndex, std::vector<std::unique_ptr<std::ifstream>>::iterator fIterator){
+            if (fIndex){
+                fIterator--;
+                fIndex = 0;
+                return {fIndex, fIterator};
+            }
+            else{
+                fIterator++;
+                fIndex = 1;
+                return {fIndex, fIterator};
             }
         }
 
