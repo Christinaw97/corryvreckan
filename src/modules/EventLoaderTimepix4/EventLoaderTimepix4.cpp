@@ -132,7 +132,7 @@ void EventLoaderTimepix4::initialize() {
             if(!new_file->read(reinterpret_cast<char*>(&headerID), sizeof headerID)) {
                   throw ModuleError("Cannot read header ID for " + m_detector->getName() + " in file " + filename);
             }
-            LOG(WARNING) << "Header ID: \"" << headerID << "\"";
+            LOG(TRACE) << "Header ID: \"" << headerID << "\"";
             // comparing 8 byte header with headerID of the file, should be SPIDR4\0\0 which is flipped into 4RDIPS which is 57527937618003
             if(headerID != 57527937618003) {
                 throw ModuleError("Incorrect header ID for " + m_detector->getName() + " in file " + filename + ": " +
@@ -147,6 +147,7 @@ void EventLoaderTimepix4::initialize() {
     }
 
     // Set the file iterator to the first file for every detector:
+    m_file_iterator = m_files.begin();
 
     // Hit time (in s)
     hHitTime = new TH1F("hitTime", "hitTime", 1000, -0.5, 999.5);
@@ -191,10 +192,9 @@ StatusCode EventLoaderTimepix4::run(const std::shared_ptr<Clipboard>& clipboard)
 
     // Make a new container for the data
     PixelVector deviceData;
-    SpidrSignalVector spidrData;
 
     // Load the next chunk of data
-    bool data = loadData(clipboard, deviceData, spidrData);
+    bool data = loadData(clipboard, deviceData);
 
     // If data was loaded then put it on the clipboard
     if(data) {
@@ -243,45 +243,56 @@ bool EventLoaderTimepix4::decodeNextWord() {
     uint64_t header = 0;
 
     // If we can't read data anymore, jump to begin of loop:
-    if(!m_files[m_half]->read(reinterpret_cast<char*>(&header), sizeof header)) {
+    if(!m_files[m_fIndex]->read(reinterpret_cast<char*>(&header), sizeof header)) {
         LOG(INFO) << "No more data in current file for " << detectorID;
         return true;
     }
 
     LOG(TRACE) << "0x" << hex << header << dec << " - " << header;
+    // decode the header to identify what type/size of data is in the following packages
     auto [groupID, encoding, contentID, streamID, contentSize] = decode_header(header);
     LOG(DEBUG) << "Group ID " << groupID;
     LOG(DEBUG) << "Content Encoding " << encoding;
     LOG(DEBUG) << "Content ID " << contentID;
     LOG(DEBUG) << "Stream ID " << streamID;
     LOG(DEBUG) << "Content size " << contentSize;
-    // Group id 0x7 is undefined non SPIDR user data added via RC
-    contentSize = contentSize << 3; // multiplying by 8
-    if (m_dataBuffer.size()*8 < contentSize)
-        m_dataBuffer.resize(contentSize/8);
 
+    // assigning buffer size according to header information
+    contentSize = contentSize << 3; // multiplying by 8
+    if (m_dataBuffer.size()*8 < contentSize){
+        m_dataBuffer.resize(contentSize/8);
+    }
+
+    // Group id 0x7 is undefined non SPIDR user data added via RC and as such ignored
     if (groupID == 0x7){
         LOG(TRACE) << "Found user defined data";
-        if(!(m_files[m_half])->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+        if(!(m_files[m_fIndex])->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
             LOG(INFO) << "No more data in current file for " << detectorID;
             return true;
         }
         LOG(TRACE) << "User information, skipping!";
     }
+
+    // Group id 0x0 is timepix4 data (actual pixel/heartbeat data)
     else if (groupID == 0x0){
         LOG(DEBUG) << "Found timepix4 data";
-        if (encoding == 0b00){
-            if(!(m_files[m_half])->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+        if (encoding == 0b00){ //this should really never fail unless something is weird with the tpx4
+
+            // reading data into newly sized buffer according to previous header content size
+            if(!(m_files[m_fIndex])->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
                 LOG(INFO) << "No more data in current file for " << detectorID;
                 return true;
             }
             LOG(DEBUG) << "Found " << m_dataBuffer.size() << " data packets." << std::endl;
+
+            // beginning of decoding of the corresponding packages
             for (ulong i = 0; i < m_dataBuffer.size(); i++){
                 m_dataPacket = m_dataBuffer[i];
                 if (decodePacket(m_dataPacket)){
                     LOG(TRACE) << "Found pixel data!";
 
                     if (!m_unsynced[m_fIndex]){
+
                         // Filtering out digital pixel data
                         bool digCompare = false;
                         for (const auto &digColRow: m_digColRow){
@@ -317,27 +328,23 @@ bool EventLoaderTimepix4::decodeNextWord() {
             }
         }
         else {
-            LOG(TRACE) << "Pixel encoding wrong, skipping!";        
+            LOG(WARNING) << "Pixel encoding wrong, this should NOT happen!";
         }
     }
+
+    // there are also oher data types, temperature sensor etc. but I don't care about those for now.
     else{
-        if(!m_files[m_half]->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+        if(!m_files[m_fIndex]->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
             LOG(INFO) << "No more data in current file for " << detectorID;
             return true;
         }
         LOG(WARNING) << "Other type of data, ignored for now";
     }
-    m_contentSum[m_fIndex] += contentSize;
-    // noting down original position within file stream before switching
-
-    m_stream_pos[m_fIndex] = (*m_file_iterator)->tellg();
-    LOG(DEBUG) << "Current stream index position " << m_stream_pos[m_fIndex];
     LOG(DEBUG) << "Finished reading event from file " << m_fIndex;
 
-//    if (m_unsynced[m_fIndex]){
-//        std::tie(m_fIndex, m_file_iterator) = switchHalf(m_fIndex, m_file_iterator);
-//        return true;
-//    }
+    // for synchronization of the two chip halfs I read in each side packet by packet until both have reached the t0 for synchronization
+    // once t0 has been reached I switch the read in method such that I read in the file which has events that are earlier in time
+    // this reduces the required buffer size for time matching of the two halves later down the line
     LOG(TRACE) << "Sync check " << m_unsynced[0] << " | " << m_unsynced[1];
     if (!m_unsynced[0] && !m_unsynced[1]){
         if (m_packetTime[0] >= m_packetTime[1] && m_fIndex == 0){
@@ -354,36 +361,29 @@ bool EventLoaderTimepix4::decodeNextWord() {
         LOG(TRACE) << "Switching to file " << !m_fIndex;
         std::tie(m_fIndex, m_file_iterator) = switchHalf(m_fIndex, m_file_iterator);
     }
-//    LOG(WARNING) << "Unsynced = " << m_unsynced[m_fIndex];
-//    LOG(WARNING) << "File index = " << m_fIndex;
-    // switch the file to the other half
     return true;
 }
 
-
+// decoding the binary data into sensible values
 bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
     uint64_t top = (dataPacket >> 63) & 0x1;
     uint64_t header = (dataPacket >> 55) & 0xFF;
-    m_oldbeat = m_heartbeat;
-//    if (!top) LOG(WARNING) << "Top? " << top;
-    if (header > 0xDF) { // heartbeat data
-//        m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
-//        LOG(WARNING) << "Heartbeat data: " << m_heartbeat;
-
+    m_oldbeat = m_hbData.time;
+    if (header > 0xDF) { // heartbeat/t0 data
         switch(header){
             case ctrl_heartbeat:
-                m_heartbeat = dataPacket & 0x7FFFFFFFFFFFFF;
                 m_hbData.bufferID = m_hbIndex;
                 m_hbData.time = dataPacket & 0x7FFFFFFFFFFFFF;
                 m_hbIndex++;
                 m_packetTime[m_fIndex] = m_hbData.time;
-                LOG(TRACE) << "Heartbeat data: " << m_heartbeat;
-                if (m_heartbeat < m_oldbeat){
-                    LOG(DEBUG) << "1) Previous heartbeat data is below current heartbeat data (hex) || new/old " << hex << m_heartbeat << "/" << hex << m_oldbeat;
-                    LOG(DEBUG) << "2) Previous heartbeat data is below current heartbeat data (dec) || new/old " << m_heartbeat << "/" << m_oldbeat;
+                if (m_hbData.time < m_oldbeat){
+                    LOG(DEBUG) << "1) Previous heartbeat data is below current heartbeat data (hex) || new/old " << hex << m_hbData.time << "/" << hex << m_oldbeat;
+                    LOG(DEBUG) << "2) Previous heartbeat data is below current heartbeat data (dec) || new/old " << m_hbData.time << "/" << m_oldbeat;
                 }
             break;
             case t0_sync:
+            // in case the signal is the t0 sync signal the timestamp will be updated with the t0 which should be 0
+            // in addition the corresponding chip half will be considered synchronized from then on
                 m_unsynced[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
                 m_packetTime[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
             break;
@@ -391,17 +391,17 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
         return false;
     }
     else { // pixel data
-        m_addr = (dataPacket>>46) & 0x3ffff; // address including pixel, super pixel and super pixel group values
-        m_sPGroup = (dataPacket >> 51) & 0xf; // super pixel group address
-        m_sPixel = (dataPacket >> 49) & 0x3; // super pixel address
-        m_pixel = (dataPacket >> 46) & 0x7; // pixel address
+        m_addr = getAddr(dataPacket);
+        m_sPGroup = getSuperPixelGroup(dataPacket);
+        m_sPixel = getSuperPixel(dataPacket);
+        m_pixel = getPixel(dataPacket);
 
-        m_toa = (dataPacket >> 30) & 0xffff; // Time of Arrival (ToA) | units of 25 ns (1/(40 MHz))
+        m_toa = getToA(dataPacket);
         m_toa = GrayToBin(m_toa); // gray to binary conversion
-        m_ftoa_rise = (dataPacket >> 17) & 0x1f; // fine ToA rising edge | units of ~1.56 ns (1/(640 MHz)
-        m_ftoa_fall = (dataPacket >> 12) & 0x1f; // fine ToA falling edge | units of ~1.56 ns (1/(640 MHz)
-        m_tot = (dataPacket>>1) & 0x7ff; // Time over Threshold | units of 25 ns  (1/(40 MHz))
-        m_pileup = dataPacket & 0x1; // bit to register whether another hit was coming in while pixel was busy
+        m_ftoa_rise = getFToARise(dataPacket >> 17);
+        m_ftoa_fall = getFToAFall(dataPacket);
+        m_tot = getToT(dataPacket);
+        m_pileup = getPileUp(dataPacket);
 
         m_uftoa_start = UftoaStart(dataPacket); // ultra fine ToA start encoding | units of ~195 ps (1/(640*8 MHz))
         m_uftoa_stop = UftoaStop(dataPacket); // ultra fine ToA stop encoding | units of ~195 ps (1/(640*8 MHz))
@@ -448,8 +448,7 @@ void EventLoaderTimepix4::fillBuffer() {
 
 // Function to load data for a given device, into the relevant container
 bool EventLoaderTimepix4::loadData(const std::shared_ptr<Clipboard>& clipboard,
-                                   PixelVector& devicedata,
-                                   SpidrSignalVector& spidrData) {
+                                   PixelVector& devicedata) {
 
     std::string detectorID = m_detector->getName();
     auto event = clipboard->getEvent();
@@ -484,27 +483,27 @@ bool EventLoaderTimepix4::loadData(const std::shared_ptr<Clipboard>& clipboard,
         fillBuffer();
     }
 
-    while(!sorted_signals_.empty()) {
-        auto signal = sorted_signals_.top();
+//    while(!sorted_signals_.empty()) {
+//        auto signal = sorted_signals_.top();
 
-        auto position = event->getTimestampPosition(signal->timestamp());
+//        auto position = event->getTimestampPosition(signal->timestamp());
 
-        if(position == Event::Position::AFTER) {
-            LOG(DEBUG) << "Stopping processing event, signal is after "
-                          "event window ("
-                       << Units::display(signal->timestamp(), {"s", "us", "ns"}) << " > "
-                       << Units::display(event->end(), {"s", "us", "ns"}) << ")";
-            break;
-        } else if(position == Event::Position::BEFORE) {
-            LOG(TRACE) << "Skipping signal, is before event window ("
-                       << Units::display(signal->timestamp(), {"s", "us", "ns"}) << " < "
-                       << Units::display(event->start(), {"s", "us", "ns"}) << ")";
-            sorted_signals_.pop();
-        } else {
-            spidrData.push_back(signal);
-            sorted_signals_.pop();
-        }
-    }
+//        if(position == Event::Position::AFTER) {
+//            LOG(DEBUG) << "Stopping processing event, signal is after "
+//                          "event window ("
+//                       << Units::display(signal->timestamp(), {"s", "us", "ns"}) << " > "
+//                       << Units::display(event->end(), {"s", "us", "ns"}) << ")";
+//            break;
+//        } else if(position == Event::Position::BEFORE) {
+//            LOG(TRACE) << "Skipping signal, is before event window ("
+//                       << Units::display(signal->timestamp(), {"s", "us", "ns"}) << " < "
+//                       << Units::display(event->start(), {"s", "us", "ns"}) << ")";
+//            sorted_signals_.pop();
+//        } else {
+//            spidrData.push_back(signal);
+//            sorted_signals_.pop();
+//        }
+//    }
 
     // If no data was loaded, return false
     if(devicedata.empty()) {

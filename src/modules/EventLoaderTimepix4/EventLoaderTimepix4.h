@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include "core/module/Module.hpp"
 #include "objects/Pixel.hpp"
-#include "objects/SpidrSignal.hpp"
 
 namespace corryvreckan {
     /** @ingroup Modules
@@ -100,7 +99,7 @@ namespace corryvreckan {
         bool decodeNextWord();
         bool decodePacket(uint64_t packet);
         void fillBuffer();
-        bool loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector&, SpidrSignalVector&);
+        bool loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector&);
 
         // configuration parameters:
         std::string m_inputDirectory;
@@ -188,8 +187,6 @@ namespace corryvreckan {
         };
 
         std::priority_queue<std::shared_ptr<Pixel>, PixelVector, CompareTimeGreater<Pixel>> sorted_pixels_;
-        std::priority_queue<std::shared_ptr<SpidrSignal>, SpidrSignalVector, CompareTimeGreater<SpidrSignal>>
-            sorted_signals_;
 
 
 
@@ -232,6 +229,19 @@ namespace corryvreckan {
             return {col,row};
         }
 
+
+        uint64_t getAddr(uint64_t packet){ return (packet>>46) & 0x3ffff;}// address including pixel, super pixel and super pixel group values
+        uint64_t getSuperPixelGroup(uint64_t packet){ return (packet>>51) & 0xf;}// super pixel group address
+        uint64_t getSuperPixel(uint64_t packet){ return (packet>>49) & 0x3;}// super pixel address
+        uint64_t getPixel(uint64_t packet){ return (packet>>46) & 0x7;}// pixel address
+
+        uint64_t getToA(uint64_t packet){ return (packet >> 30) & 0xffff;}// Time of Arrival (ToA) | units of 25 ns (1/(40 MHz))
+        uint64_t getFToARise(uint64_t packet){ return (packet >> 17) & 0x1f;}// fine ToA rising edge | units of ~1.56 ns (1/(640 MHz)
+        uint64_t getFToAFall(uint64_t packet){ return (packet >> 12) & 0x1f;}// fine ToA falling edge | units of ~1.56 ns (1/(640 MHz)
+        uint64_t getToT(uint64_t packet){ return (packet >> 1) & 0x7ff;}// Time over Threshold | units of 25 ns  (1/(40 MHz))
+        uint64_t getPileUp(uint64_t packet){ return packet & 0x1;}// bit to register whether another hit was coming in while pixel was busy
+
+
         bool compareTupleEq(std::tuple<uint32_t, uint32_t> tuple1, std::tuple<uint32_t, uint32_t> tuple2){
             if (std::get<0>(tuple1) == std::get<0>(tuple2) && std::get<1>(tuple1) == std::get<1>(tuple2)){
                 return true;
@@ -255,11 +265,12 @@ namespace corryvreckan {
         }
 
 
+
         uint64_t extendToa(uint64_t toa, uint64_t heartbeat, uint64_t tot){
             // extending toa by heartbeat counter
             uint64_t extToa = toa | ( heartbeat & ~0xFFFF);
 
-            // toa vs heartbeat latency correction
+            // toa vs heartbeat for latency correction
             if (extToa + 0x8000 < heartbeat) toa += 0x10000;
             else if (extToa > heartbeat + 0x8000 && toa >= 0x10000) toa -= 0x10000;
 
