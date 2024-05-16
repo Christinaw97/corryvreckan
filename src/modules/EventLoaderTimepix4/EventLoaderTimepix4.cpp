@@ -27,7 +27,7 @@ using namespace std;
 
 EventLoaderTimepix4::EventLoaderTimepix4(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector), m_currentEvent(0), m_prevTime(0), m_shutterOpen(false) {
-    config_.setDefault<size_t>("buffer_depth", 1000);
+    config_.setDefault<size_t>("buffer_depth", 10000);
     m_buffer_depth = config_.get<size_t>("buffer_depth");
 
 
@@ -285,7 +285,7 @@ bool EventLoaderTimepix4::decodeNextWord() {
             }
             LOG(DEBUG) << "Found " << m_dataBuffer.size() << " data packets." << std::endl;
 
-            // beginning of decoding of the corresponding packages
+            // beginning of decoding of the packages corresponding to the header
             for (ulong i = 0; i < m_dataBuffer.size(); i++){
                 m_dataPacket = m_dataBuffer[i];
                 if (decodePacket(m_dataPacket)){
@@ -342,7 +342,8 @@ bool EventLoaderTimepix4::decodeNextWord() {
     }
     LOG(DEBUG) << "Finished reading event from file " << m_fIndex;
 
-    // for synchronization of the two chip halfs I read in each side packet by packet until both have reached the t0 for synchronization
+    // for synchronization of the two chip halfs I read in each side packet by packet switching after each read until that file has reached t0
+    // then I switch to the other file until both have reached the t0 for synchronization
     // once t0 has been reached I switch the read in method such that I read in the file which has events that are earlier in time
     // this reduces the required buffer size for time matching of the two halves later down the line
     LOG(TRACE) << "Sync check " << m_unsynced[0] << " | " << m_unsynced[1];
@@ -483,27 +484,6 @@ bool EventLoaderTimepix4::loadData(const std::shared_ptr<Clipboard>& clipboard,
         fillBuffer();
     }
 
-//    while(!sorted_signals_.empty()) {
-//        auto signal = sorted_signals_.top();
-
-//        auto position = event->getTimestampPosition(signal->timestamp());
-
-//        if(position == Event::Position::AFTER) {
-//            LOG(DEBUG) << "Stopping processing event, signal is after "
-//                          "event window ("
-//                       << Units::display(signal->timestamp(), {"s", "us", "ns"}) << " > "
-//                       << Units::display(event->end(), {"s", "us", "ns"}) << ")";
-//            break;
-//        } else if(position == Event::Position::BEFORE) {
-//            LOG(TRACE) << "Skipping signal, is before event window ("
-//                       << Units::display(signal->timestamp(), {"s", "us", "ns"}) << " < "
-//                       << Units::display(event->start(), {"s", "us", "ns"}) << ")";
-//            sorted_signals_.pop();
-//        } else {
-//            spidrData.push_back(signal);
-//            sorted_signals_.pop();
-//        }
-//    }
 
     // If no data was loaded, return false
     if(devicedata.empty()) {
