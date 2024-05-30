@@ -3,23 +3,20 @@
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
 # EventDisplay
-**Maintainer**: ruizdaza (fhl-ripper02.desy.de)
-**Module Type**: *DETECTOR* **Detector Type**: *<add types here>*  
+**Maintainer**: Simon Spannagel (simon.spannagel@desy.de), Sara Ruiz Daza (sara.ruiz.daza@desy.de)
+**Module Type**: *DETECTOR*
 **Status**: Immature
 
 ### Description
-This is a demonstrator module only, taking data every detector on the clipboard and plots the pixel hit positions.
-It serves as template to create new modules.
+This module displays hitmaps of individual events after using the [FilterEvents] module.
 
 ### Parameters
 No parameters are used from the configuration file.
 
 ### Plots produced
-* Histogram of event numbers
-
 For each detector the following plots are produced:
 
-* 2D histogram of pixel hit positions
+* 2D histogram of pixel raw data.
 
 ### Usage
 ```toml
