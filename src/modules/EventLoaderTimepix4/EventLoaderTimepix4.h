@@ -56,18 +56,6 @@ namespace corryvreckan {
         };
 
         struct pixelData {
-//            uint64_t addr;
-//            uint64_t pileup;
-//            uint64_t rTot;
-//            uint64_t ftoaFall;
-//            uint64_t ftoaRise;
-//            uint64_t uftoaStart;
-//            uint64_t uftoaStop;
-//            uint64_t extToa;
-//            uint64_t rToa;
-//            uint64_t pixelID;
-//            uint64_t sPixelID;
-//            uint64_t sPGroupID;
             uint64_t fullTot;
             uint64_t fullToa;
             uint64_t hb;
@@ -128,7 +116,7 @@ namespace corryvreckan {
         uint64_t m_uftoa_start;
         uint64_t m_uftoa_stop;
         uint64_t m_ext_toa;
-        uint64_t m_toa;
+        uint16_t m_toa;
         uint64_t m_pixel;
         uint64_t m_sPixel;
         uint64_t m_sPGroup;
@@ -198,7 +186,7 @@ namespace corryvreckan {
                   unsigned(0x1FFF & (packet >> 32)), unsigned(0xFFFFFFFF & (packet >> 0))};
         }
 
-        uint64_t fullTot(uint64_t ftoa_rise, uint64_t ftoa_fall, uint64_t uftoa_start, uint64_t uftoa_stop, uint64_t tot, uint64_t ratio_VCO_CKDLL=16) {
+        uint64_t fullTot(uint64_t ftoa_rise, uint64_t ftoa_fall, uint64_t uftoa_start, uint64_t uftoa_stop, uint64_t tot) {
             //Decode TOT. Units are period of 8*640MHz (195 ps)
             return ((tot << 7) + ((ftoa_rise - ftoa_fall) << 3) - (uftoa_start-uftoa_stop));
         }
@@ -218,8 +206,8 @@ namespace corryvreckan {
         std::tuple<uint32_t, uint32_t> decodeColRow(uint64_t pix, uint64_t sPix, uint64_t spixgrp, uint64_t header, bool top){ // taken from spidr4tools
             uint32_t col;
             uint32_t row;
-            col = header << 1 | pix >> 2;
-            row = spixgrp << 4 | sPix << 2 | (pix & 0x3);
+            col = static_cast<uint32_t>(header << 1 | pix >> 2);
+            row = static_cast<uint32_t>(spixgrp << 4 | sPix << 2 | (pix & 0x3));
             if(top) // top half counting is inverted
             {
                 col  = 448 - 1 - col;
@@ -235,7 +223,7 @@ namespace corryvreckan {
         uint64_t getSuperPixel(uint64_t packet){ return (packet>>49) & 0x3;}// super pixel address
         uint64_t getPixel(uint64_t packet){ return (packet>>46) & 0x7;}// pixel address
 
-        uint64_t getToA(uint64_t packet){ return (packet >> 30) & 0xffff;}// Time of Arrival (ToA) | units of 25 ns (1/(40 MHz))
+        uint16_t getToA(uint64_t packet){ return (packet >> 30) & 0xffff;}// Time of Arrival (ToA) | units of 25 ns (1/(40 MHz))
         uint64_t getFToARise(uint64_t packet){ return (packet >> 17) & 0x1f;}// fine ToA rising edge | units of ~1.56 ns (1/(640 MHz)
         uint64_t getFToAFall(uint64_t packet){ return (packet >> 12) & 0x1f;}// fine ToA falling edge | units of ~1.56 ns (1/(640 MHz)
         uint64_t getToT(uint64_t packet){ return (packet >> 1) & 0x7ff;}// Time over Threshold | units of 25 ns  (1/(40 MHz))
@@ -268,7 +256,7 @@ namespace corryvreckan {
 
         uint64_t extendToa(uint64_t toa, uint64_t heartbeat, uint64_t tot){
             // extending toa by heartbeat counter
-            uint64_t extToa = toa | ( heartbeat & ~0xFFFF);
+            uint64_t extToa = toa | ( heartbeat & 0xFFFFFFFFFFFF0000);
 
             // toa vs heartbeat for latency correction
             if (extToa + 0x8000 < heartbeat) toa += 0x10000;

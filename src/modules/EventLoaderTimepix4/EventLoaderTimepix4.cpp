@@ -303,18 +303,18 @@ bool EventLoaderTimepix4::decodeNextWord() {
                             uint32_t col = std::get<0>(m_colrow);
                             uint32_t row = std::get<1>(m_colrow);
                             long double correctedTime = static_cast<long double>(m_fullToa) * 1/(8*640e-3); // time in ns
-                            long double correctedToT = static_cast<double>(m_fullTot) * 1/(8*640e-3); // tot in ns
+                            double correctedToT = static_cast<double>(m_fullTot) * 1/(8*640e-3); // tot in ns
                             //                        LOG(WARNING) << "Time of pixel data: " << correctedTime;
                             auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(m_fullTot), correctedToT, correctedTime);
                             pixel->setCharge(correctedToT);
                             sorted_pixels_.push(pixel);
-                            hRawToT->Fill(m_tot);
-                            hRawFullToT->Fill(m_fullTot);
+                            hRawToT->Fill(static_cast<double>(m_tot));
+                            hRawFullToT->Fill(static_cast<double>(m_fullTot));
                             hToT->Fill(correctedToT);
                             hHitMap->Fill(col, row);
                             hRawToA->Fill(m_toa);
-                            hRawExtendedToA->Fill(m_ext_toa);
-                            hRawFullToA->Fill(m_fullToa);
+                            hRawExtendedToA->Fill(static_cast<double>(m_ext_toa));
+                            hRawFullToA->Fill(static_cast<double>(m_fullToa));
                             hHitTime->Fill(static_cast<double>(Units::convert(correctedTime, "s")));
                         }
                     }
@@ -388,6 +388,8 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
                 m_unsynced[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
                 m_packetTime[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
             break;
+            default:
+                LOG(INFO) << "Non heartbeat/t0 header case, ignored for now";
         }
         return false;
     }
