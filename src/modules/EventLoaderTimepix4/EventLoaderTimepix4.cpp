@@ -332,7 +332,7 @@ bool EventLoaderTimepix4::decodeNextWord() {
         }
     }
 
-    // there are also oher data types, temperature sensor etc. but I don't care about those for now.
+    // there are also other data types, temperature sensor etc. but I don't care about those for now.
     else{
         if(!m_files[m_fIndex]->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
             LOG(INFO) << "No more data in current file for " << detectorID;
@@ -342,7 +342,7 @@ bool EventLoaderTimepix4::decodeNextWord() {
     }
     LOG(DEBUG) << "Finished reading event from file " << m_fIndex;
 
-    // for synchronization of the two chip halfs I read in each side packet by packet switching after each read until that file has reached t0
+    // for synchronization of the two chip halves I read in each side packet by packet switching after each read until that file has reached t0
     // then I switch to the other file until both have reached the t0 for synchronization
     // once t0 has been reached I switch the read in method such that I read in the file which has events that are earlier in time
     // this reduces the required buffer size for time matching of the two halves later down the line

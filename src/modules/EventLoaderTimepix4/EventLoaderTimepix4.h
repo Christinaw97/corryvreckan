@@ -69,11 +69,9 @@ namespace corryvreckan {
         };
 
         std::shared_ptr<Detector> m_detector;
-        long m_numOfEvents;
 
         // ROOT graphs
         TH2F* hHitMap;
-        TH1F* timeshiftPlot;
         TH1F* hRawToT;
         TH1F* hRawFullToT;
         TH1F* hToT;
@@ -92,19 +90,16 @@ namespace corryvreckan {
         // configuration parameters:
         std::string m_inputDirectory;
 
-        bool applyCalibration;
         std::string calibrationPath;
         std::string threshold;
 
         std::vector<std::vector<float>> vtot;
         std::vector<std::vector<float>> vtoa;
 
-        pixelData m_pixData;
         heartbeatData m_hbData;
         uint16_t m_hbIndex = 0;
         std::vector<heartbeatData> m_hbDataBuffer;
 
-        pixelData m_pData;
         std::vector<pixelData> m_pDataBuffer;
 
         // pixel packet variables
@@ -122,7 +117,6 @@ namespace corryvreckan {
         uint64_t m_sPGroup;
         uint64_t m_fullTot;
         uint64_t m_fullToa;
-        uint64_t m_heartbeat;
         uint64_t m_oldbeat;
         uint64_t m_unsynced[2] = {1};
 
@@ -134,15 +128,11 @@ namespace corryvreckan {
         // heartbeat tdc (25ns)
         // fine tdc (~1.56ns | 1/640 MHz^-1)
         // ultrafine tdc (~195 ps | 1/(8*640) MHz^-1)
-        double hbtdc = 25; // in ns
-        double ftdc = 1/(640E-3); // in ns
-        double uftdc = 1/(8*640E-3); // in ns
 
         // location of the digital pixels
         std::tuple<uint32_t, uint32_t> m_digColRow[8] ={{0,0}, {4,1}, {441,2}, {445,3}, {2,508}, {6,509}, {443,510}, {447,511}};
 
         std::streampos m_stream_pos[2] = {0};
-        uint m_contentSum[2] = {};
         uint m_fIndex = 0;
 
 
@@ -163,8 +153,6 @@ namespace corryvreckan {
 
         long long int m_currentEvent;
 
-        unsigned long long int m_prevTime;
-        bool m_shutterOpen;
         int m_prevTriggerNumber;
         int m_triggerOverflowCounter;
 
@@ -278,7 +266,7 @@ namespace corryvreckan {
         }
 
         //========================================
-        // uftoa encoding change to acutal values (original, TPX4TOOLS by kevin)
+        // uftoa encoding change to actual values (original, TPX4TOOLS by kevin)
         // =======================================
         uint64_t uftoaBin[16] = {4, 5, 8, 6, 8, 8, 8, 7, 3, 8, 8, 8, 2, 8, 1, 0};
         uint64_t UftoaStart(uint64_t value){ return uftoaBin[value >> 26 & 0x000F]; }
