@@ -30,10 +30,8 @@ EventLoaderTimepix4::EventLoaderTimepix4(Configuration& config, std::shared_ptr<
     config_.setDefault<size_t>("buffer_depth", 10000);
     m_buffer_depth = config_.get<size_t>("buffer_depth");
 
-
     // Take input directory from global parameters
     m_inputDirectory = config_.getPath("input_directory");
-
 }
 
 void EventLoaderTimepix4::initialize() {
@@ -70,7 +68,8 @@ void EventLoaderTimepix4::initialize() {
         // For some dt_type is empty for the data entries so currently identifying files by name
         if(entry->d_type == DT_DIR || (entry->d_type == DT_UNKNOWN && std::string(entry->d_name).at(0) == 'T')) {
 
-            // Only read files from correct directory: Note: currently doesn't work? maybe some weird metadata that determines this that isn't set in the tpx4 data file unlike the tpx3 data?
+            // Only read files from correct directory: Note: currently doesn't work? maybe some weird metadata that
+            // determines this that isn't set in the tpx4 data file unlike the tpx3 data?
             if(entry->d_name != m_detector->getName()) {
                 continue;
             }
@@ -130,10 +129,11 @@ void EventLoaderTimepix4::initialize() {
             uint64_t headerID;
 
             if(!new_file->read(reinterpret_cast<char*>(&headerID), sizeof headerID)) {
-                  throw ModuleError("Cannot read header ID for " + m_detector->getName() + " in file " + filename);
+                throw ModuleError("Cannot read header ID for " + m_detector->getName() + " in file " + filename);
             }
             LOG(TRACE) << "Header ID: \"" << headerID << "\"";
-            // comparing 8 byte header with headerID of the file, should be SPIDR4\0\0 which is flipped into 4RDIPS which is 57527937618003
+            // comparing 8 byte header with headerID of the file, should be SPIDR4\0\0 which is flipped into 4RDIPS which is
+            // 57527937618003
             if(headerID != 57527937618003) {
                 throw ModuleError("Incorrect header ID for " + m_detector->getName() + " in file " + filename + ": " +
                                   std::to_string(headerID));
@@ -153,7 +153,7 @@ void EventLoaderTimepix4::initialize() {
     hHitTime = new TH1F("hitTime", "hitTime", 1000, -0.5, 999.5);
 
     // ToA
-    hRawToA = new TH1F("RawToA", "RawToA", 1 << 16, -0.5, (1 << 16)-0.5);
+    hRawToA = new TH1F("RawToA", "RawToA", 1 << 16, -0.5, (1 << 16) - 0.5);
     hRawExtendedToA = new TH1F("RawExtendedToA", "RawExtendedToA", 1000, 0, 1E9);
     hRawFullToA = new TH1F("RawFullToA", "RawFullToA", 1000, 0, 1E9);
     // ToT
@@ -181,8 +181,6 @@ StatusCode EventLoaderTimepix4::run(const std::shared_ptr<Clipboard>& clipboard)
     // Check if event frame is defined:
     auto event = clipboard->getEvent();
 
-
-
     LOG(TRACE) << "== New event";
 
     // If all files for this detector have been read, end the run:
@@ -202,9 +200,9 @@ StatusCode EventLoaderTimepix4::run(const std::shared_ptr<Clipboard>& clipboard)
         clipboard->putData(deviceData, m_detector->getName());
     }
 
-//    if(!spidrData.empty()) {
-//        clipboard->putData(spidrData, m_detector->getName());
-//    }
+    //    if(!spidrData.empty()) {
+    //        clipboard->putData(spidrData, m_detector->getName());
+    //    }
 
     // Otherwise tell event loop to keep running
     LOG_PROGRESS(DEBUG, "tpx4_loader") << "Current time: " << Units::display(event->start(), {"s", "ms", "us", "ns"});
@@ -212,11 +210,8 @@ StatusCode EventLoaderTimepix4::run(const std::shared_ptr<Clipboard>& clipboard)
     return StatusCode::Success;
 }
 
-
 bool EventLoaderTimepix4::decodeNextWord() {
     std::string detectorID = m_detector->getName();
-
-
 
     // Clearing databuffer off data from previous word.
     m_dataBuffer.clear();
@@ -224,14 +219,13 @@ bool EventLoaderTimepix4::decodeNextWord() {
     LOG(DEBUG) << "Starting word decoding";
     // Check if current file is at its end and move to other one
     if((*m_file_iterator)->eof()) {
-        if (!m_fIndex){
+        if(!m_fIndex) {
             m_file_iterator++;
-        }
-        else{
+        } else {
             m_file_iterator--;
         }
         // If that file also has reached eof then stop here
-        if ((*m_file_iterator)->eof()){
+        if((*m_file_iterator)->eof()) {
             LOG(INFO) << "EOF for all files of " << detectorID;
             eof_reached = true;
             return false;
@@ -259,14 +253,14 @@ bool EventLoaderTimepix4::decodeNextWord() {
 
     // assigning buffer size according to header information
     contentSize = contentSize << 3; // multiplying by 8
-    if (m_dataBuffer.size()*8 < contentSize){
-        m_dataBuffer.resize(contentSize/8);
+    if(m_dataBuffer.size() * 8 < contentSize) {
+        m_dataBuffer.resize(contentSize / 8);
     }
 
     // Group id 0x7 is undefined non SPIDR user data added via RC and as such ignored
-    if (groupID == 0x7){
+    if(groupID == 0x7) {
         LOG(TRACE) << "Found user defined data";
-        if(!(m_files[m_fIndex])->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+        if(!(m_files[m_fIndex])->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)) {
             LOG(INFO) << "No more data in current file for " << detectorID;
             return true;
         }
@@ -274,38 +268,40 @@ bool EventLoaderTimepix4::decodeNextWord() {
     }
 
     // Group id 0x0 is timepix4 data (actual pixel/heartbeat data)
-    else if (groupID == 0x0){
+    else if(groupID == 0x0) {
         LOG(DEBUG) << "Found timepix4 data";
-        if (encoding == 0b00){ //this should really never fail unless something is weird with the tpx4
+        if(encoding == 0b00) { // this should really never fail unless something is weird with the tpx4
 
             // reading data into newly sized buffer according to previous header content size
-            if(!(m_files[m_fIndex])->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+            if(!(m_files[m_fIndex])->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)) {
                 LOG(INFO) << "No more data in current file for " << detectorID;
                 return true;
             }
             LOG(DEBUG) << "Found " << m_dataBuffer.size() << " data packets." << std::endl;
 
             // beginning of decoding of the packages corresponding to the header
-            for (ulong i = 0; i < m_dataBuffer.size(); i++){
+            for(unsigned long i = 0; i < m_dataBuffer.size(); i++) {
                 m_dataPacket = m_dataBuffer[i];
-                if (decodePacket(m_dataPacket)){
+                if(decodePacket(m_dataPacket)) {
                     LOG(TRACE) << "Found pixel data!";
 
-                    if (!m_unsynced[m_fIndex]){
+                    if(!m_unsynced[m_fIndex]) {
 
                         // Filtering out digital pixel data
                         bool digCompare = false;
-                        for (const auto &digColRow: m_digColRow){
+                        for(const auto& digColRow : m_digColRow) {
                             digCompare = compareTupleEq(digColRow, m_colrow);
-                            if (digCompare) break;
+                            if(digCompare)
+                                break;
                         }
-                        if (!digCompare){
+                        if(!digCompare) {
                             uint32_t col = std::get<0>(m_colrow);
                             uint32_t row = std::get<1>(m_colrow);
-                            long double correctedTime = static_cast<long double>(m_fullToa) * 1/(8*640e-3); // time in ns
-                            double correctedToT = static_cast<double>(m_fullTot) * 1/(8*640e-3); // tot in ns
+                            long double correctedTime = static_cast<long double>(m_fullToa) * 1 / (8 * 640e-3); // time in ns
+                            double correctedToT = static_cast<double>(m_fullTot) * 1 / (8 * 640e-3);            // tot in ns
                             //                        LOG(WARNING) << "Time of pixel data: " << correctedTime;
-                            auto pixel = std::make_shared<Pixel>(detectorID, col, row, static_cast<int>(m_fullTot), correctedToT, correctedTime);
+                            auto pixel = std::make_shared<Pixel>(
+                                detectorID, col, row, static_cast<int>(m_fullTot), correctedToT, correctedTime);
                             pixel->setCharge(correctedToT);
                             sorted_pixels_.push(pixel);
                             hRawToT->Fill(static_cast<double>(m_tot));
@@ -319,21 +315,19 @@ bool EventLoaderTimepix4::decodeNextWord() {
                         }
                     }
 
-                }
-                else{
+                } else {
                     LOG(TRACE) << "Found heartbeat data!";
                     m_hbDataBuffer.push_back(m_hbData);
                 }
             }
-        }
-        else {
+        } else {
             LOG(WARNING) << "Pixel encoding wrong, this should NOT happen!";
         }
     }
 
     // there are also other data types, temperature sensor etc. but I don't care about those for now.
-    else{
-        if(!m_files[m_fIndex]->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)){
+    else {
+        if(!m_files[m_fIndex]->read(reinterpret_cast<char*>(m_dataBuffer.data()), contentSize)) {
             LOG(INFO) << "No more data in current file for " << detectorID;
             return true;
         }
@@ -341,23 +335,21 @@ bool EventLoaderTimepix4::decodeNextWord() {
     }
     LOG(DEBUG) << "Finished reading event from file " << m_fIndex;
 
-    // for synchronization of the two chip halves I read in each side packet by packet switching after each read until that file has reached t0
-    // then I switch to the other file until both have reached the t0 for synchronization
-    // once t0 has been reached I switch the read in method such that I read in the file which has events that are earlier in time
-    // this reduces the required buffer size for time matching of the two halves later down the line
+    // for synchronization of the two chip halves I read in each side packet by packet switching after each read until that
+    // file has reached t0 then I switch to the other file until both have reached the t0 for synchronization once t0 has
+    // been reached I switch the read in method such that I read in the file which has events that are earlier in time this
+    // reduces the required buffer size for time matching of the two halves later down the line
     LOG(TRACE) << "Sync check " << m_unsynced[0] << " | " << m_unsynced[1];
-    if (!m_unsynced[0] && !m_unsynced[1]){
-        if (m_packetTime[0] >= m_packetTime[1] && m_fIndex == 0){
+    if(!m_unsynced[0] && !m_unsynced[1]) {
+        if(m_packetTime[0] >= m_packetTime[1] && m_fIndex == 0) {
             std::tie(m_fIndex, m_file_iterator) = switchHalf(m_fIndex, m_file_iterator);
             LOG(TRACE) << "Switching to file 1";
-        }
-        else if (m_packetTime[0] <= m_packetTime[1] && m_fIndex == 1){
+        } else if(m_packetTime[0] <= m_packetTime[1] && m_fIndex == 1) {
             std::tie(m_fIndex, m_file_iterator) = switchHalf(m_fIndex, m_file_iterator);
             LOG(TRACE) << "Switching to file 0";
         }
         LOG(DEBUG) << "File 0 timer " << m_packetTime[0] << " || File 1 timer " << m_packetTime[1];
-    }
-    else{
+    } else {
         LOG(TRACE) << "Switching to file " << !m_fIndex;
         std::tie(m_fIndex, m_file_iterator) = switchHalf(m_fIndex, m_file_iterator);
     }
@@ -365,34 +357,35 @@ bool EventLoaderTimepix4::decodeNextWord() {
 }
 
 // decoding the binary data into sensible values
-bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
+bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket) {
     uint64_t top = (dataPacket >> 63) & 0x1;
     uint64_t header = (dataPacket >> 55) & 0xFF;
     m_oldbeat = m_hbData.time;
-    if (header > 0xDF) { // heartbeat/t0 data
-        switch(header){
-            case ctrl_heartbeat:
-                m_hbData.bufferID = m_hbIndex;
-                m_hbData.time = dataPacket & 0x7FFFFFFFFFFFFF;
-                m_hbIndex++;
-                m_packetTime[m_fIndex] = m_hbData.time;
-                if (m_hbData.time < m_oldbeat){
-                    LOG(DEBUG) << "1) Previous heartbeat data is below current heartbeat data (hex) || new/old " << hex << m_hbData.time << "/" << hex << m_oldbeat;
-                    LOG(DEBUG) << "2) Previous heartbeat data is below current heartbeat data (dec) || new/old " << m_hbData.time << "/" << m_oldbeat;
-                }
+    if(header > 0xDF) { // heartbeat/t0 data
+        switch(header) {
+        case ctrl_heartbeat:
+            m_hbData.bufferID = m_hbIndex;
+            m_hbData.time = dataPacket & 0x7FFFFFFFFFFFFF;
+            m_hbIndex++;
+            m_packetTime[m_fIndex] = m_hbData.time;
+            if(m_hbData.time < m_oldbeat) {
+                LOG(DEBUG) << "1) Previous heartbeat data is below current heartbeat data (hex) || new/old " << hex
+                           << m_hbData.time << "/" << hex << m_oldbeat;
+                LOG(DEBUG) << "2) Previous heartbeat data is below current heartbeat data (dec) || new/old " << m_hbData.time
+                           << "/" << m_oldbeat;
+            }
             break;
-            case t0_sync:
+        case t0_sync:
             // in case the signal is the t0 sync signal the timestamp will be updated with the t0 which should be 0
             // in addition the corresponding chip half will be considered synchronized from then on
-                m_unsynced[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
-                m_packetTime[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
+            m_unsynced[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
+            m_packetTime[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
             break;
-            default:
-                LOG(INFO) << "Non heartbeat/t0 header case, ignored for now";
+        default:
+            LOG(INFO) << "Non heartbeat/t0 header case, ignored for now";
         }
         return false;
-    }
-    else { // pixel data
+    } else { // pixel data
         m_addr = getAddr(dataPacket);
         m_sPGroup = getSuperPixelGroup(dataPacket);
         m_sPixel = getSuperPixel(dataPacket);
@@ -406,13 +399,17 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
         m_pileup = getPileUp(dataPacket);
 
         m_uftoa_start = UftoaStart(dataPacket); // ultra fine ToA start encoding | units of ~195 ps (1/(640*8 MHz))
-        m_uftoa_stop = UftoaStop(dataPacket); // ultra fine ToA stop encoding | units of ~195 ps (1/(640*8 MHz))
-
+        m_uftoa_stop = UftoaStop(dataPacket);   // ultra fine ToA stop encoding | units of ~195 ps (1/(640*8 MHz))
 
         m_ext_toa = extendToa(m_toa, m_hbData.time, m_tot);
         m_packetTime[m_fIndex] = m_ext_toa;
-        m_fullTot=fullTot(m_ftoa_rise, m_ftoa_fall, m_uftoa_start, m_uftoa_stop, m_tot); // full corrected ToT | units of ~195 ps (1/(640*8 MHz))
-        m_fullToa=fullToa(m_ext_toa ,m_uftoa_start, m_uftoa_stop, m_ftoa_rise) - toa_clkdll_correction(m_sPGroup); // rfull corrected ToA | units of ~195 ps (1/(640*8 MHz))
+        m_fullTot = fullTot(m_ftoa_rise,
+                            m_ftoa_fall,
+                            m_uftoa_start,
+                            m_uftoa_stop,
+                            m_tot); // full corrected ToT | units of ~195 ps (1/(640*8 MHz))
+        m_fullToa = fullToa(m_ext_toa, m_uftoa_start, m_uftoa_stop, m_ftoa_rise) -
+                    toa_clkdll_correction(m_sPGroup); // rfull corrected ToA | units of ~195 ps (1/(640*8 MHz))
         m_colrow = decodeColRow(m_pixel, m_sPixel, m_sPGroup, header, top); // decodes the row and col value from the address
 
         LOG(TRACE) << " ";
@@ -431,15 +428,12 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket){
         LOG(TRACE) << "Super Pixel group " << m_sPGroup;
     }
     return true;
-
 }
-
-
 
 void EventLoaderTimepix4::fillBuffer() {
     // read data from file and fill timesorted buffer
     while(sorted_pixels_.size() < m_buffer_depth && !eof_reached) {
-//        LOG(WARNING) << "Stored data/Buffer size = " << sorted_pixels_.size() << "/" << m_buffer_depth;
+        //        LOG(WARNING) << "Stored data/Buffer size = " << sorted_pixels_.size() << "/" << m_buffer_depth;
         // decodeNextWord returns false when EOF is reached and true otherwise
         if(!decodeNextWord()) {
             LOG(TRACE) << "decodeNextWord returns false: reached EOF.";
@@ -449,8 +443,7 @@ void EventLoaderTimepix4::fillBuffer() {
 }
 
 // Function to load data for a given device, into the relevant container
-bool EventLoaderTimepix4::loadData(const std::shared_ptr<Clipboard>& clipboard,
-                                   PixelVector& devicedata) {
+bool EventLoaderTimepix4::loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector& devicedata) {
 
     std::string detectorID = m_detector->getName();
     auto event = clipboard->getEvent();
@@ -484,7 +477,6 @@ bool EventLoaderTimepix4::loadData(const std::shared_ptr<Clipboard>& clipboard,
         // Refill buffer
         fillBuffer();
     }
-
 
     // If no data was loaded, return false
     if(devicedata.empty()) {
