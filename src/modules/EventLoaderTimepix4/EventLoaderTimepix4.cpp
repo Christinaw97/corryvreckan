@@ -26,7 +26,7 @@ using namespace corryvreckan;
 using namespace std;
 
 EventLoaderTimepix4::EventLoaderTimepix4(Configuration& config, std::shared_ptr<Detector> detector)
-    : Module(config, detector), m_detector(detector), m_currentEvent(0), m_prevTime(0), m_shutterOpen(false) {
+    : Module(config, detector), m_detector(detector), m_currentEvent(0) {
     config_.setDefault<size_t>("buffer_depth", 10000);
     m_buffer_depth = config_.get<size_t>("buffer_depth");
 
@@ -318,7 +318,6 @@ bool EventLoaderTimepix4::decodeNextWord() {
                             hHitTime->Fill(static_cast<double>(Units::convert(correctedTime, "s")));
                         }
                     }
-
 
                 }
                 else{
