@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
 # EventLoaderTimepix4
-**Maintainer**: Uwe Kraemer (uwe.kraemer@nikhef.nl)
+**Maintainer**: Uwe Kraemer (uwe.kraemer@nikhef.nl)  
 **Module Type**: *DETECTOR*  
 **Detector Type**: *Timepix4*  
 **Status**: Experimental
 
 ### Description
-This module loads raw data from a Timepix4 [@timepix4] device and adds it to the clipboard. The input files must have extension `.dat` and are sorted into time order into for both halves. 
+This module loads raw data from a Timepix4 device and adds it to the clipboard. The input files must have extension `.dat` and are sorted into time order into for both halves. 
 
 
 The hit timestamps are derived from the 40 MHz ToA counter, the fast on-pixel 640 MHz Voltage Controlled Oscillator (VCO) which measures the number of cyclles completed until end of 40 MHz cycle called fine ToA (fToA), and the 4 phase shifted fToA values resulting in an ultra fine time of arrival (ufToA)
@@ -36,5 +36,3 @@ For all detectors, the following plots are produced:
 [Timepix4EventLoader]
 input_directory = "path/to/directory"
 ```
-
-[@timepix4]: 
