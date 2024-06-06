@@ -8,7 +8,9 @@
 **Status**: Immature
 
 ### Description
-This module displays hitmaps of individual events after using the [FilterEvents] module.
+This module creates hitmaps of individual events.
+
+It should be noted that this is only useful for a small number of events. It is suggested to use this module only after filtering interesting events using the `FilterEvents` module.
 
 ### Parameters
 No parameters are used from the configuration file.
