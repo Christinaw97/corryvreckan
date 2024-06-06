@@ -99,6 +99,9 @@ namespace corryvreckan {
 
         std::vector<pixelData> m_pDataBuffer;
 
+
+
+
         // pixel packet variables
         uint64_t m_addr;
         uint64_t m_pileup;
@@ -115,7 +118,7 @@ namespace corryvreckan {
         uint64_t m_fullTot;
         uint64_t m_fullToa;
         uint64_t m_oldbeat;
-        uint64_t m_unsynced[2] = {1};
+
 
         uint64_t m_packetTime[2] = {0};
 
@@ -130,26 +133,28 @@ namespace corryvreckan {
         std::tuple<uint32_t, uint32_t> m_digColRow[8] = {
             {0, 0}, {4, 1}, {441, 2}, {445, 3}, {2, 508}, {6, 509}, {443, 510}, {447, 511}};
 
-        std::streampos m_stream_pos[2] = {0};
+        std::streampos m_stream_pos[2] = {0, 0};
         uint m_fIndex = 0;
 
         // Member variables
         std::vector<std::unique_ptr<std::ifstream>> m_files;
         std::vector<std::unique_ptr<std::ifstream>>::iterator m_file_iterator;
 
-        bool eof_reached;
+
+        unsigned long long int m_syncTime {0};
+        uint64_t m_unsynced[2] = {1, 1};
+        bool m_clearedHeader {false};
+        long long int m_syncTimeTDC {0};
+        int m_TDCoverflowCounter {0};
+        int m_prevTriggerNumber {0};
+        int m_triggerOverflowCounter {0};
+        bool eof_reached {false};
+
         size_t m_buffer_depth;
         std::vector<uint64_t> m_dataBuffer;
         uint64_t m_dataPacket;
-        unsigned long long int m_syncTime;
-        bool m_clearedHeader;
-        long long int m_syncTimeTDC;
-        int m_TDCoverflowCounter;
-
         long long int m_currentEvent;
 
-        int m_prevTriggerNumber;
-        int m_triggerOverflowCounter;
 
         template <typename T> struct CompareTimeGreater {
             bool operator()(const std::shared_ptr<T> a, const std::shared_ptr<T> b) {

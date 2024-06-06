@@ -38,8 +38,6 @@ void EventLoaderTimepix4::initialize() {
 
     if(m_buffer_depth < 1) {
         throw InvalidValueError(config_, "buffer_depth", "Buffer depth must be larger than 0.");
-    } else {
-        LOG(INFO) << "Using buffer_depth = " << m_buffer_depth;
     }
 
     // File structure is RunX/ChipID/files.dat
@@ -98,17 +96,6 @@ void EventLoaderTimepix4::initialize() {
                           m_inputDirectory);
     }
 
-    // Initialise null values for later
-    m_syncTime = 0;
-    m_unsynced[0] = 1;
-    m_unsynced[1] = 1;
-    m_clearedHeader = false;
-    m_syncTimeTDC = 0;
-    m_TDCoverflowCounter = 0;
-    m_prevTriggerNumber = 0;
-    m_triggerOverflowCounter = 0;
-    eof_reached = false;
-
     // Sort all files by extracting the "serial number" from the file name while ignoring the timestamp:
     std::sort(detector_files.begin(), detector_files.end(), [](std::string a, std::string b) {
         auto get_serial = [](std::string name) {
@@ -132,9 +119,10 @@ void EventLoaderTimepix4::initialize() {
                 throw ModuleError("Cannot read header ID for " + m_detector->getName() + " in file " + filename);
             }
             LOG(TRACE) << "Header ID: \"" << headerID << "\"";
-            // comparing 8 byte header with headerID of the file, should be SPIDR4\0\0 which is flipped into 4RDIPS which is
-            // 57527937618003
-            if(headerID != 57527937618003) {
+            // comparing 8 byte header with headerID of the file, should be
+            //     S  P  I  D  R  4\0\0
+            // 0x 34 52 44 49 50 53
+            if(headerID != 0x345244495053) {
                 throw ModuleError("Incorrect header ID for " + m_detector->getName() + " in file " + filename + ": " +
                                   std::to_string(headerID));
             }
@@ -199,10 +187,6 @@ StatusCode EventLoaderTimepix4::run(const std::shared_ptr<Clipboard>& clipboard)
         LOG(DEBUG) << "Loaded " << deviceData.size() << " pixels for device " << m_detector->getName();
         clipboard->putData(deviceData, m_detector->getName());
     }
-
-    //    if(!spidrData.empty()) {
-    //        clipboard->putData(spidrData, m_detector->getName());
-    //    }
 
     // Otherwise tell event loop to keep running
     LOG_PROGRESS(DEBUG, "tpx4_loader") << "Current time: " << Units::display(event->start(), {"s", "ms", "us", "ns"});
@@ -284,7 +268,6 @@ bool EventLoaderTimepix4::decodeNextWord() {
                 m_dataPacket = m_dataBuffer[i];
                 if(decodePacket(m_dataPacket)) {
                     LOG(TRACE) << "Found pixel data!";
-
                     if(!m_unsynced[m_fIndex]) {
 
                         // Filtering out digital pixel data
@@ -321,7 +304,7 @@ bool EventLoaderTimepix4::decodeNextWord() {
                 }
             }
         } else {
-            LOG(WARNING) << "Pixel encoding wrong, this should NOT happen!";
+            LOG(ERROR) << "Pixel encoding wrong, this should NOT happen! Expected 0b00, received " << encoding;
         }
     }
 
