@@ -145,12 +145,13 @@ bool FilterEvents::filter_cluster(const std::shared_ptr<Clipboard>& clipboard) {
             hFilter_->Fill(5); //  too few clusters
             LOG(TRACE) << "Number of Clusters on " << det << " below minimum";
             return true;
-        } else if(min_cluster_size_.has_value()) {          for(const auto& cluster : clusters) {
-            if(cluster->size() > min_cluster_size_) {
-              LOG(DEBUG) << "Found cluster with size above threshold: " << cluster->size();
-              has_large_cluster = true;
+        } else if(min_cluster_size_.has_value()) {
+            for(const auto& cluster : clusters) {
+                if(cluster->size() > min_cluster_size_) {
+                    LOG(DEBUG) << "Found cluster with size above threshold: " << cluster->size();
+                    has_large_cluster = true;
+                }
             }
-          }
         }
     }
     // If none of the clusters is above threshold, filter the event:

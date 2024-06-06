@@ -20,24 +20,24 @@ EventDisplay::EventDisplay(Configuration& config, std::shared_ptr<Detector> dete
 
 StatusCode EventDisplay::run(const std::shared_ptr<Clipboard>& clipboard) {
 
-  auto pixels = clipboard->getData<Pixel>(detector_->getName());
-  if(pixels.empty()) {
-      LOG(DEBUG) << "Detector " << detector_->getName() << " does not have any pixels on the clipboard";
-      return StatusCode::Success;
-  }
+    auto pixels = clipboard->getData<Pixel>(detector_->getName());
+    if(pixels.empty()) {
+        LOG(DEBUG) << "Detector " << detector_->getName() << " does not have any pixels on the clipboard";
+        return StatusCode::Success;
+    }
 
-  std::string title = "map_event_" + std::to_string(event_number_);
-  auto* histogram = new TProfile2D(title.c_str(),
-                                   "rawValues; column; row; raw values",
-                                   detector_->nPixels().X(),
-                                   -0.5,
-                                   detector_->nPixels().X() - 0.5,
-                                   detector_->nPixels().Y(),
-                                   -0.5,
-                                   detector_->nPixels().Y() - 0.5);
+    std::string title = "map_event_" + std::to_string(event_number_);
+    auto* histogram = new TProfile2D(title.c_str(),
+                                     "rawValues; column; row; raw values",
+                                     detector_->nPixels().X(),
+                                     -0.5,
+                                     detector_->nPixels().X() - 0.5,
+                                     detector_->nPixels().Y(),
+                                     -0.5,
+                                     detector_->nPixels().Y() - 0.5);
 
     for(const auto& pixel : pixels) {
-      histogram->Fill(pixel->column(), pixel->row(), pixel->raw());
+        histogram->Fill(pixel->column(), pixel->row(), pixel->raw());
     }
 
     histogram->Write();
