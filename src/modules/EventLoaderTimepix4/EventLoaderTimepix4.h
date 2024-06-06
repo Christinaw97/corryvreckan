@@ -131,13 +131,7 @@ namespace corryvreckan {
         std::vector<std::unique_ptr<std::ifstream>>::iterator m_file_iterator;
 
         // initialized variables for synchronization, header clearing etc.
-        unsigned long long int m_syncTime{0};
         uint64_t m_unsynced[2] = {1, 1};
-        bool m_clearedHeader{false};
-        long long int m_syncTimeTDC{0};
-        int m_TDCoverflowCounter{0};
-        int m_prevTriggerNumber{0};
-        int m_triggerOverflowCounter{0};
         bool eof_reached{false};
 
         //===============================================================
