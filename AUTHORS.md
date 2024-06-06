@@ -47,6 +47,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Klaas Padeken, Bonn, HISKP, [padeken](https://gitlab.cern.ch/padeken)
 * Florian Pitters, HEPHY, [fpipper](https://gitlab.cern.ch/fpipper)
 * Daniil Rastorguev, DESY, [drastorg](https://gitlab.cern.ch/drastorg)
+* Sara Ruiz Daza, DESY, [ruizdaza](https://gitlab.cern.ch/ruizdaza)
 * Adriana Simancas, DESY, [asimanca](https://gitlab.cern.ch/asimanca)
 * Miljenko Suljic, CERN, [msuljic](https://gitlab.cern.ch/msuljic)
 * Peter Svihra, CERN, [psvihra](https://gitlab.cern.ch/psvihra)
