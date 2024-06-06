@@ -413,6 +413,83 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket) {
     return true;
 }
 
+
+
+// Unpack the header of the data packet. Taken from kepler
+std::array<unsigned, 5> EventLoaderTimepix4::decode_header(uint64_t packet) {
+    return {unsigned(0xF & (packet >> 60)),
+            unsigned(0x3 & (packet >> 58)),
+            unsigned(0x3FF & (packet >> 48)),
+            unsigned(0x1FFF & (packet >> 32)),
+            unsigned(0xFFFFFFFF & (packet >> 0))};
+}
+
+// decodes the row and column position from the address dat etc. Taken from spidr4tools
+std::tuple<uint32_t, uint32_t>
+EventLoaderTimepix4::decodeColRow(uint64_t pix, uint64_t sPix, uint64_t spixgrp, uint64_t header, bool top) { // taken from spidr4tools
+    uint32_t col;
+    uint32_t row;
+    col = static_cast<uint32_t>(header << 1 | pix >> 2);
+    row = static_cast<uint32_t>(spixgrp << 4 | sPix << 2 | (pix & 0x3));
+    if(top) // top half counting is inverted
+    {
+        col = 448 - 1 - col;
+        row = 512 - 1 - row;
+    }
+
+    return {col, row};
+}
+
+// compares whether the tuple is part of the digital pixel array
+bool EventLoaderTimepix4::compareTupleEq(std::tuple<uint32_t, uint32_t> tuple1, std::tuple<uint32_t, uint32_t> tuple2) {
+    if(std::get<0>(tuple1) == std::get<0>(tuple2) && std::get<1>(tuple1) == std::get<1>(tuple2)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// switches the file iterator from one to the next
+std::tuple<uint, std::vector<std::unique_ptr<std::ifstream>>::iterator>
+EventLoaderTimepix4::switchHalf(uint fIndex, std::vector<std::unique_ptr<std::ifstream>>::iterator fIterator) {
+    if(fIndex) {
+        fIterator--;
+        fIndex = 0;
+        return {fIndex, fIterator};
+    } else {
+        fIterator++;
+        fIndex = 1;
+        return {fIndex, fIterator};
+    }
+}
+
+// extension of the 16 bit ToA using the 64 bit heartbeat counter
+uint64_t EventLoaderTimepix4::extendToa(uint64_t toa, uint64_t heartbeat, uint64_t tot) {
+    // extending toa by heartbeat counter
+    uint64_t extToa = toa | (heartbeat & 0xFFFFFFFFFFFF0000);
+
+    // toa vs heartbeat for latency correction
+    if(extToa + 0x8000 < heartbeat)
+        extToa += 0x10000;
+    else if(extToa > heartbeat + 0x8000 && toa >= 0x10000)
+        extToa -= 0x10000;
+    if(!tot)
+        extToa++;
+    return extToa;
+}
+
+//converts gray encoded bits to binary
+inline uint16_t EventLoaderTimepix4::GrayToBin(uint16_t val) // taken from spidr4tools
+{
+    val ^= val >> 8;
+    val ^= val >> 4;
+    val ^= val >> 2;
+    val ^= val >> 1;
+
+    return val;
+}
+
+
 void EventLoaderTimepix4::fillBuffer() {
     // read data from file and fill timesorted buffer
     while(sorted_pixels_.size() < m_buffer_depth && !eof_reached) {

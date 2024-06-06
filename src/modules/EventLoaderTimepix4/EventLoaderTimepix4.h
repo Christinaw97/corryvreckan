@@ -35,7 +35,7 @@ namespace corryvreckan {
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
 
     private:
-        enum uint8_t {
+        enum headerIdentifier:uint8_t {
             pixel_data = 0x00,
 
             ctrl_heartbeat = 0xE0,
@@ -79,25 +79,18 @@ namespace corryvreckan {
         TH1F* hRawFullToA;
         TH1F* hHitTime;
 
-        bool decodeNextWord();
-        bool decodePacket(uint64_t packet);
-        void fillBuffer();
-        bool loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector&);
-
         // configuration parameters:
         std::string m_inputDirectory;
 
-        std::string calibrationPath;
-        std::string threshold;
-
-        std::vector<std::vector<float>> vtot;
-        std::vector<std::vector<float>> vtoa;
-
+        // data information
         heartbeatData m_hbData;
         uint16_t m_hbIndex = 0;
         std::vector<heartbeatData> m_hbDataBuffer;
-
         std::vector<pixelData> m_pDataBuffer;
+        size_t m_buffer_depth;
+        std::vector<uint64_t> m_dataBuffer;
+        uint64_t m_dataPacket;
+        long long int m_currentEvent;
 
 
 
@@ -118,10 +111,9 @@ namespace corryvreckan {
         uint64_t m_fullTot;
         uint64_t m_fullToa;
         uint64_t m_oldbeat;
+        uint64_t m_packetTime[2] = {0, 0};
 
-
-        uint64_t m_packetTime[2] = {0};
-
+        // decoded column and row value
         std::tuple<uint32_t, uint32_t> m_colrow;
 
         // conversion factor from:
@@ -129,18 +121,18 @@ namespace corryvreckan {
         // fine tdc (~1.56ns | 1/640 MHz^-1)
         // ultrafine tdc (~195 ps | 1/(8*640) MHz^-1)
 
-        // location of the digital pixels
+        // location of the digital pixels in the matrix for filtering
         std::tuple<uint32_t, uint32_t> m_digColRow[8] = {
             {0, 0}, {4, 1}, {441, 2}, {445, 3}, {2, 508}, {6, 509}, {443, 510}, {447, 511}};
 
-        std::streampos m_stream_pos[2] = {0, 0};
         uint m_fIndex = 0;
 
-        // Member variables
+        // File Member variables
         std::vector<std::unique_ptr<std::ifstream>> m_files;
         std::vector<std::unique_ptr<std::ifstream>>::iterator m_file_iterator;
 
 
+        // initialized variables for synchronization, header clearing etc.
         unsigned long long int m_syncTime {0};
         uint64_t m_unsynced[2] = {1, 1};
         bool m_clearedHeader {false};
@@ -150,12 +142,9 @@ namespace corryvreckan {
         int m_triggerOverflowCounter {0};
         bool eof_reached {false};
 
-        size_t m_buffer_depth;
-        std::vector<uint64_t> m_dataBuffer;
-        uint64_t m_dataPacket;
-        long long int m_currentEvent;
-
-
+        //===============================================================
+        // Begin of functions that are used within the Module
+        //===============================================================
         template <typename T> struct CompareTimeGreater {
             bool operator()(const std::shared_ptr<T> a, const std::shared_ptr<T> b) {
                 return a->timestamp() > b->timestamp();
@@ -164,120 +153,97 @@ namespace corryvreckan {
 
         std::priority_queue<std::shared_ptr<Pixel>, PixelVector, CompareTimeGreater<Pixel>> sorted_pixels_;
 
-        //======================================================================================================================
-        // Unpack the header of the data packet (original, kepler)
-        //======================================================================================================================
-        std::array<unsigned, 5> decode_header(uint64_t packet) const {
-            return {unsigned(0xF & (packet >> 60)),
-                    unsigned(0x3 & (packet >> 58)),
-                    unsigned(0x3FF & (packet >> 48)),
-                    unsigned(0x1FFF & (packet >> 32)),
-                    unsigned(0xFFFFFFFF & (packet >> 0))};
-        }
+        //decodes the next word, consisting of a header which tells me how many following datapackets are part of (pixel/heartbeat data)
+        bool decodeNextWord();
 
+        //decodes the 64 bit dat apacket
+        bool decodePacket(uint64_t packet);
+
+        void fillBuffer();
+
+        bool loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector&);
+
+        // Unpack the header of the data packet. Taken from kepler
+        std::array<unsigned, 5> decode_header(uint64_t packet);
+
+        // decodes the row and column position from the address dat etc. Taken from spidr4tools
+        std::tuple<uint32_t, uint32_t>
+        decodeColRow(uint64_t pix, uint64_t sPix, uint64_t spixgrp, uint64_t header, bool top);
+
+        // compares whether the tuple is part of the digital pixel array
+        bool compareTupleEq(std::tuple<uint32_t, uint32_t> tuple1, std::tuple<uint32_t, uint32_t> tuple2);
+
+        // switches the file iterator from one to the next
+        std::tuple<uint, std::vector<std::unique_ptr<std::ifstream>>::iterator>
+        switchHalf(uint fIndex, std::vector<std::unique_ptr<std::ifstream>>::iterator fIterator);
+
+        // extension of the 16 bit ToA using the 64 bit heartbeat counter
+        uint64_t extendToa(uint64_t toa, uint64_t heartbeat, uint64_t tot);
+
+        //converts gray encoded bits to binary
+        uint16_t GrayToBin(uint16_t val);
+
+
+
+        // Decode TOT. Units are period of 8*640MHz (195 ps)
         uint64_t fullTot(uint64_t ftoa_rise, uint64_t ftoa_fall, uint64_t uftoa_start, uint64_t uftoa_stop, uint64_t tot) {
-            // Decode TOT. Units are period of 8*640MHz (195 ps)
             return ((tot << 7) + ((ftoa_rise - ftoa_fall) << 3) - (uftoa_start - uftoa_stop));
         }
 
+        // Decode TOA. Units are period of 8*640MHz (195 ps)
         uint64_t fullToa(uint64_t toa, uint64_t uftoa_start, uint64_t uftoa_stop, uint64_t ftoa_rise) {
-            // Decode TOA. Units are period of 8*640MHz (195 ps)
             return ((toa << 7) - (ftoa_rise << 3) + (uftoa_start - uftoa_stop));
         }
 
+        // Corrects latency delay due to DDLL clock distribution. Units are period of 40MHz (25ns)
         uint64_t toa_clkdll_correction(uint64_t spgroup_addr = 0) {
-            // Corrects latency delay due to DDLL clock distribution. Units are period of 40MHz (25ns)
             uint64_t clk_dll_step = 1 >> 5;
             return (15 - spgroup_addr) * clk_dll_step;
         }
 
-        // decodes the row and column position from the address dat etc.
-        std::tuple<uint32_t, uint32_t>
-        decodeColRow(uint64_t pix, uint64_t sPix, uint64_t spixgrp, uint64_t header, bool top) { // taken from spidr4tools
-            uint32_t col;
-            uint32_t row;
-            col = static_cast<uint32_t>(header << 1 | pix >> 2);
-            row = static_cast<uint32_t>(spixgrp << 4 | sPix << 2 | (pix & 0x3));
-            if(top) // top half counting is inverted
-            {
-                col = 448 - 1 - col;
-                row = 512 - 1 - row;
-            }
 
-            return {col, row};
-        }
 
+        // address including pixel, super pixel and super pixel group values
         uint64_t getAddr(uint64_t packet) {
             return (packet >> 46) & 0x3ffff;
-        } // address including pixel, super pixel and super pixel group values
-        uint64_t getSuperPixelGroup(uint64_t packet) { return (packet >> 51) & 0xf; } // super pixel group address
-        uint64_t getSuperPixel(uint64_t packet) { return (packet >> 49) & 0x3; }      // super pixel address
-        uint64_t getPixel(uint64_t packet) { return (packet >> 46) & 0x7; }           // pixel address
+        }
 
+        // super pixel group address
+        uint64_t getSuperPixelGroup(uint64_t packet) { return (packet >> 51) & 0xf; }
+
+        // super pixel address
+        uint64_t getSuperPixel(uint64_t packet) { return (packet >> 49) & 0x3; }
+
+        // pixel address
+        uint64_t getPixel(uint64_t packet) { return (packet >> 46) & 0x7; }
+
+        // Time of Arrival (ToA) | units of 25 ns (1/(40 MHz))
         uint16_t getToA(uint64_t packet) {
             return (packet >> 30) & 0xffff;
-        } // Time of Arrival (ToA) | units of 25 ns (1/(40 MHz))
+        }
+
+        // fine ToA rising edge | units of ~1.56 ns (1/(640 MHz)
         uint64_t getFToARise(uint64_t packet) {
             return (packet >> 17) & 0x1f;
-        } // fine ToA rising edge | units of ~1.56 ns (1/(640 MHz)
+        }
+
+        // fine ToA falling edge | units of ~1.56 ns (1/(640 MHz)
         uint64_t getFToAFall(uint64_t packet) {
             return (packet >> 12) & 0x1f;
-        } // fine ToA falling edge | units of ~1.56 ns (1/(640 MHz)
+        }
+
+        // Time over Threshold | units of 25 ns  (1/(40 MHz))
         uint64_t getToT(uint64_t packet) {
             return (packet >> 1) & 0x7ff;
-        } // Time over Threshold | units of 25 ns  (1/(40 MHz))
+        }
+
+        // bit to register whether another hit was coming in while pixel was busy
         uint64_t getPileUp(uint64_t packet) {
             return packet & 0x1;
-        } // bit to register whether another hit was coming in while pixel was busy
-
-        bool compareTupleEq(std::tuple<uint32_t, uint32_t> tuple1, std::tuple<uint32_t, uint32_t> tuple2) {
-            if(std::get<0>(tuple1) == std::get<0>(tuple2) && std::get<1>(tuple1) == std::get<1>(tuple2)) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        std::tuple<uint, std::vector<std::unique_ptr<std::ifstream>>::iterator>
-        switchHalf(uint fIndex, std::vector<std::unique_ptr<std::ifstream>>::iterator fIterator) {
-            if(fIndex) {
-                fIterator--;
-                fIndex = 0;
-                return {fIndex, fIterator};
-            } else {
-                fIterator++;
-                fIndex = 1;
-                return {fIndex, fIterator};
-            }
-        }
-
-        uint64_t extendToa(uint64_t toa, uint64_t heartbeat, uint64_t tot) {
-            // extending toa by heartbeat counter
-            uint64_t extToa = toa | (heartbeat & 0xFFFFFFFFFFFF0000);
-
-            // toa vs heartbeat for latency correction
-            if(extToa + 0x8000 < heartbeat)
-                toa += 0x10000;
-            else if(extToa > heartbeat + 0x8000 && toa >= 0x10000)
-                toa -= 0x10000;
-
-            if(!tot)
-                extToa++;
-            return extToa;
-        }
-
-        inline uint16_t GrayToBin(uint16_t val) // taken from spidr4tools
-        {
-            val ^= val >> 8;
-            val ^= val >> 4;
-            val ^= val >> 2;
-            val ^= val >> 1;
-
-            return val;
         }
 
         //========================================
-        // uftoa encoding change to actual values (original, TPX4TOOLS by kevin)
+        // uftoa encoding change to actual values (original, TPX4TOOLS by kevin heijhoff)
         // =======================================
         uint64_t uftoaBin[16] = {4, 5, 8, 6, 8, 8, 8, 7, 3, 8, 8, 8, 2, 8, 1, 0};
         uint64_t UftoaStart(uint64_t value) { return uftoaBin[value >> 26 & 0x000F]; }
