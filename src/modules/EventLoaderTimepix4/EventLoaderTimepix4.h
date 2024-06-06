@@ -15,9 +15,9 @@
 #include <TCanvas.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <filesystem>
 #include <queue>
 #include <stdio.h>
-#include <filesystem>
 #include "core/module/Module.hpp"
 #include "objects/Pixel.hpp"
 
@@ -36,7 +36,7 @@ namespace corryvreckan {
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
 
     private:
-        enum headerIdentifier:uint8_t {
+        enum headerIdentifier : uint8_t {
             pixel_data = 0x00,
 
             ctrl_heartbeat = 0xE0,
@@ -94,9 +94,6 @@ namespace corryvreckan {
         uint64_t m_dataPacket;
         long long int m_currentEvent;
 
-
-
-
         // pixel packet variables
         uint64_t m_addr;
         uint64_t m_pileup;
@@ -133,16 +130,15 @@ namespace corryvreckan {
         std::vector<std::unique_ptr<std::ifstream>> m_files;
         std::vector<std::unique_ptr<std::ifstream>>::iterator m_file_iterator;
 
-
         // initialized variables for synchronization, header clearing etc.
-        unsigned long long int m_syncTime {0};
+        unsigned long long int m_syncTime{0};
         uint64_t m_unsynced[2] = {1, 1};
-        bool m_clearedHeader {false};
-        long long int m_syncTimeTDC {0};
-        int m_TDCoverflowCounter {0};
-        int m_prevTriggerNumber {0};
-        int m_triggerOverflowCounter {0};
-        bool eof_reached {false};
+        bool m_clearedHeader{false};
+        long long int m_syncTimeTDC{0};
+        int m_TDCoverflowCounter{0};
+        int m_prevTriggerNumber{0};
+        int m_triggerOverflowCounter{0};
+        bool eof_reached{false};
 
         //===============================================================
         // Begin of functions that are used within the Module
@@ -155,10 +151,11 @@ namespace corryvreckan {
 
         std::priority_queue<std::shared_ptr<Pixel>, PixelVector, CompareTimeGreater<Pixel>> sorted_pixels_;
 
-        //decodes the next word, consisting of a header which tells me how many following datapackets are part of (pixel/heartbeat data)
+        // decodes the next word, consisting of a header which tells me how many following datapackets are part of
+        // (pixel/heartbeat data)
         bool decodeNextWord();
 
-        //decodes the 64 bit dat apacket
+        // decodes the 64 bit dat apacket
         bool decodePacket(uint64_t packet);
 
         void fillBuffer();
@@ -182,10 +179,8 @@ namespace corryvreckan {
         // extension of the 16 bit ToA using the 64 bit heartbeat counter
         uint64_t extendToa(uint64_t toa, uint64_t heartbeat, uint64_t tot);
 
-        //converts gray encoded bits to binary
+        // converts gray encoded bits to binary
         uint16_t GrayToBin(uint16_t val);
-
-
 
         // Decode TOT. Units are period of 8*640MHz (195 ps)
         uint64_t fullTot(uint64_t ftoa_rise, uint64_t ftoa_fall, uint64_t uftoa_start, uint64_t uftoa_stop, uint64_t tot) {
@@ -203,12 +198,8 @@ namespace corryvreckan {
             return (15 - spgroup_addr) * clk_dll_step;
         }
 
-
-
         // address including pixel, super pixel and super pixel group values
-        uint64_t getAddr(uint64_t packet) {
-            return (packet >> 46) & 0x3ffff;
-        }
+        uint64_t getAddr(uint64_t packet) { return (packet >> 46) & 0x3ffff; }
 
         // super pixel group address
         uint64_t getSuperPixelGroup(uint64_t packet) { return (packet >> 51) & 0xf; }
@@ -220,29 +211,19 @@ namespace corryvreckan {
         uint64_t getPixel(uint64_t packet) { return (packet >> 46) & 0x7; }
 
         // Time of Arrival (ToA) | units of 25 ns (1/(40 MHz))
-        uint16_t getToA(uint64_t packet) {
-            return (packet >> 30) & 0xffff;
-        }
+        uint16_t getToA(uint64_t packet) { return (packet >> 30) & 0xffff; }
 
         // fine ToA rising edge | units of ~1.56 ns (1/(640 MHz)
-        uint64_t getFToARise(uint64_t packet) {
-            return (packet >> 17) & 0x1f;
-        }
+        uint64_t getFToARise(uint64_t packet) { return (packet >> 17) & 0x1f; }
 
         // fine ToA falling edge | units of ~1.56 ns (1/(640 MHz)
-        uint64_t getFToAFall(uint64_t packet) {
-            return (packet >> 12) & 0x1f;
-        }
+        uint64_t getFToAFall(uint64_t packet) { return (packet >> 12) & 0x1f; }
 
         // Time over Threshold | units of 25 ns  (1/(40 MHz))
-        uint64_t getToT(uint64_t packet) {
-            return (packet >> 1) & 0x7ff;
-        }
+        uint64_t getToT(uint64_t packet) { return (packet >> 1) & 0x7ff; }
 
         // bit to register whether another hit was coming in while pixel was busy
-        uint64_t getPileUp(uint64_t packet) {
-            return packet & 0x1;
-        }
+        uint64_t getPileUp(uint64_t packet) { return packet & 0x1; }
 
         //========================================
         // uftoa encoding change to actual values (original, TPX4TOOLS by kevin heijhoff)

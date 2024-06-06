@@ -45,12 +45,10 @@ void EventLoaderTimepix4::initialize() {
     // What is given is the path to the run from which the corresponding chips get chosen
 
     // Open the root directory
-    if (exists(m_inputPath) && is_directory(m_inputPath)){
+    if(exists(m_inputPath) && is_directory(m_inputPath)) {
         LOG(TRACE) << "Found directory " << m_inputPath;
-    }
-    else throw ModuleError("Directory " + std::string(m_inputPath) + " does not exist");
-
-
+    } else
+        throw ModuleError("Directory " + std::string(m_inputPath) + " does not exist");
 
     // Open the root directory
     DIR* directory = opendir(m_inputDirectory.c_str());
@@ -60,21 +58,22 @@ void EventLoaderTimepix4::initialize() {
         LOG(TRACE) << "Found directory " << m_inputDirectory;
     }
 
-
     // Buffer for file names:
     std::vector<std::string> detector_files;
 
     // fill the buffer with the data files
-    for (const auto& fentry : std::filesystem::directory_iterator(m_inputPath)){
+    for(const auto& fentry : std::filesystem::directory_iterator(m_inputPath)) {
         // due to the file format, non directories can be skipped for this
-        if (!is_directory(fentry)) continue;
-        //if the directory is not of the correct detector name described in the geo then it can also be skipped.
-        if (fentry.path().filename() != m_detector->getName()) continue;
-        //otherwise enter the directory and read in the data
-        for (const auto& tpxDataPath : std::filesystem::directory_iterator(fentry)){
+        if(!is_directory(fentry))
+            continue;
+        // if the directory is not of the correct detector name described in the geo then it can also be skipped.
+        if(fentry.path().filename() != m_detector->getName())
+            continue;
+        // otherwise enter the directory and read in the data
+        for(const auto& tpxDataPath : std::filesystem::directory_iterator(fentry)) {
             // Check if file has extension .dat if so this will be read, otherwise not
             if(tpxDataPath.path().extension() == ".dat") {
-                LOG(INFO) << "Enqueuing data file for " <<  m_detector->getName() << " : " << tpxDataPath.path();
+                LOG(INFO) << "Enqueuing data file for " << m_detector->getName() << " : " << tpxDataPath.path();
                 detector_files.push_back(tpxDataPath.path());
             }
         }
@@ -403,8 +402,6 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket) {
     return true;
 }
 
-
-
 // Unpack the header of the data packet. Taken from kepler
 std::array<unsigned, 5> EventLoaderTimepix4::decode_header(uint64_t packet) {
     return {unsigned(0xF & (packet >> 60)),
@@ -415,8 +412,8 @@ std::array<unsigned, 5> EventLoaderTimepix4::decode_header(uint64_t packet) {
 }
 
 // decodes the row and column position from the address dat etc. Taken from spidr4tools
-std::tuple<uint32_t, uint32_t>
-EventLoaderTimepix4::decodeColRow(uint64_t pix, uint64_t sPix, uint64_t spixgrp, uint64_t header, bool top) { // taken from spidr4tools
+std::tuple<uint32_t, uint32_t> EventLoaderTimepix4::decodeColRow(
+    uint64_t pix, uint64_t sPix, uint64_t spixgrp, uint64_t header, bool top) { // taken from spidr4tools
     uint32_t col;
     uint32_t row;
     col = static_cast<uint32_t>(header << 1 | pix >> 2);
@@ -468,7 +465,7 @@ uint64_t EventLoaderTimepix4::extendToa(uint64_t toa, uint64_t heartbeat, uint64
     return extToa;
 }
 
-//converts gray encoded bits to binary
+// converts gray encoded bits to binary
 inline uint16_t EventLoaderTimepix4::GrayToBin(uint16_t val) // taken from spidr4tools
 {
     val ^= val >> 8;
@@ -478,7 +475,6 @@ inline uint16_t EventLoaderTimepix4::GrayToBin(uint16_t val) // taken from spidr
 
     return val;
 }
-
 
 void EventLoaderTimepix4::fillBuffer() {
     // read data from file and fill timesorted buffer
