@@ -32,6 +32,7 @@ EventLoaderTimepix4::EventLoaderTimepix4(Configuration& config, std::shared_ptr<
 
     // Take input directory from global parameters
     m_inputDirectory = config_.getPath("input_directory");
+    m_inputPath = config_.getPath("input_directory");
 }
 
 void EventLoaderTimepix4::initialize() {
@@ -41,6 +42,15 @@ void EventLoaderTimepix4::initialize() {
     }
 
     // File structure is RunX/ChipID/files.dat
+    // What is given is the path to the run from which the corresponding chips get chosen
+
+    // Open the root directory
+    if (exists(m_inputPath) && is_directory(m_inputPath)){
+        LOG(TRACE) << "Found directory " << m_inputPath;
+    }
+    else throw ModuleError("Directory " + std::string(m_inputPath) + " does not exist");
+
+
 
     // Open the root directory
     DIR* directory = opendir(m_inputDirectory.c_str());
@@ -49,43 +59,23 @@ void EventLoaderTimepix4::initialize() {
     } else {
         LOG(TRACE) << "Found directory " << m_inputDirectory;
     }
-    dirent* entry;
-    dirent* file;
+
 
     // Buffer for file names:
     std::vector<std::string> detector_files;
-    // Read the entries in the folder
-    while((entry = readdir(directory))) {
 
-        // Ignore UNIX functional directories:
-        if(std::string(entry->d_name).at(0) == '.') {
-            continue;
-        }
-
-        // If these are folders then the name is the chip ID
-        // For some dt_type is empty for the data entries so currently identifying files by name
-        if(entry->d_type == DT_DIR || (entry->d_type == DT_UNKNOWN && std::string(entry->d_name).at(0) == 'T')) {
-
-            // Only read files from correct directory: Note: currently doesn't work? maybe some weird metadata that
-            // determines this that isn't set in the tpx4 data file unlike the tpx3 data?
-            if(entry->d_name != m_detector->getName()) {
-                continue;
-            }
-            LOG(DEBUG) << "Found directory for detector " << entry->d_name;
-
-            // Open the folder for this device
-            string dataDirName = m_inputDirectory + "/" + entry->d_name;
-            DIR* dataDir = opendir(dataDirName.c_str());
-
-            // Get all of the files for this chip
-            while((file = readdir(dataDir))) {
-                string filename = dataDirName + "/" + file->d_name;
-
-                // Check if file has extension .dat
-                if(string(file->d_name).find(".dat") != string::npos) {
-                    LOG(INFO) << "Enqueuing data file for " << entry->d_name << ": " << filename;
-                    detector_files.push_back(filename);
-                }
+    // fill the buffer with the data files
+    for (const auto& fentry : std::filesystem::directory_iterator(m_inputPath)){
+        // due to the file format, non directories can be skipped for this
+        if (!is_directory(fentry)) continue;
+        //if the directory is not of the correct detector name described in the geo then it can also be skipped.
+        if (fentry.path().filename() != m_detector->getName()) continue;
+        //otherwise enter the directory and read in the data
+        for (const auto& tpxDataPath : std::filesystem::directory_iterator(fentry)){
+            // Check if file has extension .dat if so this will be read, otherwise not
+            if(tpxDataPath.path().extension() == ".dat") {
+                LOG(INFO) << "Enqueuing data file for " <<  m_detector->getName() << " : " << tpxDataPath.path();
+                detector_files.push_back(tpxDataPath.path());
             }
         }
     }

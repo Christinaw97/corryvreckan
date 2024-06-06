@@ -17,6 +17,7 @@
 #include <TH2F.h>
 #include <queue>
 #include <stdio.h>
+#include <filesystem>
 #include "core/module/Module.hpp"
 #include "objects/Pixel.hpp"
 
@@ -81,6 +82,7 @@ namespace corryvreckan {
 
         // configuration parameters:
         std::string m_inputDirectory;
+        std::filesystem::path m_inputPath;
 
         // data information
         heartbeatData m_hbData;
