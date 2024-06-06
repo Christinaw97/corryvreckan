@@ -50,14 +50,6 @@ void EventLoaderTimepix4::initialize() {
     } else
         throw ModuleError("Directory " + std::string(m_inputPath) + " does not exist");
 
-    // Open the root directory
-    DIR* directory = opendir(m_inputDirectory.c_str());
-    if(directory == nullptr) {
-        throw ModuleError("Directory " + m_inputDirectory + " does not exist");
-    } else {
-        LOG(TRACE) << "Found directory " << m_inputDirectory;
-    }
-
     // Buffer for file names:
     std::vector<std::string> detector_files;
 
