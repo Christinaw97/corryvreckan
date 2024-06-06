@@ -302,8 +302,7 @@ StatusCode AnalysisBeamProfile::run(const std::shared_ptr<Clipboard>& clipboard)
     cluster->setClusterCentre(positionGlobal);
     cluster->setClusterCentreLocal(positionLocal);
     cluster->setCharge(total_charge);
-    cluster->setErrorX(widthX);
-    cluster->setErrorY(widthY);
+    cluster->setWidth(widthX, widthY);
 
     // Put the only cluster to the clipboard
     ClusterVector deviceClusters;
