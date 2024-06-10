@@ -12,13 +12,12 @@
 #ifndef EventLoaderHDF5_H
 #define EventLoaderHDF5_H 1
 
+#include <H5Cpp.h>
 #include <TH1F.h>
 #include <TH2F.h>
-#include <H5Cpp.h>
-#include <TGraph.h>
+#include <queue>
 #include "core/module/Module.hpp"
 #include "objects/Pixel.hpp"
-#include <queue>
 
 namespace corryvreckan {
 
@@ -79,7 +78,7 @@ namespace corryvreckan {
         // If timestamps are not available, sort by trigger number. If that fails, good luck
         template <typename T> struct CompareTimeGreater {
             bool operator()(const std::shared_ptr<T> a, const std::shared_ptr<T> b) {
-                if ((a->timestamp > 0) && (b->timestamp > 0)) {
+                if((a->timestamp > 0) && (b->timestamp > 0)) {
                     return a->timestamp > b->timestamp;
                 } else {
                     return a->trigger_number > b->trigger_number;

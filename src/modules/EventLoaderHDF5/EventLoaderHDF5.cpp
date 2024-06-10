@@ -13,221 +13,226 @@
 
 namespace corryvreckan {
 
-EventLoaderHDF5::EventLoaderHDF5(Configuration& config, std::shared_ptr<Detector> detector)
-    : Module(config, detector), m_detector(detector), m_currentEvent(0) {
-    m_fileName = config.getPath("filename");
-    m_datasetName = config.get<std::string>("dataset_name", "Hits");
-    m_bufferSize = config.get<hsize_t>("buffer_size", 500000);
-    m_sync_by_trigger = config.get<bool>("sync_by_trigger", false);
-    m_eventLength = config.get<double>("event_length", Units::get<double>(1, "us"));
-    m_timestampShift = config.get<double>("timestamp_shift", 0);
-    m_triggerShift = config.get<int>("trigger_shift", 0);
-}
-
-void EventLoaderHDF5::initialize() {
-    // Open the file
-    try {
-        m_file = H5::H5File(m_fileName, H5F_ACC_RDONLY);
-        m_dataset = m_file.openDataSet(m_datasetName);
-    } catch (const std::exception& ex) {
-        LOG(ERROR) << "Failed to open file.";
-        throw;
+    EventLoaderHDF5::EventLoaderHDF5(Configuration& config, std::shared_ptr<Detector> detector)
+        : Module(config, detector), m_detector(detector), m_currentEvent(0) {
+        m_fileName = config.getPath("filename");
+        m_datasetName = config.get<std::string>("dataset_name", "Hits");
+        m_bufferSize = config.get<hsize_t>("buffer_size", 500000);
+        m_sync_by_trigger = config.get<bool>("sync_by_trigger", false);
+        m_eventLength = config.get<double>("event_length", Units::get<double>(1, "us"));
+        m_timestampShift = config.get<double>("timestamp_shift", 0);
+        m_triggerShift = config.get<int>("trigger_shift", 0);
     }
 
-    m_currentEvent = 0;
+    void EventLoaderHDF5::initialize() {
+        // Open the file
+        try {
+            m_file = H5::H5File(m_fileName, H5F_ACC_RDONLY);
+            m_dataset = m_file.openDataSet(m_datasetName);
+        } catch(const std::exception& ex) {
+            LOG(ERROR) << "Failed to open file.";
+            throw;
+        }
 
-    if (!m_detector->isAuxiliary()) {
-        // Initialize hitmap and charge histograms
-        hHitMap = new TH2F
-        (
-            "hitMap",
-            "Hit Map",
-            m_detector->nPixels().X(),
-            -0.5,
-            m_detector->nPixels().X() - 0.5,
-            m_detector->nPixels().Y(),
-            -0.5,
-            m_detector->nPixels().Y() - 0.5
-        );
-        hPixelToT = new TH1F("pixelToT", "Pixel ToT", 200, -0.5, 199.5);
+        m_currentEvent = 0;
+
+        if(!m_detector->isAuxiliary()) {
+            // Initialize hitmap and charge histograms
+            hHitMap = new TH2F("hitMap",
+                               "Hit Map",
+                               m_detector->nPixels().X(),
+                               -0.5,
+                               m_detector->nPixels().X() - 0.5,
+                               m_detector->nPixels().Y(),
+                               -0.5,
+                               m_detector->nPixels().Y() - 0.5);
+            hPixelToT = new TH1F("pixelToT", "Pixel ToT", 200, -0.5, 199.5);
+        }
+
+        // TODO: only define those if event is not defined yet. How to find out here?
+        std::string title =
+            "Corryvreckan event start times (placed on clipboard); Corryvreckan event start time [ms];# entries";
+        hClipboardEventStart = new TH1D("clipboardEventStart", title.c_str(), 3e6, 0, 3e3);
+
+        title = "Corryvreckan event start times (placed on clipboard); Corryvreckan event start time [s];# entries";
+        hClipboardEventStart_long = new TH1D("clipboardEventStart_long", title.c_str(), 3e6, 0, 3e3);
+
+        title = "Corryvreckan event end times (placed on clipboard); Corryvreckan event end time [ms];# entries";
+        hClipboardEventEnd = new TH1D("clipboardEventEnd", title.c_str(), 3e6, 0, 3e3);
+
+        title = "Corryvreckan event end times (on clipboard); Corryvreckan event duration [ms];# entries";
+        hClipboardEventDuration = new TH1D("clipboardEventDuration", title.c_str(), 3e6, 0, 3e3);
+
+        m_start_record = 0;
+
+        f_dataspace = m_dataset.getSpace();
+        f_total_records = static_cast<hsize_t>(f_dataspace.getSimpleExtentNpoints());
+        LOG(DEBUG) << "Total number of records " << f_total_records;
     }
 
-    // TODO: only define those if event is not defined yet. How to find out here?
-    std::string title = "Corryvreckan event start times (placed on clipboard); Corryvreckan event start time [ms];# entries";
-    hClipboardEventStart = new TH1D("clipboardEventStart", title.c_str(), 3e6, 0, 3e3);
+    StatusCode EventLoaderHDF5::run(const std::shared_ptr<Clipboard>& clipboard) {
+        PixelVector deviceData;
 
-    title = "Corryvreckan event start times (placed on clipboard); Corryvreckan event start time [s];# entries";
-    hClipboardEventStart_long = new TH1D("clipboardEventStart_long", title.c_str(), 3e6, 0, 3e3);
+        // Load data directly into the vector
+        bool data = loadData(clipboard, deviceData);
 
-    title = "Corryvreckan event end times (placed on clipboard); Corryvreckan event end time [ms];# entries";
-    hClipboardEventEnd = new TH1D("clipboardEventEnd", title.c_str(), 3e6, 0, 3e3);
+        if(data) {
+            LOG(DEBUG) << "Loaded " << deviceData.size() << " pixels for device " << m_detector->getName();
+            clipboard->putData(deviceData, m_detector->getName());
+        }
 
-    title = "Corryvreckan event end times (on clipboard); Corryvreckan event duration [ms];# entries";
-    hClipboardEventDuration = new TH1D("clipboardEventDuration", title.c_str(), 3e6, 0, 3e3);
+        LOG(DEBUG) << clipboard->countObjects<Pixel>() << " objects on the clipboard";
+        if((m_start_record == f_total_records) & m_buffer.empty()) {
+            return StatusCode::EndRun;
+        }
 
-    m_start_record = 0;
-
-    f_dataspace = m_dataset.getSpace();
-    f_total_records = static_cast<hsize_t>(f_dataspace.getSimpleExtentNpoints());
-    LOG(DEBUG) << "Total number of records " << f_total_records;
-}
-
-StatusCode EventLoaderHDF5::run(const std::shared_ptr<Clipboard>& clipboard) {
-    PixelVector deviceData;
-
-    // Load data directly into the vector
-    bool data = loadData(clipboard, deviceData);
-
-    if (data) {
-        LOG(DEBUG) << "Loaded " << deviceData.size() << " pixels for device " << m_detector->getName();
-        clipboard->putData(deviceData, m_detector->getName());
+        return StatusCode::Success;
     }
 
-    LOG(DEBUG) << clipboard->countObjects<Pixel>() << " objects on the clipboard";
-    if ((m_start_record == f_total_records) & m_buffer.empty()) {
-        return StatusCode::EndRun;
+    bool EventLoaderHDF5::loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector& deviceData_) {
+        // Ensure that m_buffer is filled with data
+        fillBuffer();
+
+        std::string detectorID = m_detector->getName();
+
+        while(!m_buffer.empty()) {
+            auto hit = m_buffer.top();
+
+            // TODO: add warning when overflow / decrease occurs
+            double shiftedTimestamp = static_cast<double>(hit->timestamp) + m_timestampShift;
+
+            // TODO: add option to shift trigger and/or timestamp
+
+            // Check if an event is defined or if we need to create it:
+            if(!clipboard->isEventDefined()) {
+                double event_start = shiftedTimestamp;
+                double event_end = event_start + m_eventLength;
+                LOG(DEBUG) << "Defining Corryvreckan event: " << Units::display(event_start, {"us", "ns"}) << " - "
+                           << Units::display(event_end, {"us", "ns"}) << ", length "
+                           << Units::display(event_end - event_start, {"us", "ns"});
+                clipboard->putEvent(std::make_shared<Event>(event_start, event_end));
+                clipboard->getEvent()->addTrigger(
+                    hit->trigger_number,
+                    event_start + m_eventLength / 2); // TODO: decide where to put trigger inside the event? Maybe also in
+                                                      // case of already defined events?
+                hClipboardEventStart->Fill(static_cast<double>(Units::convert(event_start, "ms")));
+                hClipboardEventStart_long->Fill(static_cast<double>(Units::convert(event_start, "s")));
+                hClipboardEventEnd->Fill(static_cast<double>(Units::convert(event_end, "ms")));
+                hClipboardEventDuration->Fill(static_cast<double>(
+                    Units::convert(clipboard->getEvent()->end() - clipboard->getEvent()->start(), "ms")));
+            } else {
+                LOG(DEBUG) << "Corryvreckan event found on clipboard: "
+                           << Units::display(clipboard->getEvent()->start(), {"us", "ns"}) << " - "
+                           << Units::display(clipboard->getEvent()->end(), {"us", "ns"})
+                           << ", length: " << Units::display(clipboard->getEvent()->duration(), {"us", "ns"});
+            }
+
+            Event::Position position = getPosition(clipboard);
+            auto event = clipboard->getEvent();
+
+            if(position == Event::Position::AFTER) {
+                LOG(DEBUG) << "Stopping processing event, pixel is after event window ("
+                           << Units::display(shiftedTimestamp, {"s", "us", "ns"}) << " > "
+                           << Units::display(event->end(), {"s", "us", "ns"}) << ")";
+                break;
+            } else if(position == Event::Position::BEFORE) {
+                LOG(TRACE) << "Skipping pixel, is before event window ("
+                           << Units::display(shiftedTimestamp, {"s", "us", "ns"}) << " < "
+                           << Units::display(event->start(), {"s", "us", "ns"}) << ")";
+                m_buffer.pop();
+            } else {
+                LOG(DEBUG) << "Position is DURING";
+                if(!m_detector->isAuxiliary()) {
+                    double pixel_timestamp;
+                    LOG(DEBUG) << "Loaded pixel (" << hit->column << ", " << hit->row << ")";
+                    if(m_sync_by_trigger) {
+                        pixel_timestamp =
+                            event->getTriggerTime(hit->trigger_number) + m_timestampShift; // Use trigger time as pixel time
+                    } else {
+                        pixel_timestamp = static_cast<double>(hit->timestamp) + m_timestampShift;
+                    }
+                    auto pixel = std::make_shared<Pixel>(
+                        m_detector->getName(), hit->column, hit->row, hit->charge, hit->charge, pixel_timestamp);
+                    deviceData_.push_back(pixel);
+                    hHitMap->Fill(pixel->column(), pixel->row());
+                    hPixelToT->Fill(pixel->raw());
+                }
+                m_buffer.pop();
+            }
+            // Refill buffer for next iteration
+            fillBuffer();
+        }
+
+        if(deviceData_.empty()) {
+            return false;
+        }
+
+        // Count events:
+        m_currentEvent++;
+        return true;
     }
 
-    return StatusCode::Success;
-}
+    std::vector<EventLoaderHDF5::Hit> EventLoaderHDF5::readChunk() {
+        hsize_t num_records_to_read = std::min(m_bufferSize, f_total_records - m_start_record);
+        H5::DataSpace mem_space = H5::DataSpace(1, &num_records_to_read);
 
-bool EventLoaderHDF5::loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector& deviceData_) {
-    // Ensure that m_buffer is filled with data
-    fillBuffer();
+        H5::CompType h5_datatype(sizeof(Hit));
+        h5_datatype.insertMember("column", HOFFSET(Hit, column), H5::PredType::STD_U16LE);
+        h5_datatype.insertMember("row", HOFFSET(Hit, row), H5::PredType::STD_U16LE);
+        h5_datatype.insertMember("charge", HOFFSET(Hit, charge), H5::PredType::STD_U8LE);
+        h5_datatype.insertMember("timestamp", HOFFSET(Hit, timestamp), H5::PredType::STD_U64LE);
+        h5_datatype.insertMember("trigger_number", HOFFSET(Hit, trigger_number), H5::PredType::STD_U64LE);
 
-    std::string detectorID = m_detector->getName();
+        std::vector<EventLoaderHDF5::Hit> chunk(num_records_to_read);
 
-    while (!m_buffer.empty()) {
+        // Select memory space within the file to read
+        f_dataspace.selectHyperslab(H5S_SELECT_SET, &num_records_to_read, &m_start_record, nullptr, nullptr);
+        m_dataset.read(chunk.data(), h5_datatype, mem_space, f_dataspace);
+        m_start_record += num_records_to_read;
+
+        return chunk;
+    }
+
+    void EventLoaderHDF5::fillBuffer() {
+        // Fill buffer only if it is empty and there are records left in the file
+        if(m_buffer.empty() & (m_start_record != f_total_records)) {
+            std::vector<Hit> chunk = readChunk();
+
+            // Add the elements of chunk to the m_buffer
+            for(auto hit : chunk) {
+                m_buffer.push(std::make_shared<EventLoaderHDF5::Hit>(hit));
+            }
+        }
+    }
+
+    Event::Position EventLoaderHDF5::getPosition(const std::shared_ptr<Clipboard>& clipboard) {
+        auto event = clipboard->getEvent();
         auto hit = m_buffer.top();
 
-        // TODO: add warning when overflow / decrease occurs
-        double shiftedTimestamp = static_cast<double>(hit->timestamp) + m_timestampShift;
-
-        // TODO: add option to shift trigger and/or timestamp
-
-        // Check if an event is defined or if we need to create it:
-        if(!clipboard->isEventDefined()) {
-            double event_start = shiftedTimestamp;
-            double event_end = event_start + m_eventLength;
-            LOG(DEBUG) << "Defining Corryvreckan event: " << Units::display(event_start, {"us", "ns"}) << " - "
-                    << Units::display(event_end, {"us", "ns"}) << ", length "
-                    << Units::display(event_end - event_start, {"us", "ns"});
-            clipboard->putEvent(std::make_shared<Event>(event_start, event_end));
-            clipboard->getEvent()->addTrigger(hit->trigger_number, event_start + m_eventLength / 2); // TODO: decide where to put trigger inside the event? Maybe also in case of already defined events?
-            hClipboardEventStart->Fill(static_cast<double>(Units::convert(event_start, "ms")));
-            hClipboardEventStart_long->Fill(static_cast<double>(Units::convert(event_start, "s")));
-            hClipboardEventEnd->Fill(static_cast<double>(Units::convert(event_end, "ms")));
-            hClipboardEventDuration->Fill(
-                static_cast<double>(Units::convert(clipboard->getEvent()->end() - clipboard->getEvent()->start(), "ms")));
-        } else {
-            LOG(DEBUG) << "Corryvreckan event found on clipboard: "
-                << Units::display(clipboard->getEvent()->start(), {"us", "ns"}) << " - "
-                << Units::display(clipboard->getEvent()->end(), {"us", "ns"})
-                << ", length: " << Units::display(clipboard->getEvent()->duration(), {"us", "ns"});
-        }
-
-        Event::Position position = getPosition(clipboard);
-        auto event = clipboard->getEvent();
-
-        if (position == Event::Position::AFTER) {
-            LOG(DEBUG) << "Stopping processing event, pixel is after event window ("
-                       << Units::display(shiftedTimestamp, {"s", "us", "ns"}) << " > "
-                       << Units::display(event->end(), {"s", "us", "ns"}) << ")";
-            break;
-        } else if (position == Event::Position::BEFORE) {
-            LOG(TRACE) << "Skipping pixel, is before event window (" << Units::display(shiftedTimestamp, {"s", "us", "ns"})
-                       << " < " << Units::display(event->start(), {"s", "us", "ns"}) << ")";
-            m_buffer.pop();
-        } else {
-            LOG(DEBUG) << "Position is DURING";
-            if (!m_detector->isAuxiliary()) {
-                double pixel_timestamp;
-                LOG(DEBUG) << "Loaded pixel (" << hit->column << ", " << hit->row << ")";
-                if (m_sync_by_trigger) {
-                    pixel_timestamp = event->getTriggerTime(hit->trigger_number) + m_timestampShift; // Use trigger time as pixel time
-                } else {
-                    pixel_timestamp = static_cast<double>(hit->timestamp) + m_timestampShift;
-                }
-                auto pixel = std::make_shared<Pixel>(m_detector->getName(), hit->column, hit->row, hit->charge, hit->charge, pixel_timestamp);
-                deviceData_.push_back(pixel);
-                hHitMap->Fill(pixel->column(), pixel->row());
-                hPixelToT->Fill(pixel->raw());
+        if(m_sync_by_trigger) {
+            Event::Position trigger_position = event->getTriggerPosition(hit->trigger_number);
+            LOG(DEBUG) << "Corryvreckan event with trigger id " << hit->trigger_number << " has trigger time at "
+                       << Units::display(event->getTriggerTime(hit->trigger_number), {"s", "us", "ns"});
+            if(trigger_position == Event::Position::BEFORE) {
+                LOG(DEBUG) << "Trigger ID " << hit->trigger_number << " is before triggers registered in Corryvreckan event";
+                // LOG(DEBUG) << "(Shifted) Trigger ID " << trigger_after_shift
+                //            << " before triggers registered in Corryvreckan event";
+            } else if(trigger_position == Event::Position::AFTER) {
+                LOG(DEBUG) << "Trigger ID " << hit->trigger_number << " is after triggers registered in Corryvreckan event";
+                //     LOG(DEBUG) << "(Shifted) Trigger ID " << trigger_after_shift
+                //                << " after triggers registered in Corryvreckan event";
+            } else if(trigger_position == Event::Position::UNKNOWN) {
+                LOG(DEBUG) << "Trigger ID " << hit->trigger_number
+                           << " is within Corryvreckan event range but not registered";
+                //     LOG(DEBUG) << "(Shifted) Trigger ID " << trigger_after_shift
+                //                << " within Corryvreckan event range but not registered";
             }
-             m_buffer.pop();
-        }
-        // Refill buffer for next iteration
-        fillBuffer();
-    }
-
-    if(deviceData_.empty()) {
-        return false;
-    }
-
-    // Count events:
-    m_currentEvent++;
-    return true;
-}
-
-std::vector<EventLoaderHDF5::Hit> EventLoaderHDF5::readChunk() {
-    hsize_t num_records_to_read = std::min(m_bufferSize, f_total_records - m_start_record);
-    H5::DataSpace mem_space = H5::DataSpace(1, &num_records_to_read);
-
-    H5::CompType h5_datatype(sizeof(Hit));
-    h5_datatype.insertMember("column", HOFFSET(Hit, column), H5::PredType::STD_U16LE);
-    h5_datatype.insertMember("row", HOFFSET(Hit, row), H5::PredType::STD_U16LE);
-    h5_datatype.insertMember("charge", HOFFSET(Hit, charge), H5::PredType::STD_U8LE);
-    h5_datatype.insertMember("timestamp", HOFFSET(Hit, timestamp), H5::PredType::STD_U64LE);
-    h5_datatype.insertMember("trigger_number", HOFFSET(Hit, trigger_number), H5::PredType::STD_U64LE);
-
-    std::vector<EventLoaderHDF5::Hit> chunk(num_records_to_read);
-
-    // Select memory space within the file to read
-    f_dataspace.selectHyperslab(H5S_SELECT_SET, &num_records_to_read, &m_start_record, nullptr, nullptr);
-    m_dataset.read(chunk.data(), h5_datatype, mem_space, f_dataspace);
-    m_start_record += num_records_to_read;
-
-    return chunk;
-}
-
-void EventLoaderHDF5::fillBuffer() {
-    // Fill buffer only if it is empty and there are records left in the file
-    if (m_buffer.empty() & (m_start_record != f_total_records)) {
-        std::vector<Hit> chunk = readChunk();
-
-        // Add the elements of chunk to the m_buffer
-        for (auto hit : chunk) {
-            m_buffer.push(std::make_shared<EventLoaderHDF5::Hit>(hit));
-        }
-    }
-}
-
-Event::Position EventLoaderHDF5::getPosition(const std::shared_ptr<Clipboard>& clipboard) {
-    auto event = clipboard->getEvent();
-    auto hit = m_buffer.top();
-
-    if (m_sync_by_trigger) {
-        Event::Position trigger_position = event->getTriggerPosition(hit->trigger_number);
-        LOG(DEBUG) << "Corryvreckan event with trigger id " << hit->trigger_number << " has trigger time at " << Units::display(event->getTriggerTime(hit->trigger_number), {"s", "us", "ns"});
-        if(trigger_position == Event::Position::BEFORE) {
-            LOG(DEBUG) << "Trigger ID " << hit->trigger_number << " is before triggers registered in Corryvreckan event";
-            // LOG(DEBUG) << "(Shifted) Trigger ID " << trigger_after_shift
-            //            << " before triggers registered in Corryvreckan event";
-        } else if(trigger_position == Event::Position::AFTER) {
-            LOG(DEBUG) << "Trigger ID " << hit->trigger_number << " is after triggers registered in Corryvreckan event";
-        //     LOG(DEBUG) << "(Shifted) Trigger ID " << trigger_after_shift
-        //                << " after triggers registered in Corryvreckan event";
-        } else if(trigger_position == Event::Position::UNKNOWN) {
-            LOG(DEBUG) << "Trigger ID " << hit->trigger_number << " is within Corryvreckan event range but not registered";
-        //     LOG(DEBUG) << "(Shifted) Trigger ID " << trigger_after_shift
-        //                << " within Corryvreckan event range but not registered";
-        }
-        return trigger_position;
-    }
-    else {
-        auto position = event->getTimestampPosition(static_cast<double>(hit->timestamp));
+            return trigger_position;
+        } else {
+            auto position = event->getTimestampPosition(static_cast<double>(hit->timestamp));
             return position;
+        }
+        return Event::Position::DURING;
     }
-    return Event::Position::DURING;
-}
 
 } // namespace corryvreckan
