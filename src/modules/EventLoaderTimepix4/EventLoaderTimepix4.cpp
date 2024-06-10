@@ -184,11 +184,8 @@ bool EventLoaderTimepix4::decodeNextWord() {
     LOG(DEBUG) << "Starting word decoding";
     // Check if current file is at its end and move to other one
     if((*m_file_iterator)->eof()) {
-        if(!m_fIndex) {
-            m_file_iterator++;
-        } else {
-            m_file_iterator--;
-        }
+        LOG(TRACE) << "Reached eof for file " << m_fIndex;
+        std::tie(m_fIndex, m_file_iterator) = switchHalf(m_fIndex, m_file_iterator);
         // If that file also has reached eof then stop here
         if((*m_file_iterator)->eof()) {
             LOG(INFO) << "EOF for all files of " << detectorID;
