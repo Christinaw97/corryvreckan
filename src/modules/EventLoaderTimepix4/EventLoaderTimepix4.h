@@ -77,8 +77,13 @@ namespace corryvreckan {
         TH1F* hToT;
         TH1F* hRawToA;
         TH1F* hRawExtendedToA;
+        TH1F* hFToARise;
+        TH1F* hFToAFall;
+        TH1F* hUfToAStop;
+        TH1F* hUfToAStart;
         TH1F* hRawFullToA;
         TH1F* hHitTime;
+        TH1F* hPileUp;
 
         // configuration parameters:
         std::string m_inputDirectory;

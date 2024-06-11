@@ -118,19 +118,13 @@ void EventLoaderTimepix4::initialize() {
     // Set the file iterator to the first file for every detector:
     m_file_iterator = m_files.begin();
 
-    // Hit time (in s)
-    hHitTime = new TH1F("hitTime", "hitTime", 1000, -0.5, 999.5);
-
-    // ToA
-    hRawToA = new TH1F("RawToA", "RawToA", 1 << 16, -0.5, (1 << 16) - 0.5);
-    hRawExtendedToA = new TH1F("RawExtendedToA", "RawExtendedToA", 1000, 0, 1E9);
-    hRawFullToA = new TH1F("RawFullToA", "RawFullToA", 1000, 0, 1E9);
-    // ToT
-    hRawToT = new TH1F("rawToT", "rawToT", 1000, -0.5, 999.5);
-    hRawFullToT = new TH1F("rawFullToT", "rawFullToT", 1000, -0.5, 999.5);
-    hToT = new TH1F("ToT", "ToT", 1000, -0.5, 999.5);
     // Make debugging plots
-    std::string title = m_detector->getName() + " Hit map;x [px];y [px];# entries";
+    // Hit time (in s)
+    std::string title = m_detector->getName() + " hitTime; time [s]; # entries";
+    hHitTime = new TH1F("hitTime", title.c_str(), 1000, -0.5, 999.5);
+
+    // Hit map
+    title = m_detector->getName() + " Hit map;x [px];y [px];# entries";
     hHitMap = new TH2F("hitMap",
                        title.c_str(),
                        m_detector->nPixels().X(),
@@ -139,6 +133,38 @@ void EventLoaderTimepix4::initialize() {
                        m_detector->nPixels().Y(),
                        -0.5,
                        m_detector->nPixels().Y() - 0.5);
+
+    // ToA
+    title = m_detector->getName() + " RawToA; ToA; # entries";
+    hRawToA = new TH1F("RawToA", title.c_str(), 1 << 16, -0.5, (1 << 16) - 0.5);
+    title = m_detector->getName() + " RawExtendedToA; Raw Extended ToA [25 ns]; # entries";
+    hRawExtendedToA = new TH1F("RawExtendedToA", title.c_str(), 1000, 0, 1E10);
+    title = m_detector->getName() + " RawFullToA; Raw Full ToA [~195 ps]; # entries";
+    hRawFullToA = new TH1F("RawFullToA", title.c_str(), 1000, 0, 1E12);
+
+    // fToA
+    title = m_detector->getName() + " fToA_rise; fToA_rise; # entries";
+    hFToARise = new TH1F("fToA_rise", title.c_str(), 1 << 5, -0.5, (1 << 5) - 0.5);
+    title = m_detector->getName() + " fToA_fall; fToA_fall; # entries";
+    hFToAFall = new TH1F("fToA_fall", title.c_str(), 1 << 5, -0.5, (1 << 5) - 0.5);
+
+    // ufToA
+    title = m_detector->getName() + " ufToA_stop; ufToA_stop; # entries";
+    hUfToAStop = new TH1F("ufToA_stop", title.c_str(), 1 << 4, -0.5, (1 << 4) - 0.5);
+    title = m_detector->getName() + " ufToA_start; ufToA_start; # entries";
+    hUfToAStart = new TH1F("ufToA_start", title.c_str(), 1 << 4, -0.5, (1 << 4) - 0.5);
+
+    // ToT
+    title = m_detector->getName() + " rawToT; Raw ToT [25 ns]; # entries";
+    hRawToT = new TH1F("rawToT", title.c_str(), 1000, -0.5, 999.5);
+    title = m_detector->getName() + " rawFullToT; Raw Full ToT [~195 ps]; # entries";
+    hRawFullToT = new TH1F("rawFullToT", title.c_str(), 1000, -0.5, 99999.5);
+    title = m_detector->getName() + " ToT; ToT [ns]; # entries";
+    hToT = new TH1F("ToT", title.c_str(), 1000, -0.5, 99999.5 * 1 / (8 * 640e-3));
+
+    // Pixel Pileup
+    title = m_detector->getName() + " PileUp; Pileup; # entries";
+    hPileUp = new TH1F("PileUp", title.c_str(), 2, -0.5, 1.5);
 }
 
 StatusCode EventLoaderTimepix4::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -265,14 +291,25 @@ bool EventLoaderTimepix4::decodeNextWord() {
                                 detectorID, col, row, static_cast<int>(m_fullTot), correctedToT, correctedTime);
                             pixel->setCharge(correctedToT);
                             sorted_pixels_.push(pixel);
+
+                            // Filling of histograms
+                            hHitMap->Fill(col, row);
+                            hHitTime->Fill(static_cast<double>(Units::convert(correctedTime, "s")));
+
                             hRawToT->Fill(static_cast<double>(m_tot));
                             hRawFullToT->Fill(static_cast<double>(m_fullTot));
                             hToT->Fill(correctedToT);
-                            hHitMap->Fill(col, row);
+
                             hRawToA->Fill(m_toa);
                             hRawExtendedToA->Fill(static_cast<double>(m_ext_toa));
                             hRawFullToA->Fill(static_cast<double>(m_fullToa));
-                            hHitTime->Fill(static_cast<double>(Units::convert(correctedTime, "s")));
+
+                            hFToAFall->Fill(static_cast<double>(m_ftoa_fall));
+                            hFToARise->Fill(static_cast<double>(m_ftoa_rise));
+                            hUfToAStart->Fill(static_cast<double>(m_uftoa_start));
+                            hUfToAStop->Fill(static_cast<double>(m_uftoa_stop));
+
+                            hPileUp->Fill(static_cast<double>(m_pileup));
                         }
                     }
 
