@@ -167,6 +167,9 @@ void EventLoaderTimepix3::initialize() {
     // Set the file iterator to the first file for every detector:
     m_file_iterator = m_files.begin();
 
+    // Trigger time
+    hTriggerTime = new TH1F("triggerTime", "triggerTime", 100, -0.5, 1e12);
+
     // Calibration
     pixelToT_beforecalibration = new TH1F("pixelToT", "pixelToT", 100, -0.5, 199.5);
 
@@ -516,7 +519,8 @@ bool EventLoaderTimepix3::decodeNextWord() {
 
             double triggerTime =
                 (static_cast<double>(timestamp) + static_cast<double>(stamp) / 12) / (8. * 0.04); // 320 MHz clock
-
+            hTriggerTime->Fill(triggerTime);
+            LOG(TRACE) << "Trigger time value of: " << triggerTime;
             m_syncTimeTDC = timestamp_raw;
 
             int triggerID = triggerNumber + (m_triggerOverflowCounter << 12);

@@ -50,6 +50,7 @@ namespace corryvreckan {
         TH2F* pixelTOAParameterD;
         TH2F* pixelTOAParameterT;
         TH1F* timeshiftPlot;
+        TH1F* hTriggerTime;
 
         bool decodeNextWord();
         void fillBuffer();
