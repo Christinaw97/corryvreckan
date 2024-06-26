@@ -224,6 +224,11 @@ namespace corryvreckan {
          */
         virtual XYVector getSize() const = 0;
 
+        /**
+         * @brief Get the size of a single pixel, accounting for "big pixels" in
+         * PixelModuleDetector or other hybrid pixel size detectors
+         * @return double with area of pixel at this index
+         */
         virtual double getPixelArea(int column, int row) const = 0;
 
         /**
