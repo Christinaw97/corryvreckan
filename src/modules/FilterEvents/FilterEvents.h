@@ -2,7 +2,7 @@
  * @file
  * @brief Definition of module FILTEREVENTS
  *
- * @copyright Copyright (c) 2020 CERN and the Corryvreckan authors.
+ * @copyright Copyright (c) 2015-2024 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -57,8 +57,10 @@ namespace corryvreckan {
         std::optional<long unsigned> min_number_tracks_{};
         std::optional<long unsigned> min_clusters_per_reference_{};
         std::optional<long unsigned> max_clusters_per_reference_{};
+        std::optional<long unsigned> min_cluster_size_{};
         std::optional<double> min_event_duration_{};
         std::optional<double> max_event_duration_{};
+        bool filter_duts_{};
 
         bool only_tracks_on_dut_{};
         std::map<std::string, std::function<bool(const std::string&)>> tag_filter_funcs_{};

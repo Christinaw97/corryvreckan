@@ -1,5 +1,5 @@
 ---
-# SPDX-FileCopyrightText: 2023 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2023-2024 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: CC-BY-4.0
 title: "Authors and Acknowledgments"
 ---
@@ -37,6 +37,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Daniel Hynds, Nikhef, [dhynds](https://gitlab.cern.ch/dhynds)
 * Nicolò Jacazio, CERN, [njacazio](https://gitlab.cern.ch/njacazio)
 * Callan Jessiman, Carleton University, [cjessima](https://gitlab.cern.ch/cjessima)
+* Uwe Kraemer, Nikhef, [uwkramer](https://gitlab.cern.ch/uwkramer)
 * Jens Kroeger, University of Heidelberg/CERN, [jekroege](https://gitlab.cern.ch/jekroege)
 * Fabian Lex, University of Freiburg, [lex](https://gitlab.cern.ch/lex)
 * Magnus Mager, CERN, [mmager](https://gitlab.cern.ch/mmager)
@@ -47,6 +48,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Klaas Padeken, Bonn, HISKP, [padeken](https://gitlab.cern.ch/padeken)
 * Florian Pitters, HEPHY, [fpipper](https://gitlab.cern.ch/fpipper)
 * Daniil Rastorguev, DESY, [drastorg](https://gitlab.cern.ch/drastorg)
+* Sara Ruiz Daza, DESY, [ruizdaza](https://gitlab.cern.ch/ruizdaza)
 * Adriana Simancas, DESY, [asimanca](https://gitlab.cern.ch/asimanca)
 * Miljenko Suljic, CERN, [msuljic](https://gitlab.cern.ch/msuljic)
 * Peter Svihra, CERN, [psvihra](https://gitlab.cern.ch/psvihra)

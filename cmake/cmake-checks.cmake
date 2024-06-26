@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2021-2022 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2022-2024 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: MIT
 
 # Additional targets to perform cmake-lint/cmake-format

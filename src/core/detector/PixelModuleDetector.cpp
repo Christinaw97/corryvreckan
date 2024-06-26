@@ -1,6 +1,6 @@
 /** @file
  *  @brief Detector model class
- *  @copyright Copyright (c) 2017-2020 CERN and the Corryvreckan authors.
+ *  @copyright Copyright (c) 2021-2024 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -125,7 +125,7 @@ double PixelModuleDetector::getColumn(const PositionVector3D<Cartesian3D<double>
 
     if(is_big_x_pixel == true) {
         for(unsigned int i = 0; i < transformed_big_pixel_x.size(); i = i + 2) {
-            if(abs(tempPosition - transformed_big_pixel_x[i] - 0.5) <= 2) {
+            if(fabs(tempPosition - static_cast<double>(transformed_big_pixel_x[i]) - 0.5) <= 2) {
                 column = (tempPosition - transformed_big_pixel_x[i]) / 2. + big_pixel_x[i / 2] - 0.25;
             }
         }

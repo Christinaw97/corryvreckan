@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2018-2023 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2017-2024 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: MIT
 
 # Additional targets to perform clang-format/clang-tidy/cppcheck

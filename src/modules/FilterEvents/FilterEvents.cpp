@@ -2,7 +2,7 @@
  * @file
  * @brief Implementation of module FilterEvents
  *
- * @copyright Copyright (c) 2022 CERN and the Corryvreckan authors.
+ * @copyright Copyright (c) 2021-2024 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -39,9 +39,12 @@ void FilterEvents::initialize() {
     max_number_tracks_ = config_.getOptional<long unsigned>("max_tracks");
     min_clusters_per_reference_ = config_.getOptional<long unsigned>("min_clusters_per_plane");
     max_clusters_per_reference_ = config_.getOptional<long unsigned>("max_clusters_per_plane");
+    min_cluster_size_ = config_.getOptional<long unsigned>("min_cluster_size");
     only_tracks_on_dut_ = config_.get<bool>("only_tracks_on_dut");
     min_event_duration_ = config_.getOptional<double>("min_event_duration");
     max_event_duration_ = config_.getOptional<double>("max_event_duration");
+    filter_duts_ = config_.get<bool>("filter_duts", false);
+    LOG(INFO) << (filter_duts_ ? "Filtering also" : "Not filtering") << " on DUT detectors";
 
     if(only_tracks_on_dut_ && get_duts().size() != 1) {
         LOG(WARNING) << "Multiple DUTs in geometry, only_tracks_on_dut_ forced to true";
@@ -125,22 +128,34 @@ bool FilterEvents::filter_tracks(const std::shared_ptr<Clipboard>& clipboard) {
 }
 
 bool FilterEvents::filter_cluster(const std::shared_ptr<Clipboard>& clipboard) {
+
+    bool has_large_cluster = false;
+
     // Loop over all reference detectors
-    for(auto& detector : get_regular_detectors(false)) {
+    for(auto& detector : get_regular_detectors(filter_duts_)) {
         std::string det = detector->getName();
+        LOG(TRACE) << "Checking clusters for detector " << det;
         // Check if number of Clusters on plane is within acceptance
-        auto num_clusters = clipboard->getData<Cluster>(det).size();
-        if(max_clusters_per_reference_.has_value() && num_clusters > max_clusters_per_reference_.value()) {
+        auto clusters = clipboard->getData<Cluster>(det);
+        if(max_clusters_per_reference_.has_value() && clusters.size() > max_clusters_per_reference_.value()) {
             hFilter_->Fill(6); //  too many clusters
             LOG(TRACE) << "Number of Clusters " << det << " above maximum";
             return true;
-        } else if(min_clusters_per_reference_.has_value() && num_clusters < min_clusters_per_reference_.value()) {
+        } else if(min_clusters_per_reference_.has_value() && clusters.size() < min_clusters_per_reference_.value()) {
             hFilter_->Fill(5); //  too few clusters
             LOG(TRACE) << "Number of Clusters on " << det << " below minimum";
             return true;
+        } else if(min_cluster_size_.has_value()) {
+            for(const auto& cluster : clusters) {
+                if(cluster->size() > min_cluster_size_) {
+                    LOG(DEBUG) << "Found cluster with size above threshold: " << cluster->size();
+                    has_large_cluster = true;
+                }
+            }
         }
     }
-    return false;
+    // If none of the clusters is above threshold, filter the event:
+    return !has_large_cluster;
 }
 
 bool FilterEvents::filter_event_duration(const std::shared_ptr<Clipboard>& clipboard) {
