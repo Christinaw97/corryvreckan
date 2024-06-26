@@ -154,8 +154,12 @@ bool FilterEvents::filter_cluster(const std::shared_ptr<Clipboard>& clipboard) {
             }
         }
     }
-    // If none of the clusters is above threshold, filter the event:
-    return !has_large_cluster;
+    // If none of the clusters is above threshold, filter the event, but only if requested.
+    if(min_cluster_size_.has_value()) {
+        return !has_large_cluster;
+    } else {
+        return false;
+    }
 }
 
 bool FilterEvents::filter_event_duration(const std::shared_ptr<Clipboard>& clipboard) {
