@@ -79,13 +79,13 @@ StatusCode FilterEvents::run(const std::shared_ptr<Clipboard>& clipboard) {
     status = filter_event_duration(clipboard) ? StatusCode::DeadTime : status;
 
     if(status == StatusCode::Success) {
-        hFilter_->Fill(8);
+        hFilter_->Fill(10);
     }
     return status;
 }
 
 void FilterEvents::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
-    LOG(STATUS) << hFilter_->GetBinContent(8) << " out of " << hFilter_->GetBinContent(1) << " events passed.";
+    LOG(STATUS) << hFilter_->GetBinContent(10) << " out of " << hFilter_->GetBinContent(1) << " events passed.";
 }
 
 bool FilterEvents::filter_trigger_windows(const std::shared_ptr<Clipboard>& clipboard) {
