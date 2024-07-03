@@ -126,8 +126,6 @@ StatusCode MaskCreator::run(const std::shared_ptr<Clipboard>& clipboard) {
         // Enter another pixel hit for this channel
         double weight = m_detector->getPitch().X() * m_detector->getPitch().Y() /
                         m_detector->getPixelArea(pixel->column(), pixel->row());
-        // if(weight < 1)
-        //     LOG(INFO) << "weight is " << weight;
 
         if(m_squareBigPixelWeight)
             weight = weight * weight;
