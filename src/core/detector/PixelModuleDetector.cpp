@@ -191,9 +191,6 @@ XYVector PixelModuleDetector::getSize() const {
 double PixelModuleDetector::getPixelArea(int column, int row) const {
     bool is_big_x_pixel = std::binary_search(big_pixel_x.begin(), big_pixel_x.end(), column);
     bool is_big_y_pixel = std::binary_search(big_pixel_y.begin(), big_pixel_y.end(), row);
-    // if (is_big_x_pixel || is_big_y_pixel) {
-    //     LOG(INFO) << "Found some big pixel " << column << " : " << row;
-    // }
     return m_pitch.X() * (1 + is_big_x_pixel) * m_pitch.Y() * (1 + is_big_y_pixel);
 }
 

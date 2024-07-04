@@ -196,11 +196,9 @@ namespace corryvreckan {
         XYVector getSize() const override;
 
         /**
-         * @brief Get the size of a single pixel, accounting for "big pixels" in
-         * PixelModuleDetector or other hybrid pixel size detectors
+         * @brief Get the size of a given strip, accounting for area differences in
+         * radial rows
          * @return double with area of pixel at this index
-         *
-         * @note: not implemented due to
          */
         double getPixelArea(int column = 0, int row = 0) const override;
 
