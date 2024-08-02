@@ -66,6 +66,8 @@ namespace corryvreckan {
         size_t size() const { return pixels_.size(); }
         size_t columnWidth() const { return m_columnWidth; }
         size_t rowWidth() const { return m_rowWidth; }
+        double widthX() const { return m_width.X(); }
+        double widthY() const { return m_width.Y(); }
         std::vector<const Pixel*> pixels() const;
 
         /**
@@ -89,6 +91,7 @@ namespace corryvreckan {
         void setColumn(double col) { m_column = col; }
         void setRow(double row) { m_row = row; }
         void setCharge(double charge) { m_charge = charge; }
+        void setWidth(double width_x, double width_y) { m_width = {width_x, width_y}; }
         void setClusterCentre(ROOT::Math::XYZPoint global) { m_global = std::move(global); }
         void setClusterCentreLocal(ROOT::Math::XYZPoint local) { m_local = std::move(local); }
         void setErrorX(double error) { m_error.SetX(error); }
@@ -115,6 +118,8 @@ namespace corryvreckan {
         TMatrixD m_error_matrix_global{3, 3};
         size_t m_columnWidth{0};
         size_t m_rowWidth{0};
+        // Width of the cluster e.g. from a fit
+        ROOT::Math::XYVector m_width;
         bool m_split{false};
 
         ROOT::Math::XYZPoint m_local;
@@ -124,7 +129,7 @@ namespace corryvreckan {
         std::map<int, bool> m_columnHits;
 
         // ROOT I/O class definition - update version number when you change this class!
-        ClassDefOverride(Cluster, 15)
+        ClassDefOverride(Cluster, 16)
     };
 
     // Vector type declaration
