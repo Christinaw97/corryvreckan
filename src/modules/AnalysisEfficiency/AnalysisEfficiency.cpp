@@ -571,7 +571,7 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
 
                 // discard tracks without intercept, using a tolerance defined
                 // by the radial cut which we will use later.
-                if(m_detector->hasIntercept(track.get(), -m_fake_rate_distance)) {
+                if(!m_detector->hasIntercept(track.get(), -m_fake_rate_distance)) {
                     continue;
                 }
 
