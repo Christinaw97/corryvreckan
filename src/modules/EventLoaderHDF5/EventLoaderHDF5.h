@@ -38,7 +38,7 @@ namespace corryvreckan {
             int row;
             int charge;
             unsigned long long timestamp;
-            unsigned int trigger_number;
+            uint32_t trigger_number;
         };
 
         using HitVector = std::vector<std::shared_ptr<Hit>>;
@@ -50,7 +50,7 @@ namespace corryvreckan {
         hsize_t m_bufferSize;
         bool m_sync_by_trigger;
         double m_timestampShift;
-        int m_triggerShift;
+        uint32_t m_triggerShift;
 
         H5::DataSet m_dataset;
         H5::H5File m_file;

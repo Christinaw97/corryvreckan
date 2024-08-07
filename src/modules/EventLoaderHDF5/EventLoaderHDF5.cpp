@@ -21,7 +21,7 @@ namespace corryvreckan {
         m_sync_by_trigger = config.get<bool>("sync_by_trigger", false);
         m_eventLength = config.get<double>("event_length", Units::get<double>(1, "us"));
         m_timestampShift = config.get<double>("timestamp_shift", 0);
-        m_triggerShift = config.get<int>("trigger_shift", 0);
+        m_triggerShift = config.get<uint32_t>("trigger_shift", 0);
     }
 
     void EventLoaderHDF5::initialize() {
@@ -100,6 +100,7 @@ namespace corryvreckan {
 
             // TODO: add warning when overflow / decrease occurs
             double shiftedTimestamp = static_cast<double>(hit->timestamp) + m_timestampShift;
+            uint32_t shiftedTriggerId = hit->trigger_number + m_triggerShift;
 
             // TODO: add option to shift trigger and/or timestamp
 
@@ -112,8 +113,8 @@ namespace corryvreckan {
                            << Units::display(event_end - event_start, {"us", "ns"});
                 clipboard->putEvent(std::make_shared<Event>(event_start, event_end));
                 clipboard->getEvent()->addTrigger(
-                    hit->trigger_number,
-                    event_start + m_eventLength / 2); // TODO: decide where to put trigger inside the event? Maybe also in
+                    shiftedTriggerId,
+                    event_start); // TODO: decide where to put trigger inside the event? Maybe also in
                                                       // case of already defined events?
                 hClipboardEventStart->Fill(static_cast<double>(Units::convert(event_start, "ms")));
                 hClipboardEventStart_long->Fill(static_cast<double>(Units::convert(event_start, "s")));
@@ -147,9 +148,9 @@ namespace corryvreckan {
                     LOG(DEBUG) << "Loaded pixel (" << hit->column << ", " << hit->row << ")";
                     if(m_sync_by_trigger) {
                         pixel_timestamp =
-                            event->getTriggerTime(hit->trigger_number) + m_timestampShift; // Use trigger time as pixel time
+                            event->getTriggerTime(shiftedTriggerId) + m_timestampShift; // Use trigger time as pixel time
                     } else {
-                        pixel_timestamp = static_cast<double>(hit->timestamp) + m_timestampShift;
+                        pixel_timestamp = shiftedTimestamp;
                     }
                     auto pixel = std::make_shared<Pixel>(
                         m_detector->getName(), hit->column, hit->row, hit->charge, hit->charge, pixel_timestamp);
@@ -181,7 +182,7 @@ namespace corryvreckan {
         h5_datatype.insertMember("row", HOFFSET(Hit, row), H5::PredType::STD_U16LE);
         h5_datatype.insertMember("charge", HOFFSET(Hit, charge), H5::PredType::STD_U8LE);
         h5_datatype.insertMember("timestamp", HOFFSET(Hit, timestamp), H5::PredType::STD_U64LE);
-        h5_datatype.insertMember("trigger_number", HOFFSET(Hit, trigger_number), H5::PredType::STD_U64LE);
+        h5_datatype.insertMember("trigger_number", HOFFSET(Hit, trigger_number), H5::PredType::STD_U32LE);
 
         std::vector<EventLoaderHDF5::Hit> chunk(num_records_to_read);
 
@@ -209,27 +210,24 @@ namespace corryvreckan {
         auto event = clipboard->getEvent();
         auto hit = m_buffer.top();
 
+        uint32_t shiftedTriggerId = hit->trigger_number + m_triggerShift;
+        double shiftedTimestamp = static_cast<double>(hit->timestamp) + m_timestampShift;
+
         if(m_sync_by_trigger) {
-            Event::Position trigger_position = event->getTriggerPosition(hit->trigger_number);
-            LOG(DEBUG) << "Corryvreckan event with trigger id " << hit->trigger_number << " has trigger time at "
-                       << Units::display(event->getTriggerTime(hit->trigger_number), {"s", "us", "ns"});
+            Event::Position trigger_position = event->getTriggerPosition(shiftedTriggerId);
+            LOG(DEBUG) << "Corryvreckan event with trigger id " << shiftedTriggerId << " has trigger time at "
+                       << Units::display(event->getTriggerTime(shiftedTriggerId), {"s", "us", "ns"});
             if(trigger_position == Event::Position::BEFORE) {
-                LOG(DEBUG) << "Trigger ID " << hit->trigger_number << " is before triggers registered in Corryvreckan event";
+                LOG(DEBUG) << "(Shifted) trigger ID " << shiftedTriggerId << " is before triggers registered in Corryvreckan event";
                 // LOG(DEBUG) << "(Shifted) Trigger ID " << trigger_after_shift
-                //            << " before triggers registered in Corryvreckan event";
             } else if(trigger_position == Event::Position::AFTER) {
-                LOG(DEBUG) << "Trigger ID " << hit->trigger_number << " is after triggers registered in Corryvreckan event";
-                //     LOG(DEBUG) << "(Shifted) Trigger ID " << trigger_after_shift
-                //                << " after triggers registered in Corryvreckan event";
+                LOG(DEBUG) << "(Shifted) trigger ID " << shiftedTriggerId << " is after triggers registered in Corryvreckan event";
             } else if(trigger_position == Event::Position::UNKNOWN) {
-                LOG(DEBUG) << "Trigger ID " << hit->trigger_number
-                           << " is within Corryvreckan event range but not registered";
-                //     LOG(DEBUG) << "(Shifted) Trigger ID " << trigger_after_shift
-                //                << " within Corryvreckan event range but not registered";
+                LOG(DEBUG) << "(Shifted) trigger ID " << shiftedTriggerId << " is within Corryvreckan event range but not registered";
             }
             return trigger_position;
         } else {
-            auto position = event->getTimestampPosition(static_cast<double>(hit->timestamp));
+            auto position = event->getTimestampPosition(shiftedTimestamp);
             return position;
         }
         return Event::Position::DURING;
