@@ -391,7 +391,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket) {
 
         m_toa = getToA(dataPacket);
         m_toa = GrayToBin(m_toa); // gray to binary conversion
-        m_ftoa_rise = getFToARise(dataPacket >> 17);
+        m_ftoa_rise = getFToARise(dataPacket);
         m_ftoa_fall = getFToAFall(dataPacket);
         m_tot = getToT(dataPacket);
         m_pileup = getPileUp(dataPacket);
@@ -406,7 +406,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket) {
                             m_uftoa_start,
                             m_uftoa_stop,
                             m_tot); // full corrected ToT | units of ~195 ps (1/(640*8 MHz))
-        m_fullToa = fullToa(m_ext_toa, m_uftoa_start, m_uftoa_stop, m_ftoa_rise) -
+        m_fullToa = fullToa(m_ext_toa, m_uftoa_start, m_uftoa_stop, m_ftoa_rise) +
                     toa_clkdll_correction(m_sPGroup); // rfull corrected ToA | units of ~195 ps (1/(640*8 MHz))
         m_colrow = decodeColRow(m_pixel, m_sPixel, m_sPGroup, header, top); // decodes the row and col value from the address
 

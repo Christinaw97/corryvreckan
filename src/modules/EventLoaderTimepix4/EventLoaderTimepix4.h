@@ -193,8 +193,7 @@ namespace corryvreckan {
 
         // Corrects latency delay due to DDLL clock distribution. Units are period of 40MHz (25ns)
         uint64_t toa_clkdll_correction(uint64_t spgroup_addr = 0) {
-            uint64_t clk_dll_step = 1 >> 5;
-            return (15 - spgroup_addr) * clk_dll_step;
+	  return 15 - spgroup_addr << 2;
         }
 
         // address including pixel, super pixel and super pixel group values
