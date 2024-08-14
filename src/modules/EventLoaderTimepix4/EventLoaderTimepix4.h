@@ -191,7 +191,7 @@ namespace corryvreckan {
             return ((toa << 7) - (ftoa_rise << 3) + (uftoa_start - uftoa_stop));
         }
 
-        // Corrects latency delay due to DDLL clock distribution. Units are period of 40MHz (25ns)
+        // Corrects latency delay due to DDLL clock distribution. Units are period of 8*640MHz (195 ps)
         uint64_t toa_clkdll_correction(uint64_t spgroup_addr = 0) { return spgroup_addr << 2; }
 
         // address including pixel, super pixel and super pixel group values
