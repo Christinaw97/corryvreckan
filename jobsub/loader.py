@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2022-2023 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2022-2024 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: MIT
 
 import csv

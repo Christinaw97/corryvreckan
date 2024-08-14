@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2018-2022 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2021-2024 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: MIT
 
 # General overview for compiler support of CXX language and library features:

@@ -2,7 +2,7 @@
  * @file
  * @brief Implementation of module FilterEvents
  *
- * @copyright Copyright (c) 2022 CERN and the Corryvreckan authors.
+ * @copyright Copyright (c) 2021-2024 CERN and the Corryvreckan authors.
  * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
  * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
  * Intergovernmental Organization or submit itself to any jurisdiction.
@@ -79,13 +79,13 @@ StatusCode FilterEvents::run(const std::shared_ptr<Clipboard>& clipboard) {
     status = filter_event_duration(clipboard) ? StatusCode::DeadTime : status;
 
     if(status == StatusCode::Success) {
-        hFilter_->Fill(8);
+        hFilter_->Fill(10);
     }
     return status;
 }
 
 void FilterEvents::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
-    LOG(STATUS) << hFilter_->GetBinContent(8) << " out of " << hFilter_->GetBinContent(1) << " events passed.";
+    LOG(STATUS) << hFilter_->GetBinContent(10) << " out of " << hFilter_->GetBinContent(1) << " events passed.";
 }
 
 bool FilterEvents::filter_trigger_windows(const std::shared_ptr<Clipboard>& clipboard) {
@@ -154,8 +154,12 @@ bool FilterEvents::filter_cluster(const std::shared_ptr<Clipboard>& clipboard) {
             }
         }
     }
-    // If none of the clusters is above threshold, filter the event:
-    return !has_large_cluster;
+    // If none of the clusters is above threshold, filter the event, but only if requested.
+    if(min_cluster_size_.has_value()) {
+        return !has_large_cluster;
+    } else {
+        return false;
+    }
 }
 
 bool FilterEvents::filter_event_duration(const std::shared_ptr<Clipboard>& clipboard) {
