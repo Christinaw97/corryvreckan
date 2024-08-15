@@ -11,10 +11,9 @@
 
 #include "EventLoaderMuPixTelescope.h"
 #include <string>
+#include "AnalysisHit.hpp"
 #include "dirent.h"
-#include "objects/Cluster.hpp"
 #include "objects/Pixel.hpp"
-#include "objects/Track.hpp"
 
 #include "TDirectory.h"
 using namespace corryvreckan;
@@ -305,7 +304,8 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
     return StatusCode::NoData;
 }
 
-std::shared_ptr<Pixel> EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint tag, long unsigned int corrected_fpgaTime) {
+std::shared_ptr<Pixel>
+EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint tag, long unsigned int corrected_fpgaTime, uint16_t chip_time) {
 
     uint16_t time = 0x0;
     // TS can be sampled on both edges - keep this optional
@@ -345,7 +345,13 @@ std::shared_ptr<Pixel> EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint
     while(tot < 0)
         tot += maxToT_;
 
-    return std::make_shared<Pixel>(names_.at(tag), h.column(), h.row(), tot, tot, px_timestamp);
+    //  return std::make_shared<Pixel>(names_.at(tag), h.column(), h.row(), tot, tot, px_timestamp);
+    return std::make_shared<Pixel>(names_.at(tag),
+                                   h.column(),
+                                   h.row(),
+                                   tot,
+                                   tot,
+                                   mudaq::AnalysisHit::Factory(h, corrected_fpgaTime, chip_time).get_ToA_ns());
 }
 
 void EventLoaderMuPixTelescope::fillBuffer() {
@@ -396,7 +402,8 @@ void EventLoaderMuPixTelescope::fillBuffer() {
                 raw_fpga_vs_chip_corrected.at(names_.at(tag))
                     ->Fill(raw_time, static_cast<double>(corrected_fpgaTime & 0x7FF));
 
-                pixelbuffers_.at(tag).push(read_hit(h, tag, (corrected_fpgaTime * 4)));
+                pixelbuffers_.at(tag).push(
+                    read_hit(h, tag, tf_.timestamp(), tf_.chip_timestamp())); //(corrected_fpgaTime * 4)));
             }
             buffers_full = true;
             for(auto t : tags_) {
