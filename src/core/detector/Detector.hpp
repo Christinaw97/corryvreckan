@@ -225,7 +225,7 @@ namespace corryvreckan {
         virtual XYVector getSize() const = 0;
 
         /**
-         * @brief Get the total global size of the active matrix, i.e. pitch * number of pixels in both dimensions
+         * @brief Get the total global extent of the active matrix, i.e. pitch * number of pixels in both dimensions
          * @return 2D vector with the dimensions of the pixel matrix in X and Y
          * @todo: this is designed for PixelDetector, find a proper interface for other Detector type
          */
