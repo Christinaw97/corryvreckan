@@ -1,5 +1,5 @@
-# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
-# SPDX-License-Identifier: CC-BY-4.0 OR MIT
+#SPDX - FileCopyrightText : 2023 - 2024 CERN and the Corryvreckan authors
+#SPDX - License - Identifier : CC - BY - 4.0 OR MIT
 
 CORRYVRECKAN_ENABLE_DEFAULT(OFF)
 CORRYVRECKAN_DETECTOR_TYPE($ { MODULE_NAME } "HDF5")
