@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2017-2024 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: MIT
 
 # For every module, build a separate library to be loaded by corryvreckan core

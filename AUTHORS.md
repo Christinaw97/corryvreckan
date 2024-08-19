@@ -1,5 +1,5 @@
 ---
-# SPDX-FileCopyrightText: 2023 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2023-2024 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: CC-BY-4.0
 title: "Authors and Acknowledgments"
 ---
@@ -37,6 +37,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Daniel Hynds, Nikhef, [dhynds](https://gitlab.cern.ch/dhynds)
 * Nicolò Jacazio, CERN, [njacazio](https://gitlab.cern.ch/njacazio)
 * Callan Jessiman, Carleton University, [cjessima](https://gitlab.cern.ch/cjessima)
+* Uwe Kraemer, Nikhef, [uwkramer](https://gitlab.cern.ch/uwkramer)
 * Jens Kroeger, University of Heidelberg/CERN, [jekroege](https://gitlab.cern.ch/jekroege)
 * Fabian Lex, University of Freiburg, [lex](https://gitlab.cern.ch/lex)
 * Magnus Mager, CERN, [mmager](https://gitlab.cern.ch/mmager)
