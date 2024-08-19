@@ -112,10 +112,9 @@ namespace corryvreckan {
                            << Units::display(event_end, {"us", "ns"}) << ", length "
                            << Units::display(event_end - event_start, {"us", "ns"});
                 clipboard->putEvent(std::make_shared<Event>(event_start, event_end));
-                clipboard->getEvent()->addTrigger(
-                    shiftedTriggerId,
-                    event_start); // TODO: decide where to put trigger inside the event? Maybe also in
-                                                      // case of already defined events?
+                clipboard->getEvent()->addTrigger(shiftedTriggerId,
+                                                  event_start); // TODO: decide where to put trigger inside the event? Maybe
+                                                                // also in case of already defined events?
                 hClipboardEventStart->Fill(static_cast<double>(Units::convert(event_start, "ms")));
                 hClipboardEventStart_long->Fill(static_cast<double>(Units::convert(event_start, "s")));
                 hClipboardEventEnd->Fill(static_cast<double>(Units::convert(event_end, "ms")));
@@ -218,12 +217,15 @@ namespace corryvreckan {
             LOG(DEBUG) << "Corryvreckan event with trigger id " << shiftedTriggerId << " has trigger time at "
                        << Units::display(event->getTriggerTime(shiftedTriggerId), {"s", "us", "ns"});
             if(trigger_position == Event::Position::BEFORE) {
-                LOG(DEBUG) << "(Shifted) trigger ID " << shiftedTriggerId << " is before triggers registered in Corryvreckan event";
+                LOG(DEBUG) << "(Shifted) trigger ID " << shiftedTriggerId
+                           << " is before triggers registered in Corryvreckan event";
                 // LOG(DEBUG) << "(Shifted) Trigger ID " << trigger_after_shift
             } else if(trigger_position == Event::Position::AFTER) {
-                LOG(DEBUG) << "(Shifted) trigger ID " << shiftedTriggerId << " is after triggers registered in Corryvreckan event";
+                LOG(DEBUG) << "(Shifted) trigger ID " << shiftedTriggerId
+                           << " is after triggers registered in Corryvreckan event";
             } else if(trigger_position == Event::Position::UNKNOWN) {
-                LOG(DEBUG) << "(Shifted) trigger ID " << shiftedTriggerId << " is within Corryvreckan event range but not registered";
+                LOG(DEBUG) << "(Shifted) trigger ID " << shiftedTriggerId
+                           << " is within Corryvreckan event range but not registered";
             }
             return trigger_position;
         } else {
