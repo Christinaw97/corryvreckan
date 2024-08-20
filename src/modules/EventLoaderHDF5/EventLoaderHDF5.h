@@ -47,7 +47,7 @@ namespace corryvreckan {
         std::string m_datasetName;
         double m_eventLength;
         std::shared_ptr<Detector> m_detector;
-        hsize_t m_bufferSize;
+        hsize_t m_bufferDepth;
         bool m_sync_by_trigger;
         double m_timestampShift;
         uint32_t m_triggerShift;

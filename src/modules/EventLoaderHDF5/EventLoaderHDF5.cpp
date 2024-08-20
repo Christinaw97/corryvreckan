@@ -17,7 +17,7 @@ namespace corryvreckan {
         : Module(config, detector), m_detector(detector), m_currentEvent(0) {
         m_fileName = config.getPath("filename");
         m_datasetName = config.get<std::string>("dataset_name", "Hits");
-        m_bufferSize = config.get<hsize_t>("buffer_size", 500000);
+        m_bufferDepth = config.get<hsize_t>("buffer_depth", 100000);
         m_sync_by_trigger = config.get<bool>("sync_by_trigger", false);
         m_eventLength = config.get<double>("event_length", Units::get<double>(1, "us"));
         m_timestampShift = config.get<double>("timestamp_shift", 0);
@@ -173,7 +173,7 @@ namespace corryvreckan {
     }
 
     std::vector<EventLoaderHDF5::Hit> EventLoaderHDF5::readChunk() {
-        hsize_t num_records_to_read = std::min(m_bufferSize, f_total_records - m_start_record);
+        hsize_t num_records_to_read = std::min(m_bufferDepth, f_total_records - m_start_record);
         H5::DataSpace mem_space = H5::DataSpace(1, &num_records_to_read);
 
         H5::CompType h5_datatype(sizeof(Hit));
