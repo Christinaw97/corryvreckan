@@ -10,7 +10,7 @@
 ### Description
 This module loads data from hdf5 files and adds it to the clipboard. The input file must have extension `.h5` without any compression filters and follow the structure below:
 
-| column |  row  | charge |       timestamp      | trigger_number |
+| column |  row  | charge |   timestamp \[ns\]   | trigger_number |
 |:------:|:-----:|:------:|:--------------------:|:--------------:|
 | `int`  | `int` | `int`  | `unsigned long long` | `unsigned int` |
 
@@ -21,8 +21,8 @@ The module is capable of defining an event as well as adding records based on ti
 ### Parameters
 * `filename`: Input file name.
 * `dataset_name`: Name of the node in the hdf5 file.
-* `buffer_size`: Buffer size for chunking.
-* `event_length`: Duration of the event if this module is the first event loader and defines the event. Ignored otherwise.
+* `buffer_depth`: Buffer size (entries) for chunking. Default is 100,000.
+* `event_length`: Duration of the event if this module is the first event loader and defines the event. Defaults to `1 us`.
 * `sync_by_trigger`: Add records to the clipboard based on its trigger instead of timestamp. This requires an event definition with trigger information and can therefore not be used as first event loader.
 * `timestamp_shift`: Shift the timestamp of the record by the defined value in nanoseconds.
 * `trigger_shift`: Shift the trigger of the record by the defined value.
@@ -37,6 +37,6 @@ The following plots are produced:
 ### Usage
 ```toml
 [EventLoaderHDF5]
-input_directory = "path/to/file"
+filename = "path/to/file"
 dataset_name = "Hits"
 ```
