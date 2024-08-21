@@ -98,11 +98,8 @@ namespace corryvreckan {
         while(!m_buffer.empty()) {
             auto hit = m_buffer.top();
 
-            // TODO: add warning when overflow / decrease occurs
             double shiftedTimestamp = static_cast<double>(hit->timestamp) + m_timestampShift;
             uint32_t shiftedTriggerId = hit->trigger_number + m_triggerShift;
-
-            // TODO: add option to shift trigger and/or timestamp
 
             // Check if an event is defined or if we need to create it:
             if(!clipboard->isEventDefined()) {
