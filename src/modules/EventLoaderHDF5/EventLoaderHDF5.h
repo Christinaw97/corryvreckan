@@ -66,13 +66,11 @@ namespace corryvreckan {
         TH1D* hClipboardEventEnd;
         TH1D* hClipboardEventDuration;
 
-        long long int m_currentEvent;
-
         // Additional helper function
         std::vector<Hit> readChunk();
         bool loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector&);
         void fillBuffer();
-        Event::Position getPosition(const std::shared_ptr<Clipboard>& clipboard);
+        Event::Position getPosition(const std::shared_ptr<Event>& event, const std::shared_ptr<Hit>& hit) const;
 
         // Sort buffer by timestamp to make sure to read them in chronological order.
         // If timestamps are not available, sort by trigger number. If that fails, good luck

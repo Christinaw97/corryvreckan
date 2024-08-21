@@ -14,12 +14,12 @@
 namespace corryvreckan {
 
     EventLoaderHDF5::EventLoaderHDF5(Configuration& config, std::shared_ptr<Detector> detector)
-        : Module(config, detector), m_detector(detector), m_currentEvent(0) {
+        : Module(config, detector), m_detector(detector) {
         m_fileName = config.getPath("filename");
         m_datasetName = config.get<std::string>("dataset_name", "Hits");
         m_bufferDepth = config.get<hsize_t>("buffer_depth", 100000);
         m_sync_by_trigger = config.get<bool>("sync_by_trigger", false);
-        m_eventLength = config.get<double>("event_length", Units::get<double>(1, "us"));
+        m_eventLength = config.get<double>("event_length", Units::get<double>(1.0, "us"));
         m_timestampShift = config.get<double>("timestamp_shift", 0);
         m_triggerShift = config.get<uint32_t>("trigger_shift", 0);
     }
@@ -33,8 +33,6 @@ namespace corryvreckan {
             LOG(ERROR) << "Failed to open file.";
             throw;
         }
-
-        m_currentEvent = 0;
 
         if(!m_detector->isAuxiliary()) {
             // Initialize hitmap and charge histograms
@@ -60,7 +58,7 @@ namespace corryvreckan {
         title = "Corryvreckan event end times (placed on clipboard); Corryvreckan event end time [ms];# entries";
         hClipboardEventEnd = new TH1D("clipboardEventEnd", title.c_str(), 3e6, 0, 3e3);
 
-        title = "Corryvreckan event end times (on clipboard); Corryvreckan event duration [ms];# entries";
+        title = "Corryvreckan event durations (on clipboard); Corryvreckan event duration [ms];# entries";
         hClipboardEventDuration = new TH1D("clipboardEventDuration", title.c_str(), 3e6, 0, 3e3);
 
         m_start_record = 0;
@@ -82,7 +80,7 @@ namespace corryvreckan {
         }
 
         LOG(DEBUG) << clipboard->countObjects<Pixel>() << " objects on the clipboard";
-        if((m_start_record == f_total_records) & m_buffer.empty()) {
+        if(m_buffer.empty() && (m_start_record == f_total_records)) {
             return StatusCode::EndRun;
         }
 
@@ -124,8 +122,8 @@ namespace corryvreckan {
                            << ", length: " << Units::display(clipboard->getEvent()->duration(), {"us", "ns"});
             }
 
-            Event::Position position = getPosition(clipboard);
             auto event = clipboard->getEvent();
+            Event::Position position = getPosition(event, hit);
 
             if(position == Event::Position::AFTER) {
                 LOG(DEBUG) << "Stopping processing event, pixel is after event window ("
@@ -164,8 +162,6 @@ namespace corryvreckan {
             return false;
         }
 
-        // Count events:
-        m_currentEvent++;
         return true;
     }
 
@@ -192,25 +188,24 @@ namespace corryvreckan {
 
     void EventLoaderHDF5::fillBuffer() {
         // Fill buffer only if it is empty and there are records left in the file
-        if(m_buffer.empty() & (m_start_record != f_total_records)) {
+        if(m_buffer.empty() && (m_start_record != f_total_records)) {
             std::vector<Hit> chunk = readChunk();
 
-            // Add the elements of chunk to the m_buffer
+            // Add the elements of chunk to the buffer
             for(auto hit : chunk) {
                 m_buffer.push(std::make_shared<EventLoaderHDF5::Hit>(hit));
             }
         }
     }
 
-    Event::Position EventLoaderHDF5::getPosition(const std::shared_ptr<Clipboard>& clipboard) {
-        auto event = clipboard->getEvent();
-        auto hit = m_buffer.top();
+    Event::Position EventLoaderHDF5::getPosition(const std::shared_ptr<Event>& event,
+                                                 const std::shared_ptr<Hit>& hit) const {
 
         uint32_t shiftedTriggerId = hit->trigger_number + m_triggerShift;
         double shiftedTimestamp = static_cast<double>(hit->timestamp) + m_timestampShift;
 
         if(m_sync_by_trigger) {
-            Event::Position trigger_position = event->getTriggerPosition(shiftedTriggerId);
+            const auto trigger_position = event->getTriggerPosition(shiftedTriggerId);
             LOG(DEBUG) << "Corryvreckan event with trigger id " << shiftedTriggerId << " has trigger time at "
                        << Units::display(event->getTriggerTime(shiftedTriggerId), {"s", "us", "ns"});
             if(trigger_position == Event::Position::BEFORE) {
@@ -226,10 +221,8 @@ namespace corryvreckan {
             }
             return trigger_position;
         } else {
-            auto position = event->getTimestampPosition(shiftedTimestamp);
-            return position;
+            return event->getTimestampPosition(shiftedTimestamp);
         }
-        return Event::Position::DURING;
     }
 
 } // namespace corryvreckan
