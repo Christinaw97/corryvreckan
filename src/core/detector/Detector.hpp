@@ -225,6 +225,12 @@ namespace corryvreckan {
         virtual XYVector getSize() const = 0;
 
         /**
+         * @brief Get the size of a single pixel, accounting for non-uniform pixel sizes in some detectors
+         * @return double with area of pixel at this index
+         */
+        virtual double getPixelArea(int column, int row) const = 0;
+
+        /**
          * @brief Get pitch of a single pixel
          * @return Pitch of a pixel
          * @todo: this is designed for PixelDetector, find a proper interface for other Detector type

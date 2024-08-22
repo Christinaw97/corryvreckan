@@ -39,6 +39,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Callan Jessiman, Carleton University, [cjessima](https://gitlab.cern.ch/cjessima)
 * Uwe Kraemer, Nikhef, [uwkramer](https://gitlab.cern.ch/uwkramer)
 * Jens Kroeger, University of Heidelberg/CERN, [jekroege](https://gitlab.cern.ch/jekroege)
+* Simon Koch, University of Oxford, [sfkoch](https://gitlab.cern.ch/sfkoch)
 * Fabian Lex, University of Freiburg, [lex](https://gitlab.cern.ch/lex)
 * Magnus Mager, CERN, [mmager](https://gitlab.cern.ch/mmager)
 * Keerthi Nakkalil, University Bonn/DESY, [nakkalil](https://gitlab.cern.ch/nakkalil)

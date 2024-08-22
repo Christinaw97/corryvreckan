@@ -428,6 +428,16 @@ XYVector PolarDetector::getPitch() const {
     return {pitch_x, pitch_y};
 }
 
+double PolarDetector::getPixelArea(int, int row) const {
+    // Get strip length and pitch for the given row
+    auto outer_r = row_radius.at(static_cast<size_t>(row));
+    auto strip_phi = angular_pitch.at(static_cast<size_t>(row));
+    auto inner_r = (row < 1) ? center_radius : row_radius.at(static_cast<size_t>(row) - 1);
+
+    /* A = pi * (r_outer^2 - r_inner^2) * (strip_phi / (2 * pi)) */
+    return (outer_r * outer_r - inner_r * inner_r) * strip_phi / 2;
+}
+
 XYVector PolarDetector::getSpatialResolution(double, double row) const {
     // Get integer row
     auto row_int = static_cast<unsigned int>(floor(row + 0.5));
