@@ -43,6 +43,8 @@ namespace corryvreckan {
 
         using HitVector = std::vector<std::shared_ptr<Hit>>;
 
+        H5::CompType h5_datatype{sizeof(Hit)};
+
         std::string m_fileName;
         std::string m_datasetName;
         double m_eventLength;

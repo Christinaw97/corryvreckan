@@ -15,6 +15,12 @@ namespace corryvreckan {
 
     EventLoaderHDF5::EventLoaderHDF5(Configuration& config, std::shared_ptr<Detector> detector)
         : Module(config, detector), m_detector(detector) {
+        h5_datatype.insertMember("column", HOFFSET(Hit, column), H5::PredType::STD_U16LE);
+        h5_datatype.insertMember("row", HOFFSET(Hit, row), H5::PredType::STD_U16LE);
+        h5_datatype.insertMember("charge", HOFFSET(Hit, charge), H5::PredType::STD_U8LE);
+        h5_datatype.insertMember("timestamp", HOFFSET(Hit, timestamp), H5::PredType::STD_U64LE);
+        h5_datatype.insertMember("trigger_number", HOFFSET(Hit, trigger_number), H5::PredType::STD_U32LE);
+
         m_fileName = config.getPath("filename");
         m_datasetName = config.get<std::string>("dataset_name", "Hits");
         m_bufferDepth = config.get<hsize_t>("buffer_depth", 100000);
@@ -168,14 +174,6 @@ namespace corryvreckan {
     std::vector<EventLoaderHDF5::Hit> EventLoaderHDF5::readChunk() {
         hsize_t num_records_to_read = std::min(m_bufferDepth, f_total_records - m_start_record);
         H5::DataSpace mem_space = H5::DataSpace(1, &num_records_to_read);
-
-        H5::CompType h5_datatype(sizeof(Hit));
-        h5_datatype.insertMember("column", HOFFSET(Hit, column), H5::PredType::STD_U16LE);
-        h5_datatype.insertMember("row", HOFFSET(Hit, row), H5::PredType::STD_U16LE);
-        h5_datatype.insertMember("charge", HOFFSET(Hit, charge), H5::PredType::STD_U8LE);
-        h5_datatype.insertMember("timestamp", HOFFSET(Hit, timestamp), H5::PredType::STD_U64LE);
-        h5_datatype.insertMember("trigger_number", HOFFSET(Hit, trigger_number), H5::PredType::STD_U32LE);
-
         std::vector<EventLoaderHDF5::Hit> chunk(num_records_to_read);
 
         // Select memory space within the file to read
