@@ -876,7 +876,7 @@ StatusCode AnalysisDUT::run(const std::shared_ptr<Clipboard>& clipboard) {
             double global_x_absdistance = fabs(global_x_distance);
             double global_y_absdistance = fabs(global_y_distance);
             double global_pos_diff =
-                sqrt(global_x_distance * global_x_absdistance + global_y_absdistance * global_y_absdistance);
+                sqrt(global_x_absdistance * global_x_absdistance + global_y_absdistance * global_y_absdistance);
             double global_pos_diff_um = global_pos_diff * 1000.;
 
             residualsX_global->Fill(global_x_distance_um);
