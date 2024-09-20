@@ -66,6 +66,12 @@ TrackingMultiplet::TrackingMultiplet(Configuration& config, std::vector<std::sha
     config_.setDefaultArray<std::string>("upstream_detectors", default_upstream_detectors);
     config_.setDefaultArray<std::string>("downstream_detectors", default_downstream_detectors);
 
+    // BL4S
+    config_.setDefault<bool>("write_tree", false);
+    write_tree_ = config_.get<bool>("write_tree");
+    config_.setDefault<std::string>("output_file", "test.root");
+    outName_ = config_.get<std::string>("output_file");
+
     // Get the strings of detectors and translate it to shared_ptr<Detector>
     std::vector<std::string> upstream_detectors_str = config_.getArray<std::string>("upstream_detectors");
     std::vector<std::string> downstream_detectors_str = config_.getArray<std::string>("downstream_detectors");
@@ -323,8 +329,17 @@ void TrackingMultiplet::initialize() {
             residualsY_global[detector_selection] = new TH1F("GlobalResidualsY", title.c_str(), 500, -0.1, 0.1);
         }
     }
-}
 
+    if(write_tree_) {
+        outputFile_ = new TFile(outName_.c_str(), "RECREATE");
+        gDirectory->Delete("tree;*");
+        outputTree_ = new TTree("bl4s", "bl4s");
+        outputTree_->Branch("TriggerID", &triggerID_);
+        outputTree_->Branch("x", &intersect_x_);
+        outputTree_->Branch("y", &intersect_y_);
+        outputTree_->Branch("chi2_ndof", &track_chi2_ndof_);
+    }
+}
 double TrackingMultiplet::calculate_average_timestamp(const Track* track) {
     double sum_weighted_time = 0;
     double sum_weights = 0;
@@ -849,6 +864,15 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         multipletKinkAtScattererX->Fill(static_cast<double>(Units::convert(kinkX, "mrad")));
         multipletKinkAtScattererY->Fill(static_cast<double>(Units::convert(kinkY, "mrad")));
     }
+    // BL4S
+    if(write_tree_ && multiplets.size() == 1) {
+        auto t = multiplets.front();
+        track_chi2_ndof_ = t->getChi2ndof();
+        intersect_x_ = t->getPositionAtScatterer().X();
+        intersect_y_ = t->getPositionAtScatterer().Y();
+        triggerID_ = clipboard->getEvent()->triggerList().begin()->first;
+        outputTree_->Fill();
+    }
     fill_tracklet_histograms(upstream, all, upstream_tracklets);
     fill_tracklet_histograms(downstream, all, downstream_tracklets);
     fill_tracklet_histograms(upstream, chosen, upstream_selected);
@@ -856,4 +880,12 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
 
     // Return value telling analysis to keep running
     return StatusCode::Success;
+}
+
+void TrackingMultiplet::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
+
+    if(write_tree_) {
+        outputFile_->Write();
+        delete(outputFile_);
+    }
 }
