@@ -136,6 +136,7 @@ namespace corryvreckan {
         ROOT::Math::XYPoint inpixelBinSize_;
         double time_cut_frameedge_;
         double spatial_cut_sensoredge_;
+        bool ignore_neighbors_masked_;
         double chi2_ndof_cut_;
         bool use_closest_cluster_;
         int n_timebins_;
