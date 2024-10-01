@@ -629,23 +629,23 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         // track!
         if(!track_in_active) {
 
-            // iterate the dut pixels from clipboard
-            for(auto& pixel : pixels) {
-                fake_hits++;
-                hFakePixelCharge->Fill(pixel->charge());
-                fakePixelPerEventMap->Fill(pixel->column(), pixel->row(), 1);
-            }
-            hFakePixelPerEvent->Fill(fake_hits);
-            fakePixelPerEventVsTime->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
-            fakePixelPerEventVsTimeLong->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
-
             // get and iterate dut clusters from clipboard
             auto clusters = clipboard->getData<Cluster>(m_detector->getName());
             for(auto& cluster : clusters) {
                 fake_clusters++;
                 hFakeClusterCharge->Fill(cluster->charge());
                 hFakeClusterSize->Fill(static_cast<double>(cluster->size()));
+
+                for(auto& pixel : cluster->pixels()) {
+                    fake_hits++;
+                    hFakePixelCharge->Fill(pixel->charge());
+                    fakePixelPerEventMap->Fill(pixel->column(), pixel->row(), 1);
+                }
             }
+
+            hFakePixelPerEvent->Fill(fake_hits);
+            fakePixelPerEventVsTime->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
+            fakePixelPerEventVsTimeLong->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
             hFakeClusterPerEvent->Fill(fake_clusters);
         }
     }
