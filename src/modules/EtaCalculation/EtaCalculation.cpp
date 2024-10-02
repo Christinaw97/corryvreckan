@@ -148,8 +148,8 @@ std::string EtaCalculation::fit(const std::string& fname, double pitch, TProfile
     std::stringstream parameters;
 
     // Get the eta distribution profiles and fit them to extract the correction parameters
-    auto fit_result = profile->Fit(function, "q");
-    if(!fit_result) {
+    int fit_result = profile->Fit(function, "qS");
+    if(fit_result != 0) {
         LOG(ERROR) << "Fit for " << fname << " failed!";
         return {};
     }
