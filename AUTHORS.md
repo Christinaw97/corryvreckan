@@ -14,6 +14,7 @@ Corryvreckan is developed and maintained by
 The following authors, in alphabetical order, have developed or contributed to Corryvreckan:
 
 * David Bacher, ETH Zürich, [dabacher](https://gitlab.cern.ch/dabacher)
+* Mélanie Marthe Bay, CERN, [mebay](https://gitlab.cern.ch/mebay)
 * Pascal Becht, University of Heidelberg, [pbecht](https://gitlab.cern.ch/pbecht)
 * Bogdan-Mihail Blidaru, University of Heidelberg, [mblidaru](https://gitlab.cern.ch/mblidaru)
 * Matthew Daniel Buckland, University of Liverpool, [mbucklan](https://gitlab.cern.ch/mbucklan)
