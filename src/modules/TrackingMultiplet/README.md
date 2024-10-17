@@ -41,6 +41,22 @@ For each upstream tracklet, the downstream tracklet with the lowest matching dis
 * `particle_charge`: Particle charge number. Defaults to `1`.
 * `refit_gbl`: Refit the multiplet tracks with GBL. Defaults to false.
 * `unique_cluster_usage`: Only use a cluster for one track - in the case of multiple assignments, the track with the best chi2/ndof is kept. Defaults to `false`
+* Parameters of x-kinks and y-kinks histograms:
+    * `kink_x_low`, `kink_y_low`: Lower bound of the histogram, in mrad. Defaults to `-20` mrad.
+    * `kink_x_high`, `kink_y_high`: Upper bound of the histogram, in mrad. Defaults to `20` mrad.
+    * `kink_x_granularity`, `kink_y_granularity`: Number of bins which defaults to `200`.
+* Parameters of the tracklet angles histograms, where `stream` is chosen among `upstream_all`, `upstream_chosen`, `downstream_all`, and/or `downstream_chosen`:
+    * `tracklet_x_<stream>_low`, `tracklet_y_<stream>_low`: Lower bound of the histogram, in mrad. Defaults to `-25` mrad.
+    * `tracklet_x_<stream>_high`, `tracklet_y_<stream>_high`: Upper bound of the histogram, in mrad. Defaults to `25` mrad.
+    * `tracklet_x_<stream>_granularity`, `tracklet_y_<stream>_granularity`: Number of bins which defaults to `250`.
+* Parameters of the chi-squared histogram:
+    * `chi2_low`: Lower bound of the histogram. Defaults to `0`.
+    * `chi2_high`: Upper bound of the histogram. Defaults to `150`.
+    * `chi2_granularity`: Number of bins which defaults to `150`.
+* Parameters of the chi-squared divided by the degrees of freedom histogram:
+    * `chi2ndof_low`: Lower bound of the histogram. Defaults to `0`.
+    * `chi2ndof_high`: Upper bound of the histogram. Defaults to `50`.
+    * `chi2ndof_granularity`: Number of bins which defaults to `100`.
 
 ### Plots produced
 
