@@ -207,11 +207,26 @@ void TrackingMultiplet::initialize() {
     std::string title = "Multiplet multiplicity;multiplets;events";
     multipletMultiplicity = new TH1F("multipletMultiplicity", title.c_str(), 40, 0, 40);
 
+    // Histogram multiplet track chi2
+    config_.setDefault("track_chi2_low", 0.);
+    config_.setDefault("track_chi2_high", 150.);
+    config_.setDefault("track_chi2_granularity", 150); // number of bins
+    double track_chi2_low = config_.get<double>("track_chi2_low");
+    double track_chi2_high = config_.get<double>("track_chi2_high");
+    int track_chi2_granularity = config_.get<int>("track_chi2_granularity");
     title = "Multiplet track #chi^{2};#chi^{2};events";
-    trackChi2 = new TH1F("trackChi2", title.c_str(), 150, 0, 150);
+    trackChi2 = new TH1F("trackChi2", title.c_str(), track_chi2_granularity, track_chi2_low, track_chi2_high);
 
+    // Histogram multiplet track chi2 / ndof
+    config_.setDefault("track_chi2ndof_low", 0.);
+    config_.setDefault("track_chi2ndof_high", 50.);
+    config_.setDefault("track_chi2ndof_granularity", 100); // number of bins
+    double track_chi2ndof_low = config_.get<double>("track_chi2ndof_low");
+    double track_chi2ndof_high = config_.get<double>("track_chi2ndof_high");
+    int track_chi2ndof_granularity = config_.get<int>("track_chi2ndof_granularity");
     title = "Multiplet track #chi^{2}/ndof;#chi^{2}/ndof;events";
-    trackChi2ndof = new TH1F("trackChi2ndof", title.c_str(), 100, 0, 50);
+    trackChi2ndof =
+        new TH1F("trackChi2ndof", title.c_str(), track_chi2ndof_granularity, track_chi2ndof_low, track_chi2ndof_high);
 
     if(refit_gbl_) {
         title = "GBL-refit track #chi^{2};#chi^{2};events";
@@ -222,19 +237,36 @@ void TrackingMultiplet::initialize() {
     }
 
     title = "Matching distance X at scatterer;distance x [mm];multiplet candidates";
-    matchingDistanceAtScattererX = new TH1F("matchingDistanceAtScattererX", title.c_str(), 200, -10., 10.);
+    matchingDistanceAtScattererX = new TH1F("matchingDistanceAtScattererX", title.c_str(), 400, -20., 20.);
     title = "Matching distance Y at scatterer;distance y [mm];multiplet candidates";
-    matchingDistanceAtScattererY = new TH1F("matchingDistanceAtScattererY", title.c_str(), 200, -10., 10.);
+    matchingDistanceAtScattererY = new TH1F("matchingDistanceAtScattererY", title.c_str(), 400, -20., 20.);
 
     title = "Multiplet offset X at scatterer;offset x [um];multiplets";
     multipletOffsetAtScattererX = new TH1F("multipletOffsetAtScattererX", title.c_str(), 200, -300., 300.);
     title = "Multiplet offset Y at scatterer;offset y [um];multiplets";
     multipletOffsetAtScattererY = new TH1F("multipletOffsetAtScattererY", title.c_str(), 200, -300., 300.);
 
+    // Histogram x kinks
+    config_.setDefault("kink_x_low", -20.);        // mrad
+    config_.setDefault("kink_x_high", 20.);        // mrad
+    config_.setDefault("kink_x_granularity", 200); // number of bins
+    double kink_x_low = config_.get<double>("kink_x_low");
+    double kink_x_high = config_.get<double>("kink_x_high");
+    int kink_x_granularity = config_.get<int>("kink_x_granularity");
     title = "Multiplet kink X at scatterer;kink x [mrad];multiplets";
-    multipletKinkAtScattererX = new TH1F("multipletKinkAtScattererX", title.c_str(), 200, -20., 20.);
+    multipletKinkAtScattererX =
+        new TH1F("multipletKinkAtScattererX", title.c_str(), kink_x_granularity, kink_x_low, kink_x_high);
+
+    // Histogram y kinks
+    config_.setDefault("kink_y_low", -20.);        // mrad
+    config_.setDefault("kink_y_high", 20.);        // mrad
+    config_.setDefault("kink_y_granularity", 200); // number of bins
+    double kink_y_low = config_.get<double>("kink_y_low");
+    double kink_y_high = config_.get<double>("kink_y_high");
+    int kink_y_granularity = config_.get<int>("kink_y_granularity");
     title = "Multiplet kink Y at scatterer;kink y [mrad];multiplets";
-    multipletKinkAtScattererY = new TH1F("multipletKinkAtScattererY", title.c_str(), 200, -20., 20.);
+    multipletKinkAtScattererY =
+        new TH1F("multipletKinkAtScattererY", title.c_str(), kink_y_granularity, kink_y_low, kink_y_high);
 
     for(auto stream : {upstream, downstream}) {
         std::string stream_name = stream == upstream ? "upstream" : "downstream";
@@ -266,13 +298,37 @@ void TrackingMultiplet::initialize() {
             hist_name = stream_name + "ClustersPerTracklet" + selection_name_caps;
             clustersPerTracklet[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 10, 0, 10);
 
+            // Histogram tracklet x angles
+            std::string key_tracklet_angle_x_low = "tracklet_x_" + stream_selection + "_low";
+            std::string key_tracklet_angle_x_high = "tracklet_x_" + stream_selection + "_high";
+            std::string key_tracklet_angle_x_granularity = "tracklet_x_" + stream_selection + "_granularity";
+            config_.setDefault(key_tracklet_angle_x_low, -25.);        // mrad
+            config_.setDefault(key_tracklet_angle_x_high, 25.);        // mrad
+            config_.setDefault(key_tracklet_angle_x_granularity, 250); // number of bins
+            double tracklet_angle_x_low = config_.get<double>(key_tracklet_angle_x_low);
+            double tracklet_angle_x_high = config_.get<double>(key_tracklet_angle_x_high);
+            int tracklet_angle_x_granularity = config_.get<int>(key_tracklet_angle_x_granularity);
             title = stream_name_caps + " tracklet angle X;angle x [mrad];" + stream_name + selection_axis;
             hist_name = stream_name + "AngleX" + selection_name_caps;
-            trackletAngleX[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
+            trackletAngleX[stream_selection] = new TH1F(
+                hist_name.c_str(), title.c_str(), tracklet_angle_x_granularity, tracklet_angle_x_low, tracklet_angle_x_high);
+
+            // Histogram tracklet y angles
+            std::string key_tracklet_angle_y_low = "tracklet_y_" + stream_selection + "_low";
+            std::string key_tracklet_angle_y_high = "tracklet_y_" + stream_selection + "_high";
+            std::string key_tracklet_angle_y_granularity = "tracklet_y_" + stream_selection + "_granularity";
+            config_.setDefault(key_tracklet_angle_y_low, -25.);        // mrad
+            config_.setDefault(key_tracklet_angle_y_high, 25.);        // mrad
+            config_.setDefault(key_tracklet_angle_y_granularity, 250); // number of bins
+            double tracklet_angle_y_low = config_.get<double>(key_tracklet_angle_y_low);
+            double tracklet_angle_y_high = config_.get<double>(key_tracklet_angle_y_high);
+            int tracklet_angle_y_granularity = config_.get<int>(key_tracklet_angle_y_granularity);
             title = stream_name_caps + " tracklet angle Y;angle y [mrad];" + stream_name + selection_axis;
             hist_name = stream_name + "AngleY" + selection_name_caps;
-            trackletAngleY[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 250, -25., 25.);
+            trackletAngleY[stream_selection] = new TH1F(
+                hist_name.c_str(), title.c_str(), tracklet_angle_y_granularity, tracklet_angle_y_low, tracklet_angle_y_high);
 
+            // Histograms tracklet positions
             title = stream_name_caps + " tracklet X at scatterer;position x [mm];" + stream_name + selection_axis;
             hist_name = stream_name + "PositionAtScattererX" + selection_name_caps;
             trackletPositionAtScattererX[stream_selection] = new TH1F(hist_name.c_str(), title.c_str(), 200, -10., 10.);
@@ -601,7 +657,7 @@ void TrackingMultiplet::fill_tracklet_histograms(const streams& stream, const se
     trackletMultiplicity[stream_selection]->Fill(static_cast<double>(tracklets.size()));
 
     if(tracklets.size() > 0) {
-        LOG(DEBUG) << "Filling plots for " << stream_name << " tracklets";
+        LOG(DEBUG) << "Filling plots for " << stream_selection << " tracklets";
 
         for(auto& tracklet : tracklets) {
             clustersPerTracklet[stream_selection]->Fill(static_cast<double>(tracklet->getNClusters()));
@@ -704,6 +760,10 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
     LOG(DEBUG) << "Found " << upstream_tracklets.size() << " upstream tracklets";
     LOG(DEBUG) << "Found " << downstream_tracklets.size() << " downstream tracklets";
 
+    // Filling the histograms of all tracklets before merging them
+    fill_tracklet_histograms(upstream, all, upstream_tracklets);
+    fill_tracklet_histograms(downstream, all, downstream_tracklets);
+
     // Multiplet merging
     MultipletVector multiplets;
     for(auto& uptracklet : upstream_tracklets) {
@@ -800,6 +860,7 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
             multiplet->setTimestamp(det_timestamp);
         }
 
+        // Removing the used downstream tracklet
         LOG(DEBUG) << "Deleting downstream tracklet";
         downstream_tracklets.erase(used_downtracklet);
 
@@ -849,8 +910,8 @@ StatusCode TrackingMultiplet::run(const std::shared_ptr<Clipboard>& clipboard) {
         multipletKinkAtScattererX->Fill(static_cast<double>(Units::convert(kinkX, "mrad")));
         multipletKinkAtScattererY->Fill(static_cast<double>(Units::convert(kinkY, "mrad")));
     }
-    fill_tracklet_histograms(upstream, all, upstream_tracklets);
-    fill_tracklet_histograms(downstream, all, downstream_tracklets);
+
+    // Filling the histograms of successfully merged tracklets
     fill_tracklet_histograms(upstream, chosen, upstream_selected);
     fill_tracklet_histograms(downstream, chosen, downstream_selected);
 
