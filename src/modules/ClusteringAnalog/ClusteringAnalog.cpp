@@ -55,6 +55,11 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
 
     // Read calibration file
     if(thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX) {
+        // Backwards compatibility for the newly-added calibration type:
+        if(detConf.has("calibration_file")) {
+            calibrationType = CalibrationType::FILE;
+        }
+
         if(calibrationType == CalibrationType::FILE) {
             auto calibFilePath = detConf.getPath("calibration_file", true); // Return absolute path
             if(readCalibrationFileROOT(calibFilePath)) {
