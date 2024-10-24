@@ -218,7 +218,7 @@ namespace corryvreckan {
         virtual Configuration getConfiguration() const;
 
         /**
-         * @brief Get the total local size of the active matrix, i.e. pitch * number of pixels in both dimensions
+         * @brief Get the total size of the active matrix, i.e. pitch * number of pixels in both dimensions
          * @return 2D vector with the dimensions of the pixel matrix in X and Y
          * @todo: this is designed for PixelDetector, find a proper interface for other Detector type
          */
