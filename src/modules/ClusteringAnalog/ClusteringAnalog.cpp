@@ -88,11 +88,7 @@ bool ClusteringAnalog::readCalibrationFileROOT(const std::filesystem::path fileN
         return false;
     }
     // Read histogram name from conf.
-    string hTemp = config_.get<string>("calibration_pedestal");
-    TH2F* hSensorPedestal = dynamic_cast<TH2F*>(f->Get(hTemp.c_str())->Clone("sensorPedestal"));
-    hTemp = config_.get<string>("calibration_noise");
-    TH2F* hSensorNoise = dynamic_cast<TH2F*>(f->Get(hTemp.c_str())->Clone("sensorNoise"));
-    hSensorPedestal->SetDirectory(nullptr);
+    TH2F* hSensorNoise = dynamic_cast<TH2F*>(f->Get(config_.get<string>("calibration_noise").c_str())->Clone("sensorNoise"));
     hSensorNoise->SetDirectory(nullptr);
 
     if(m_detector->nPixels().X() != hSensorNoise->GetNbinsX() || m_detector->nPixels().Y() != hSensorNoise->GetNbinsY()) {
