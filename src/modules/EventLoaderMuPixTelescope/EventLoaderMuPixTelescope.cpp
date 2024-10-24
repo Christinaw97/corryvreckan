@@ -344,14 +344,14 @@ EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint tag, long unsigned int
     // catch lapse of ToT time stamp
     while(tot < 0)
         tot += maxToT_;
-
+    auto anahit = mudaq::AnalysisHit::Factory(h, corrected_fpgaTime, chip_time);
     //  return std::make_shared<Pixel>(names_.at(tag), h.column(), h.row(), tot, tot, px_timestamp);
     return std::make_shared<Pixel>(names_.at(tag),
                                    h.column(),
                                    h.row(),
-                                   tot,
-                                   tot,
-                                   mudaq::AnalysisHit::Factory(h, corrected_fpgaTime, chip_time).get_ToA_ns());
+                                   anahit.get_ToT_ns(),
+                                   anahit.get_ToT_ns(),
+                                   anahit.get_ToA_ns()+timeOffset_.at(tag));
 }
 
 void EventLoaderMuPixTelescope::fillBuffer() {
