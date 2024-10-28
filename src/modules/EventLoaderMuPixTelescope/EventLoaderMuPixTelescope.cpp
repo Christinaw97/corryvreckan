@@ -48,17 +48,6 @@ EventLoaderMuPixTelescope::EventLoaderMuPixTelescope(Configuration& config, std:
     } else {
         runNumber_ = config_.get<int>("run");
     }
-
-    // simplifying calculations:
-    multiplierToT_ = (1. + static_cast<double>(ckdivend2_)) / (1. + static_cast<double>(ckdivend_)) * 2.;
-    // timestamp is calculated with respect to a 4ns base, tot wrt 8ns
-    timestampMask_ = ((0x1) << nbitsTS_) - 1; // raw timestamp from data
-    // timestamp after shift and 4ns base change
-    timestampMaskExtended_ = ((0x1) << ((ckdivend_ + 1) * (nbitsTS_ + 1))) - 1;
-    totMask_ = ((0x1) << nbitsToT_) - 1;
-    clockToTime_ = 4. / refFrequency_ * 125.;
-    maxToT_ =
-        static_cast<double>(((totMask_ + 1) * static_cast<uint>(multiplierToT_)) & timestampMaskExtended_) * clockToTime_;
 }
 
 void EventLoaderMuPixTelescope::initialize() {
