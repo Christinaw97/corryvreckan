@@ -61,7 +61,6 @@ namespace corryvreckan {
         int eventNo_{};
         std::map<uint, long unsigned> counterHits_{};
         std::map<uint, long unsigned> removed_{}, stored_{};
-        uint64_t ts_prev_{0};
         unsigned buffer_depth_{};
         bool eof_{false};
         std::map<uint, double> timeOffset_{};
@@ -84,13 +83,8 @@ namespace corryvreckan {
         uint nbitsTS_;
         uint nbitsToT_;
         uint timestampMask_;
-        uint timestampMaskExtended_;
-        uint totMask_;
         uint ckdivend_;
         uint ckdivend2_;
-        double multiplierToT_;
-        double maxToT_;
-        double clockToTime_;
         BlockFile* blockFile_;
         TelescopeFrame tf_;
 
