@@ -82,7 +82,6 @@ namespace corryvreckan {
         bool use_both_timestamps_;
         uint nbitsTS_;
         uint nbitsToT_;
-        uint timestampMask_;
         uint ckdivend_;
         uint ckdivend2_;
         BlockFile* blockFile_;
