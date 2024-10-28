@@ -307,51 +307,24 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
 std::shared_ptr<Pixel>
 EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint tag, long unsigned int corrected_fpgaTime, uint16_t chip_time) {
 
-    uint16_t time = 0x0;
-    // TS can be sampled on both edges - keep this optional
+    auto anahit = mudaq::AnalysisHit::Factory(h, corrected_fpgaTime, chip_time);
 
-    if((h.get_ts2() == uint16_t(-1)) || (!use_both_timestamps_)) {
-        ((types_.at(tag) == TELEPIX2_UNSORTED_GS1_GS2_GS3) ? time = (timestampMask_ & h.timestamp_raw())
-                                                           : time = ((timestampMask_ & h.timestamp_raw()) << 1));
-    } else if(h.timestamp_raw() > h.get_ts2()) {
-        time = ((timestampMask_ & h.timestamp_raw()) << 1);
-    } else {
-        time = ((timestampMask_ & h.timestamp_raw()) << 1) + 0x1;
-    }
-
-    // in case the ts clock is divided
-    time *= (ckdivend_ + 1);
-
-    double time_shifted = static_cast<double>(time) * static_cast<double>(ckdivend_ + 1);
-
+    // Fill basic histograms
     auto name = names_.at(tag);
 
     ts1_ts2[name]->Fill(h.get_ts2(), h.timestamp_raw());
-    double px_timestamp =
-        clockToTime_ * (static_cast<double>((corrected_fpgaTime >> 1) & (0xFFFFFFFFFFFFF - timestampMask_)) + time_shifted) -
-        static_cast<double>(timeOffset_.at(tag));
-
     hts_ToT[name]->Fill(static_cast<double>(h.tot_decoded()));
 
-    // store the ToT information if reasonable
-    double tot_timestamp = clockToTime_ * (static_cast<double>(h.tot_decoded()) * multiplierToT_);
-
-    ts_TS1_ToT[name]->Fill(static_cast<double>((static_cast<uint>(px_timestamp / 8)) & timestampMaskExtended_),
-                           (static_cast<double>(static_cast<uint>(tot_timestamp / 8) & timestampMaskExtended_)));
-
-    double tot = tot_timestamp - (time_shifted * clockToTime_);
-
-    // catch lapse of ToT time stamp
-    while(tot < 0)
-        tot += maxToT_;
-    auto anahit = mudaq::AnalysisHit::Factory(h, corrected_fpgaTime, chip_time);
+    ts_TS1_ToT[name]->Fill(static_cast<double>((static_cast<uint>(h.timestamp_raw() / 8)) & timestampMaskExtended_),
+                           (static_cast<double>(static_cast<uint>(h.tot_decoded() / 8) & timestampMaskExtended_)));
+    // ToDo: allow changes of ckdivends via configs
     //  return std::make_shared<Pixel>(names_.at(tag), h.column(), h.row(), tot, tot, px_timestamp);
     return std::make_shared<Pixel>(names_.at(tag),
                                    h.column(),
                                    h.row(),
                                    anahit.get_ToT_ns(),
                                    anahit.get_ToT_ns(),
-                                   anahit.get_ToA_ns()+timeOffset_.at(tag));
+                                   anahit.get_ToA_ns() + timeOffset_.at(tag));
 }
 
 void EventLoaderMuPixTelescope::fillBuffer() {
