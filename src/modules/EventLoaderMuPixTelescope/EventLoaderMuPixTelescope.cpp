@@ -304,8 +304,8 @@ EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint tag, long unsigned int
     ts1_ts2[name]->Fill(h.get_ts2(), h.timestamp_raw());
     hts_ToT[name]->Fill(static_cast<double>(h.tot_decoded()));
 
-    ts_TS1_ToT[name]->Fill(static_cast<double>((static_cast<uint>(h.timestamp_raw() / 8)) & timestampMaskExtended_),
-                           (static_cast<double>(static_cast<uint>(h.tot_decoded() / 8) & timestampMaskExtended_)));
+    ts_TS1_ToT[name]->Fill(static_cast<double>((static_cast<uint>(h.timestamp_raw() / 8)) & 0xFF),
+                           (static_cast<double>(static_cast<uint>(h.tot_decoded() / 8) & 0xFF)));
     // ToDo: allow changes of ckdivends via configs
     //  return std::make_shared<Pixel>(names_.at(tag), h.column(), h.row(), tot, tot, px_timestamp);
     return std::make_shared<Pixel>(names_.at(tag),
