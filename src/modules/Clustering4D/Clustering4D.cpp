@@ -41,9 +41,16 @@ Clustering4D::Clustering4D(Configuration& config, std::shared_ptr<Detector> dete
     charge_weighting_ = config_.get<bool>("charge_weighting");
     use_earliest_pixel_ = config_.get<bool>("use_earliest_pixel");
     reject_by_ROI_ = config_.get<bool>("reject_by_roi");
+
+    // Plotting
+    config_.setDefault<int>("output_plots_charge_max", Units::get(50, "ke"));
+    config_.setDefault<int>("output_plots_charge_bins", 5000);
 }
 
 void Clustering4D::initialize() {
+
+    auto charge_maximum = static_cast<double>(Units::convert(config_.get<double>("output_plots_charge_max"), "e"));
+    auto charge_nbins = config_.get<int>("output_plots_charge_bins");
 
     // Cluster plots
     std::string title = m_detector->getName() + " Cluster size;cluster size;events";
@@ -55,7 +62,7 @@ void Clustering4D::initialize() {
     title = m_detector->getName() + " Cluster Width - Columns;cluster width [columns];events";
     clusterWidthColumn = new TH1F("clusterWidthColumn", title.c_str(), 100, -0.5, 99.5);
     title = m_detector->getName() + " Cluster Charge;cluster charge [e];events";
-    clusterCharge = new TH1F("clusterCharge", title.c_str(), 5000, -0.5, 49999.5);
+    clusterCharge = new TH1F("clusterCharge", title.c_str(), charge_nbins, -0.5, charge_maximum - 0.5);
     title = m_detector->getName() + " Cluster Charge (1px clusters);cluster charge [e];events";
     clusterCharge_1px = new TH1F("clusterCharge_1px", title.c_str(), 256, -0.5, 255.5);
     title = m_detector->getName() + " Cluster Charge (2px clusters);cluster charge [e];events";
