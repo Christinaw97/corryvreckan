@@ -58,6 +58,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Annika Vauth, University of Hamburg/DESY, [anvauth](https://gitlab.cern.ch/anvauth)
 * Mateus Vicente Barreto Pinto, University Geneva, [mvicente](https://gitlab.cern.ch/mvicente)
 * Gianpiero Vignola, DESY, [gvignola](https://gitlab.cern.ch/gvignola)
+* Håkan Wennlöf, Nikhef, [hwennlof](https://gitlab.cern.ch/hwennlof)
 * Morag Williams, University of Glasgow/CERN, [williamm](https://gitlab.cern.ch/williamm)
 * Philipp Windischhofer, University of Chicago, [phwindis](https://gitlab.cern.ch/phwindis)
 * Yitao Wu, University of Science and Technology of China, [yitao](https://gitlab.cern.ch/yitao)
