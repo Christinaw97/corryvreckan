@@ -32,9 +32,16 @@ ClusteringSpatial::ClusteringSpatial(Configuration& config, std::shared_ptr<Dete
     rejectByROI = config_.get<bool>("reject_by_roi");
     neighbor_radius_row_ = config_.get<int>("neighbor_radius_row");
     neighbor_radius_col_ = config_.get<int>("neighbor_radius_col");
+
+    // Plotting
+    config_.setDefault<int>("output_plots_charge_max", Units::get(50, "ke"));
+    config_.setDefault<int>("output_plots_charge_bins", 5000);
 }
 
 void ClusteringSpatial::initialize() {
+
+    auto charge_maximum = static_cast<double>(Units::convert(config_.get<double>("output_plots_charge_max"), "e"));
+    auto charge_nbins = config_.get<int>("output_plots_charge_bins");
 
     // Cluster plots
     std::string title = m_detector->getName() + " Cluster size;cluster size;events";
@@ -46,7 +53,7 @@ void ClusteringSpatial::initialize() {
     title = m_detector->getName() + " Cluster Width - Columns;cluster width [columns];events";
     clusterWidthColumn = new TH1F("clusterWidthColumn", title.c_str(), 100, -0.5, 99.5);
     title = m_detector->getName() + " Cluster Charge;cluster charge [e];events";
-    clusterCharge = new TH1F("clusterCharge", title.c_str(), 5000, -0.5, 49999.5);
+    clusterCharge = new TH1F("clusterCharge", title.c_str(), charge_nbins, -0.5, charge_maximum - 0.5);
     title = m_detector->getName() + " Cluster Position (Global);x [mm];y [mm];events";
     clusterPositionGlobal = new TH2F("clusterPositionGlobal",
                                      title.c_str(),
