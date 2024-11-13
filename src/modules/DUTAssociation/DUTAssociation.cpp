@@ -31,6 +31,8 @@ DUTAssociation::DUTAssociation(Configuration& config, std::shared_ptr<Detector> 
         config_.setDefault("spatial_cut_rel", 3.0);
     }
 
+    config_.setDefault<double>("charge_cut", 0.0);
+
     // timing cut, relative (x * time_resolution) or absolute:
     time_cut_ = corryvreckan::calculate_cut<double>("time_cut", config_, m_detector);
 
@@ -39,17 +41,21 @@ DUTAssociation::DUTAssociation(Configuration& config, std::shared_ptr<Detector> 
     use_cluster_centre_ = config_.get<bool>("use_cluster_centre");
     elliptic_cut_ = config_.get<bool>("elliptic_cut", true);
 
+    charge_cut_ = config_.get<double>("charge_cut");
+
     LOG(DEBUG) << "time_cut = " << Units::display(time_cut_, {"ms", "us", "ns"});
     LOG(DEBUG) << "spatial_cut = " << Units::display(spatial_cut_, {"um", "mm"});
+    LOG(DEBUG) << "charge_cut = " << charge_cut_;
     LOG(DEBUG) << "use_cluster_centre = " << use_cluster_centre_;
 }
 
 void DUTAssociation::initialize() {
     // Cut flow histogram
     std::string title = m_detector->getName() + ": number of tracks discarded by different cuts;cut type;clusters";
-    hCutHisto = new TH1F("hCutHisto", title.c_str(), 2, 1, 3);
+    hCutHisto = new TH1F("hCutHisto", title.c_str(), 3, 1, 4);
     hCutHisto->GetXaxis()->SetBinLabel(1, "Spatial");
     hCutHisto->GetXaxis()->SetBinLabel(2, "Timing");
+    hCutHisto->GetXaxis()->SetBinLabel(3, "Charge");
 
     hDistX = new TH1D("hDistXClusterClosestPx",
                       "Distance cluster center to pixel closest to track; x_{cluster} - x_{closest pixel} [um]; # events",
@@ -272,6 +278,14 @@ StatusCode DUTAssociation::run(const std::shared_ptr<Clipboard>& clipboard) {
                 LOG(DEBUG) << "Discarding DUT cluster with time difference "
                            << Units::display(std::abs(cluster->timestamp() - track->timestamp()), {"ms", "s"});
                 hCutHisto->Fill(2);
+                num_cluster++;
+                continue;
+            }
+
+            // Check if the cluster charge is below cut value
+            if(cluster->charge() < charge_cut_) {
+                LOG(DEBUG) << "Discarding DUT cluster with charge " << cluster->charge();
+                hCutHisto->Fill(3);
                 num_cluster++;
                 continue;
             }
