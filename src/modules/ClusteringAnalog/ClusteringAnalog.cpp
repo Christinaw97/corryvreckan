@@ -70,8 +70,9 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
         } else if(calibrationType == CalibrationType::VALUE) {
             noiseValue = config_.get<double>("calibration_noise");
         } else {
-            throw InvalidCombinationError(
-                detConf, {"calibration_file", "threshold_type"}, "Missing calibration file or value, required by S/N ratio analysis");
+            throw InvalidCombinationError(detConf,
+                                          {"calibration_file", "threshold_type"},
+                                          "Missing calibration file or value, required by S/N ratio analysis");
         }
     }
 
@@ -317,8 +318,7 @@ void ClusteringAnalog::fillHistogramsShapeAnalysis(const std::shared_ptr<Cluster
 // return charge, if calibration file is not available.
 float ClusteringAnalog::SNR(const Pixel* px) {
     if(calibrationType == CalibrationType::NONE) {
-        LOG_ONCE(WARNING) << "No calibration provided - return raw charge of (" << px->column() << "," << px->row()
-                          << ")";
+        LOG_ONCE(WARNING) << "No calibration provided - return raw charge of (" << px->column() << "," << px->row() << ")";
         return float(px->charge());
     } else if(calibrationType == CalibrationType::VALUE) {
         return float(px->charge() / noiseValue);
