@@ -31,6 +31,8 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     estimationMethod = config_.get<EstimationMethod>("method", EstimationMethod::CLUSTER);
     seedingMethod = config_.get<SeedingMethod>("seeding_method", SeedingMethod::MULTI);
     thresholdType = config_.get<ThresholdType>("threshold_type", ThresholdType::FIX);
+    calibrationType = config_.get<CalibrationType>("calibration_type", CalibrationType::NONE);
+
     windowSize = config_.get<int>("window_size", 1);
     if(windowSize < 1) {
         throw InvalidValueError(config_, "window_size", "Invalid window size - value should be >= 1.");
@@ -52,19 +54,25 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     }
 
     // Read calibration file
-    isCalibrated = false;
     if(thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX) {
+        // Backwards compatibility for the newly-added calibration type:
         if(detConf.has("calibration_file")) {
+            calibrationType = CalibrationType::FILE;
+        }
+
+        if(calibrationType == CalibrationType::FILE) {
             auto calibFilePath = detConf.getPath("calibration_file", true); // Return absolute path
             if(readCalibrationFileROOT(calibFilePath)) {
                 LOG(INFO) << "Calibration file " << calibFilePath << " loaded successfully";
-                isCalibrated = true;
             } else {
                 throw InvalidValueError(detConf, "calibration_file", "Invalid calibration file");
             }
+        } else if(calibrationType == CalibrationType::VALUE) {
+            noiseValue = config_.get<double>("calibration_noise");
         } else {
-            throw InvalidCombinationError(
-                detConf, {"calibration_file", "threshold_type"}, "Missing calibration file, required by S/N ratio analysis");
+            throw InvalidCombinationError(detConf,
+                                          {"calibration_file", "threshold_type"},
+                                          "Missing calibration file or value, required by S/N ratio analysis");
         }
     }
 
@@ -81,11 +89,7 @@ bool ClusteringAnalog::readCalibrationFileROOT(const std::filesystem::path fileN
         return false;
     }
     // Read histogram name from conf.
-    string hTemp = config_.get<string>("calibration_pedestal");
-    TH2F* hSensorPedestal = dynamic_cast<TH2F*>(f->Get(hTemp.c_str())->Clone("sensorPedestal"));
-    hTemp = config_.get<string>("calibration_noise");
-    TH2F* hSensorNoise = dynamic_cast<TH2F*>(f->Get(hTemp.c_str())->Clone("sensorNoise"));
-    hSensorPedestal->SetDirectory(nullptr);
+    TH2F* hSensorNoise = dynamic_cast<TH2F*>(f->Get(config_.get<string>("calibration_noise").c_str())->Clone("sensorNoise"));
     hSensorNoise->SetDirectory(nullptr);
 
     if(m_detector->nPixels().X() != hSensorNoise->GetNbinsX() || m_detector->nPixels().Y() != hSensorNoise->GetNbinsY()) {
@@ -313,11 +317,13 @@ void ClusteringAnalog::fillHistogramsShapeAnalysis(const std::shared_ptr<Cluster
 // Signal/Noise ratio
 // return charge, if calibration file is not available.
 float ClusteringAnalog::SNR(const Pixel* px) {
-    if(!isCalibrated) {
-        LOG_ONCE(WARNING) << "Calibration file NOT initialized - return raw charge of (" << px->column() << "," << px->row()
-                          << ")";
+    if(calibrationType == CalibrationType::NONE) {
+        LOG_ONCE(WARNING) << "No calibration provided - return raw charge of (" << px->column() << "," << px->row() << ")";
         return float(px->charge());
+    } else if(calibrationType == CalibrationType::VALUE) {
+        return float(px->charge() / noiseValue);
     }
+
     double pNoise = noisemap[static_cast<size_t>(px->column())][static_cast<size_t>(px->row())];
     if(pNoise > 0.)
         return float(px->charge() / pNoise);

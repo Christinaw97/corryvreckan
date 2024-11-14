@@ -30,7 +30,9 @@ This module also provides a cluster shape analysis. To characterize the cluster 
 * `thresholdSNR_iteration`: S/N ratio cut to find neighbors of neighbors. Detector `calibration_file` must be defined in geometry file and `threshold_type=snr or mix`.
 * `threshold_cluster`: Cut on cluster charge, used for the optimization of seeding criteria. (Default: `threshold_seed`)
 * `calibration_pedestal`: Histogram name of pedestal map in calibration file. Read as ROOT::TH2F.
-* `calibration_noise`: Histogram name of noise map in calibration file. Read as ROOT::TH2F.
+* `calibration_type`: Type of the calibration to be applied, either `VALUE` for a single noise value of `FILE` for a full calibration file with noise values per detector channel.
+* `calibration_noise`: Histogram name of noise map in calibration file. Read as ROOT::TH2F. Only used with `calibration_type = FILE`.
+* `calibration_value`: Noise value to be used. Only used with `calibration_type = VALUE`.
 * `analysis_shape`: Produce more elaborate histograms for cluster shape analysis. (Default: `false`)
 * `use_trigger_timestamp`: If true, the first trigger timestamp of the Corryvreckan event is set as the cluster timestamp. Caution when using this method for very long events containing multiple triggers. If false, the seed pixel defines the timestamp. Default value is `false`.
 

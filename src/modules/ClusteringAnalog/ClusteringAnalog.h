@@ -116,6 +116,12 @@ namespace corryvreckan {
             MIX,
         } thresholdType;
 
+        enum class CalibrationType {
+            NONE,
+            FILE,
+            VALUE,
+        } calibrationType;
+
         int windowSize; // Cluster matrix to search neighbors
         size_t neighborsSizeCentral;
         bool includeCorners;
@@ -131,13 +137,13 @@ namespace corryvreckan {
         float thresholdIterationSNR;
         // Calibration file
         std::vector<std::vector<double>> noisemap;
+        double noiseValue;
         // Configure associated cluster time
         bool useTriggerTimestamp;
         // Analysis functionality
         TH1F* hCutHisto;
         bool flagAnalysisSNR;   // Enable SNR estimation and histograms for analysis
         bool flagAnalysisShape; // Enable analysis for charge sharing
-        bool isCalibrated;
     };
 } // namespace corryvreckan
 #endif // ClusteringAnalog_H
