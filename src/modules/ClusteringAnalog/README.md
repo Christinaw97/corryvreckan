@@ -35,6 +35,8 @@ This module also provides a cluster shape analysis. To characterize the cluster 
 * `calibration_value`: Noise value to be used. Only used with `calibration_type = VALUE`.
 * `analysis_shape`: Produce more elaborate histograms for cluster shape analysis. (Default: `false`)
 * `use_trigger_timestamp`: If true, the first trigger timestamp of the Corryvreckan event is set as the cluster timestamp. Caution when using this method for very long events containing multiple triggers. If false, the seed pixel defines the timestamp. Default value is `false`.
+* `digitizerBinWidth`: Setting the bin width for the digitization of analog signals. The width of the first bin always corresponds to the smallest configured threshold. Defaults to `0.0`, which means that no digitization is applied.
+* `digitizerBinNumber`: Setting the number of bins for the digitization of analog signals, counting only the bins above threshold. Defaults to `0`, which means that no digitization is applied.
 
 ### Plots produced
 For each detector, the following plots are produced:
