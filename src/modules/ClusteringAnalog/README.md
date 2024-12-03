@@ -15,6 +15,8 @@ For analysis of signal-noise ratio, this module reads the pedestal and noise map
 
 This module also provides a cluster shape analysis. To characterize the cluster shape, the charge distribution is estimated in the entire clustering window and the neighboring pixels are ordered by 1D index number w.r.t. the local position of the seed or by decreasing charge. To understand the signal significance and consider the common shift effect, a special plot for charge ratio is accumulated with the largest N pixels in the cluster, using the sum of all positive pixels as the denominator to normalize cluster-by-cluster.
 
+Finally, this module allows emulating digitization with configurable number of bins and bin width. This allows to study how much charge information is needed to make full use of a detectors potential.
+
 ### Parameters
 * `reject_by_roi`: ROI rejection with the local position of the cluster. (Default: false)
 * `method`: Clustering method to reconstruct cluster position and charge. `cluster` (default): includes all adjacent pixels with signal above thresholds (see later) and calculates charge-weighted center-of-gravity as the cluster position. `seed`: equivalent to `cluster` but the cluster position and charge is given only by the seed pixel. `binary`: equivalent to `cluster` but calculates center-of-gravity of all pixels above threshold without charge weighting (as is done in binary sensors). `window`: includes all pixels in a window centered on the seed and defined by `window_size` and calculates charge-weighted center-of-gravity as the cluster position.

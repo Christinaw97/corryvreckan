@@ -42,8 +42,8 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     flagAnalysisShape = config_.get<bool>("analysis_shape", false);
     flagAnalysisSNR = thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX;
 
-    digitizerBinNumber = config_.get<unsigned int>("digitizerBinNumber", 0);
-    digitizerBinWidth = config_.get<float>("digitizerBinWidth", 0.);
+    digitizerBinNumber = config_.get<unsigned int>("digitizer_bin_number", 0);
+    digitizerBinWidth = config_.get<float>("digitizer_bin_width", 0.);
     if(digitizerBinNumber == 0 || std::fabs(digitizerBinWidth - 0) < std::numeric_limits<float>::epsilon()) {
         LOG(INFO) << "Digitization needs digitizerBinNumber > 0 and digitizerBinWidth > 0, using analog charge info!";
     } else {
