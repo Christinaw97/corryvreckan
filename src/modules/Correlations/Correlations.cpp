@@ -38,7 +38,6 @@ Correlations::Correlations(Configuration& config, std::shared_ptr<Detector> dete
     corr_vs_time_ = config_.get<bool>("correlation_vs_time");
     time_binning_ = config_.get<double>("time_binning");
 
-    
     corr_vs_trigger_ = config_.get<bool>("correlation_vs_trigger");
     // Plotting
     config_.setDefault<int>("output_plots_trigger_max", 100000);
@@ -86,16 +85,16 @@ void Correlations::initialize() {
 
     // vs trigger number to check for correlation loss during the run
     if(corr_vs_trigger_) {
-      title = m_detector->getName() + ": correlation X vs corry event trigger ID;corry event trigger ID;x_{ref}-x[mm]";
-      correlationXVsTrigger = new TH2F("correlationXVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
-      title = m_detector->getName() + ": correlation Y vs corry event trigger ID;corry event trigger ID;y_{ref}-y[mm]";
-      correlationYVsTrigger = new TH2F("correlationYVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
-      title = m_detector->getName() + ": correlation XY vs corry event trigger ID;corry event trigger ID;y_{ref}-x[mm]";
-      correlationXYVsTrigger = new TH2F("correlationXYVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
-      title = m_detector->getName() + ": correlation YX vs corry event trigger ID;corry event trigger ID;x_{ref}-y[mm]";
-      correlationYXVsTrigger = new TH2F("correlationYXVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
+        title = m_detector->getName() + ": correlation X vs corry event trigger ID;corry event trigger ID;x_{ref}-x[mm]";
+        correlationXVsTrigger = new TH2F("correlationXVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
+        title = m_detector->getName() + ": correlation Y vs corry event trigger ID;corry event trigger ID;y_{ref}-y[mm]";
+        correlationYVsTrigger = new TH2F("correlationYVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
+        title = m_detector->getName() + ": correlation XY vs corry event trigger ID;corry event trigger ID;y_{ref}-x[mm]";
+        correlationXYVsTrigger = new TH2F("correlationXYVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
+        title = m_detector->getName() + ": correlation YX vs corry event trigger ID;corry event trigger ID;x_{ref}-y[mm]";
+        correlationYXVsTrigger = new TH2F("correlationYXVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
     }
-    
+
     // time correlation plot range should cover length of events. nanosecond binning.
     title = m_detector->getName() + "Reference cluster time stamp - cluster time stamp;t_{ref}-t [ns];events";
     correlationTime = new TH1F("correlationTime",
@@ -264,17 +263,15 @@ StatusCode Correlations::run(const std::shared_ptr<Clipboard>& clipboard) {
     for(auto& cluster : clusters) {
         hitmap_clusters->Fill(cluster->column(), cluster->row());
     }
-    
+
     // Get the first trigger ID contained in the event (note: this does no sorting, just gets the first map element)
     auto event = clipboard->getEvent();
     auto triggerlist = event->triggerList();
     uint32_t firsttrigger = 0;
     if(!triggerlist.empty()) {
-      firsttrigger=triggerlist.begin()->first  ;
+        firsttrigger = triggerlist.begin()->first;
     }
 
-
-    
     // Get pixels/clusters from reference detector
     auto reference = get_reference();
     auto referencePixels = clipboard->getData<Pixel>(reference->getName());
@@ -313,10 +310,10 @@ StatusCode Correlations::run(const std::shared_ptr<Clipboard>& clipboard) {
 
             // Correlation plots
             if(abs(timeDifference) < time_cut_ || !do_time_cut_) {
-	        auto globalXref = refCluster->global().x();
-	        auto globalXcluster = cluster->global().x();
-	        auto globalYref = refCluster->global().y();
-	        auto globalYcluster = cluster->global().y();
+                auto globalXref = refCluster->global().x();
+                auto globalXcluster = cluster->global().x();
+                auto globalYref = refCluster->global().y();
+                auto globalYcluster = cluster->global().y();
                 correlationX->Fill(globalXref - globalXcluster);
                 correlationX2D->Fill(globalXcluster, globalXref);
                 correlationX2Dlocal->Fill(cluster->column(), refCluster->column());
@@ -330,13 +327,12 @@ StatusCode Correlations::run(const std::shared_ptr<Clipboard>& clipboard) {
                 correlationYX->Fill(globalXref - globalYcluster);
                 correlationYX2D->Fill(globalXref, globalYcluster);
 
-		if(corr_vs_trigger_ && firsttrigger!=0){
- 		  correlationXVsTrigger->Fill(firsttrigger, globalXref - globalXcluster);
-		  correlationYVsTrigger->Fill(firsttrigger, globalYref - globalYcluster);
-		  correlationXYVsTrigger->Fill(firsttrigger, globalYref - globalXcluster);
-		  correlationYXVsTrigger->Fill(firsttrigger, globalXref - globalYcluster);
-		}		
-
+                if(corr_vs_trigger_ && firsttrigger != 0) {
+                    correlationXVsTrigger->Fill(firsttrigger, globalXref - globalXcluster);
+                    correlationYVsTrigger->Fill(firsttrigger, globalYref - globalYcluster);
+                    correlationXYVsTrigger->Fill(firsttrigger, globalYref - globalXcluster);
+                    correlationYXVsTrigger->Fill(firsttrigger, globalXref - globalYcluster);
+                }
             }
 
             correlationTime->Fill(timeDifference); // time difference in ns
