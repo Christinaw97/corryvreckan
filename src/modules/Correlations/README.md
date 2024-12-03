@@ -18,6 +18,8 @@ No plots are produced for `aux` devices.
 * `time_cut_abs`: Specifies an absolute value for the maximum time difference allowed for cluster correlation if `do_time_cut = true`. Absolute and relative time cuts are mutually exclusive. No default value.
 * `correlation_vs_time`: Enable plotting of spatial and time correlation as a function of time. Default value is `false` because of the time required to fill the histogram with many bins.
 * `time_binning`: Specifies the binning of the time correlations plots. Defaults to `1ns`.
+* `correlation_vs_trigger`: Enable plotting of spatial correlation as a function of the corry event number. Default value is `false`.
+* `output_plots_trigger_max`: The max trigger number on the x-axis of the correlation_vs_trigger plots. Defaults to `100000`.
 
 ### Plots produced
 For each device the following plots are produced:
