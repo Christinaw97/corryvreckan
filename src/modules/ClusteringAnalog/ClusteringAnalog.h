@@ -44,6 +44,7 @@ namespace corryvreckan {
         void fillHistogramsShapeAnalysis(const std::shared_ptr<Cluster>& cluster);
         void fillHistograms(const std::shared_ptr<Cluster>& cluster, double chargeTotal);
         bool readCalibrationFileROOT(const std::filesystem::path fileName);
+        void digitize(std::shared_ptr<Pixel>& px);
 
         std::shared_ptr<Detector> m_detector;
 
@@ -144,6 +145,11 @@ namespace corryvreckan {
         TH1F* hCutHisto;
         bool flagAnalysisSNR;   // Enable SNR estimation and histograms for analysis
         bool flagAnalysisShape; // Enable analysis for charge sharing
+        bool isCalibrated;
+        // Optional digitization
+        unsigned int digitizerBinNumber;
+        float digitizerBinWidth;
+        float thresholdSmallest;
     };
 } // namespace corryvreckan
 #endif // ClusteringAnalog_H

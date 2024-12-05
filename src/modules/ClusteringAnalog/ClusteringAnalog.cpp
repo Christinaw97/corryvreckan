@@ -42,6 +42,17 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     flagAnalysisShape = config_.get<bool>("analysis_shape", false);
     flagAnalysisSNR = thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX;
 
+    digitizerBinNumber = config_.get<unsigned int>("digitizer_bin_number", 0);
+    digitizerBinWidth = config_.get<float>("digitizer_bin_width", 0.);
+    if(digitizerBinNumber == 0 || std::fabs(digitizerBinWidth - 0) < std::numeric_limits<float>::epsilon()) {
+        LOG(INFO) << "Digitization needs digitizerBinNumber > 0 and digitizerBinWidth > 0, using analog charge info!";
+    } else {
+        // calculate smallest threshold
+        std::vector<float> thresholds = {thresholdSeed, thresholdNeighbor, thresholdIteration};
+        thresholdSmallest = *std::min_element(thresholds.begin(), thresholds.end());
+        LOG(DEBUG) << "Smallest threshold is " << thresholdSmallest;
+    }
+
     auto detConf = m_detector->getConfiguration();
 
     if(flagAnalysisShape) {
@@ -107,6 +118,30 @@ bool ClusteringAnalog::readCalibrationFileROOT(const std::filesystem::path fileN
     }
     f->Close();
     return true;
+}
+
+void corryvreckan::ClusteringAnalog::digitize(std::shared_ptr<Pixel>& px) {
+
+    // we do not want to digitize
+    if(digitizerBinNumber == 0 || std::fabs(digitizerBinWidth - 0) < std::numeric_limits<float>::epsilon()) {
+        LOG(TRACE) << "Digitization needs digitizerBinNumber > 0 and digitizerBinWidth > 0, using analog charge info!";
+        return;
+    }
+
+    LOG(TRACE) << "Pixel " << px->column() << " " << px->row() << " charge " << px->charge();
+
+    // get charge bin index
+    int charge_bin = static_cast<int>(ceil((px->charge() - thresholdSmallest) / digitizerBinWidth) - 1);
+    // catch edge cases
+    if(charge_bin < 0) {
+        px->setCharge(thresholdSmallest / 2.);
+    } else if(static_cast<unsigned int>(charge_bin) > digitizerBinNumber - 1) {
+        px->setCharge(thresholdSmallest + digitizerBinWidth * (digitizerBinNumber - 0.5));
+    } else {
+        px->setCharge(thresholdSmallest + digitizerBinWidth * (charge_bin + 0.5));
+    }
+
+    LOG(TRACE) << "  Digitized charge " << px->charge();
 }
 
 void ClusteringAnalog::initialize() {
@@ -486,6 +521,9 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
     for(auto pixel : pixels) {
         // Pre-fill the hitmap with pixels
         hitmap[pixel->column()][pixel->row()] = pixel;
+
+        digitize(pixel);
+
         // Select seeds by threshold
         if(isAboveSeedThreshold(pixel.get())) {
             switch(seedingMethod) {
