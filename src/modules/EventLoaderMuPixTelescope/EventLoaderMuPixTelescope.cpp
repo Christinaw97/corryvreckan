@@ -90,7 +90,7 @@ void EventLoaderMuPixTelescope::initialize() {
         input_file_ = "telescope_run_" + s + ".blck";
     }
 
-    // check the if folder and file do exist
+    // check  if the data folder and file do exist
     dirent* entry;
     bool foundFile = false;
     DIR* directory = opendir(inputDirectory_.c_str());
@@ -104,18 +104,19 @@ void EventLoaderMuPixTelescope::initialize() {
         }
     }
     if(!foundFile) {
-
         throw MissingDataError("Cannot open data file: " + input_file_);
     } else
         LOG(INFO) << "File " << input_file_ << " found";
+
     std::string file = (inputDirectory_ + "/" + entry->d_name);
     LOG(INFO) << "reading " << file;
+
     blockFile_ = new BlockFile(file);
     if(!blockFile_->open_read()) {
         throw MissingDataError("Cannot read data file: " + input_file_);
     }
-    TDirectory* dir = getROOTDirectory();
 
+    TDirectory* dir = getROOTDirectory();
     // create the histograms for all sensor
     for(auto& detector : detectors_) {
         auto name = detector->getName();
@@ -298,7 +299,7 @@ EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint tag, long unsigned int
 
     auto anahit = mudaq::AnalysisHit::Factory(h, corrected_fpgaTime, chip_time);
 
-    // Fill basic histograms
+    // Fill basic histograms based on raw hits
     auto name = names_.at(tag);
 
     ts1_ts2[name]->Fill(h.get_ts2(), h.timestamp_raw());
@@ -307,7 +308,6 @@ EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint tag, long unsigned int
     ts_TS1_ToT[name]->Fill(static_cast<double>((static_cast<uint>(h.timestamp_raw() / 8)) & 0xFF),
                            (static_cast<double>(static_cast<uint>(h.tot_decoded() / 8) & 0xFF)));
     // ToDo: allow changes of ckdivends via configs
-    //  return std::make_shared<Pixel>(names_.at(tag), h.column(), h.row(), tot, tot, px_timestamp);
     return std::make_shared<Pixel>(names_.at(tag),
                                    h.column(),
                                    h.row(),
