@@ -22,6 +22,7 @@ AnalysisDUT::AnalysisDUT(Configuration& config, std::shared_ptr<Detector> detect
 
     config_.setDefault<double>("time_cut_frameedge", Units::get<double>(20, "ns"));
     config_.setDefault<double>("spatial_cut_sensoredge", 0.5);
+    config_.setDefault<bool>("ignore_neighbors_masked", true);
     config_.setDefault<double>("chi2ndof_cut", 3.);
     config_.setDefault<bool>("use_closest_cluster", true);
     config_.setDefault<int>("n_time_bins", 20000);
@@ -35,6 +36,7 @@ AnalysisDUT::AnalysisDUT(Configuration& config, std::shared_ptr<Detector> detect
 
     time_cut_frameedge_ = config_.get<double>("time_cut_frameedge");
     spatial_cut_sensoredge_ = config_.get<double>("spatial_cut_sensoredge");
+    ignore_neighbors_masked_ = config_.get<bool>("ignore_neighbors_masked");
     chi2_ndof_cut_ = config_.get<double>("chi2ndof_cut");
     use_closest_cluster_ = config_.get<bool>("use_closest_cluster");
     n_timebins_ = config_.get<int>("n_time_bins");
@@ -683,7 +685,7 @@ bool AnalysisDUT::acceptTrackDUT(const std::shared_ptr<Track>& track) {
     }
 
     // Check that it doesn't go through/near a masked pixel
-    if(m_detector->hitMasked(track.get(), 1.)) {
+    if(m_detector->hitMasked(track.get(), (ignore_neighbors_masked_ ? 1.0 : 0.0))) {
         LOG(DEBUG) << " - track close to masked pixel";
         hCutHisto->Fill(ETrackSelection::kCloseToMask);
         num_tracks_++;
@@ -876,7 +878,7 @@ StatusCode AnalysisDUT::run(const std::shared_ptr<Clipboard>& clipboard) {
             double global_x_absdistance = fabs(global_x_distance);
             double global_y_absdistance = fabs(global_y_distance);
             double global_pos_diff =
-                sqrt(global_x_distance * global_x_absdistance + global_y_absdistance * global_y_absdistance);
+                sqrt(global_x_absdistance * global_x_absdistance + global_y_absdistance * global_y_absdistance);
             double global_pos_diff_um = global_pos_diff * 1000.;
 
             residualsX_global->Fill(global_x_distance_um);

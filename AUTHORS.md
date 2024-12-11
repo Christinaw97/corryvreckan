@@ -14,6 +14,7 @@ Corryvreckan is developed and maintained by
 The following authors, in alphabetical order, have developed or contributed to Corryvreckan:
 
 * David Bacher, ETH Zürich, [dabacher](https://gitlab.cern.ch/dabacher)
+* Mélanie Marthe Bay, CERN, [mebay](https://gitlab.cern.ch/mebay)
 * Pascal Becht, University of Heidelberg, [pbecht](https://gitlab.cern.ch/pbecht)
 * Bogdan-Mihail Blidaru, University of Heidelberg, [mblidaru](https://gitlab.cern.ch/mblidaru)
 * Matthew Daniel Buckland, University of Liverpool, [mbucklan](https://gitlab.cern.ch/mbucklan)
@@ -39,6 +40,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Callan Jessiman, Carleton University, [cjessima](https://gitlab.cern.ch/cjessima)
 * Uwe Kraemer, Nikhef, [uwkramer](https://gitlab.cern.ch/uwkramer)
 * Jens Kroeger, University of Heidelberg/CERN, [jekroege](https://gitlab.cern.ch/jekroege)
+* Simon Koch, University of Oxford, [sfkoch](https://gitlab.cern.ch/sfkoch)
 * Fabian Lex, University of Freiburg, [lex](https://gitlab.cern.ch/lex)
 * Magnus Mager, CERN, [mmager](https://gitlab.cern.ch/mmager)
 * Keerthi Nakkalil, University Bonn/DESY, [nakkalil](https://gitlab.cern.ch/nakkalil)
@@ -56,6 +58,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Annika Vauth, University of Hamburg/DESY, [anvauth](https://gitlab.cern.ch/anvauth)
 * Mateus Vicente Barreto Pinto, University Geneva, [mvicente](https://gitlab.cern.ch/mvicente)
 * Gianpiero Vignola, DESY, [gvignola](https://gitlab.cern.ch/gvignola)
+* Håkan Wennlöf, Nikhef, [hwennlof](https://gitlab.cern.ch/hwennlof)
 * Morag Williams, University of Glasgow/CERN, [williamm](https://gitlab.cern.ch/williamm)
 * Philipp Windischhofer, University of Chicago, [phwindis](https://gitlab.cern.ch/phwindis)
 * Yitao Wu, University of Science and Technology of China, [yitao](https://gitlab.cern.ch/yitao)

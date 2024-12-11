@@ -110,9 +110,15 @@ namespace corryvreckan {
 
         /**
          * @brief Get the total size of the active matrix, i.e. pitch * number of pixels in both dimensions
-         * @return 2D vector with the dimensions of the pixle matrix in X and Y
+         * @return 2D vector with the dimensions of the pixel matrix in X and Y
          */
         XYVector getSize() const override;
+
+        /**
+         * @brief Get the size of a single pixel
+         * @return double with area of pixel at this index
+         */
+        double getPixelArea(int = 0, int = 0) const override { return 3 * std::sqrt(3) / 2 * getPitch().X(); }
 
         /**
          * @brief Test whether one pixel touches the cluster

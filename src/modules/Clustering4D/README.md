@@ -26,6 +26,10 @@ Their width is defined as the maximum extent in column/row direction, i.e. a clu
 * `charge_weighting`: If true, calculate a charge-weighted mean for the cluster centre. If false, calculate the simple arithmetic mean. Defaults to `true`.
 * `use_earliest_pixel` : If `true`, the pixel with the earliest timestamp will be used to set the cluster timestamp. If `false`, the pixel with the largest charge will be used. Defaults to `false`.
 * `reject_by_roi`: If true, clusters positioned outside the ROI set for the detector will be rejected. Defaults to `false`.
+* `output_plots_charge_max` : Set the x-axis maximum of the cluster charge histogram, defaults to 50ke.
+* `output_plots_charge_bins` : Set the number of bins for the cluster charge histogram, defaults to 5000.
+
+#### Plotting parameters
 
 ### Plots produced
 For each detector the following plots are produced:

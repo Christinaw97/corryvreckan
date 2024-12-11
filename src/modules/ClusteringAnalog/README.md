@@ -15,6 +15,8 @@ For analysis of signal-noise ratio, this module reads the pedestal and noise map
 
 This module also provides a cluster shape analysis. To characterize the cluster shape, the charge distribution is estimated in the entire clustering window and the neighboring pixels are ordered by 1D index number w.r.t. the local position of the seed or by decreasing charge. To understand the signal significance and consider the common shift effect, a special plot for charge ratio is accumulated with the largest N pixels in the cluster, using the sum of all positive pixels as the denominator to normalize cluster-by-cluster.
 
+Finally, this module allows emulating digitization with configurable number of bins and bin width. This allows to study how much charge information is needed to make full use of a detectors potential.
+
 ### Parameters
 * `reject_by_roi`: ROI rejection with the local position of the cluster. (Default: false)
 * `method`: Clustering method to reconstruct cluster position and charge. `cluster` (default): includes all adjacent pixels with signal above thresholds (see later) and calculates charge-weighted center-of-gravity as the cluster position. `seed`: equivalent to `cluster` but the cluster position and charge is given only by the seed pixel. `binary`: equivalent to `cluster` but calculates center-of-gravity of all pixels above threshold without charge weighting (as is done in binary sensors). `window`: includes all pixels in a window centered on the seed and defined by `window_size` and calculates charge-weighted center-of-gravity as the cluster position.
@@ -30,9 +32,13 @@ This module also provides a cluster shape analysis. To characterize the cluster 
 * `thresholdSNR_iteration`: S/N ratio cut to find neighbors of neighbors. Detector `calibration_file` must be defined in geometry file and `threshold_type=snr or mix`.
 * `threshold_cluster`: Cut on cluster charge, used for the optimization of seeding criteria. (Default: `threshold_seed`)
 * `calibration_pedestal`: Histogram name of pedestal map in calibration file. Read as ROOT::TH2F.
-* `calibration_noise`: Histogram name of noise map in calibration file. Read as ROOT::TH2F.
+* `calibration_type`: Type of the calibration to be applied, either `VALUE` for a single noise value of `FILE` for a full calibration file with noise values per detector channel.
+* `calibration_noise`: Histogram name of noise map in calibration file. Read as ROOT::TH2F. Only used with `calibration_type = FILE`.
+* `calibration_value`: Noise value to be used. Only used with `calibration_type = VALUE`.
 * `analysis_shape`: Produce more elaborate histograms for cluster shape analysis. (Default: `false`)
 * `use_trigger_timestamp`: If true, the first trigger timestamp of the Corryvreckan event is set as the cluster timestamp. Caution when using this method for very long events containing multiple triggers. If false, the seed pixel defines the timestamp. Default value is `false`.
+* `digitizer_bin_width`: Setting the bin width for the digitization of analog signals. The width of the first bin always corresponds to the smallest configured threshold. Defaults to `0.0`, which means that no digitization is applied.
+* `digitizer_bin_number`: Setting the number of bins for the digitization of analog signals, counting only the bins above threshold. Defaults to `0`, which means that no digitization is applied.
 
 ### Plots produced
 For each detector, the following plots are produced:

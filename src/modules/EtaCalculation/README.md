@@ -33,5 +33,5 @@ For each detector the following plots are produced:
 ```toml
 [EtaCalculation]
 chi2ndof_cut = 100
-eta_formula_x = [0] + [1]*x + [2]*x^2 + [3]*x^3 + [4]*x^4 + [5]*x^5
+eta_formula_x = "[0] + [1]*x + [2]*x^2 + [3]*x^3 + [4]*x^4 + [5]*x^5"
 ```

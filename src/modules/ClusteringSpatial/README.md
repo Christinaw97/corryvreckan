@@ -23,6 +23,8 @@ Their width is defined as the maximum extent in column/row direction, i.e. a clu
 * `reject_by_roi`: If true, clusters positioned outside the ROI set for the detector will be rejected. Defaults to `false`.
 * `neighbor_radius_col`: Search radius for neighboring pixels in column direction, defaults to `1` (do not allow split clusters)
 * `neighbor_radius_row`:  Search radius for neighboring pixels in row direction, defaults to `1` (do not allow split clusters)
+* `output_plots_charge_max` : Set the x-axis maximum of the cluster charge histogram, defaults to 50ke.
+* `output_plots_charge_bins` : Set the number of bins for the cluster charge histogram, defaults to 5000.
 
 ### Plots produced
 For each detector the following plots are produced:

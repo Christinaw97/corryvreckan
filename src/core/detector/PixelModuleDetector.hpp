@@ -61,6 +61,12 @@ namespace corryvreckan {
         XYVector getSize() const override;
 
         /**
+         * @brief Get the size of a single pixel, accounting for "big pixels"
+         * @return double with area of pixel at selected indexes
+         */
+        double getPixelArea(int column, int row) const override;
+
+        /**
          * @brief Retrieve configuration object from detector, containing all (potentially updated) parameters
          * @return Configuration object for this detector
          */

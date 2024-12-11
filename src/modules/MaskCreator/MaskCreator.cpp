@@ -27,6 +27,7 @@ MaskCreator::MaskCreator(Configuration& config, std::shared_ptr<Detector> detect
     config_.setDefault<bool>("mask_dead_pixels", false);
     config_.setDefault<bool>("write_new_config", false);
     config_.setDefault<std::string>("new_config_suffix", "");
+    config_.setDefault<bool>("square_big_pixel_weight", false);
 
     m_method = config_.get<MaskingMethod>("method");
     m_frequency = config_.get<double>("frequency_cut");
@@ -37,6 +38,7 @@ MaskCreator::MaskCreator(Configuration& config, std::shared_ptr<Detector> detect
     m_maskDeadPixels = config_.get<bool>("mask_dead_pixels");
     m_writeNewConfig = config_.get<bool>("write_new_config");
     m_newConfigSuffix = config_.get<std::string>("new_config_suffix");
+    m_squareBigPixelWeight = config_.get<bool>("square_big_pixel_weight");
 }
 
 void MaskCreator::initialize() {
@@ -122,7 +124,13 @@ StatusCode MaskCreator::run(const std::shared_ptr<Clipboard>& clipboard) {
     // Loop over all pixels
     for(auto& pixel : pixels) {
         // Enter another pixel hit for this channel
-        m_occupancy->Fill(pixel->column(), pixel->row());
+        double weight = m_detector->getPitch().X() * m_detector->getPitch().Y() /
+                        m_detector->getPixelArea(pixel->column(), pixel->row());
+
+        if(m_squareBigPixelWeight)
+            weight = weight * weight;
+
+        m_occupancy->Fill(pixel->column(), pixel->row(), weight);
     }
 
     return StatusCode::Success;

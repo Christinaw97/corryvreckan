@@ -55,15 +55,6 @@ stages:
         - source etc/setup_lxplus.sh
         - mkdir -p build/ && cd build/
 
-.macos:
-    tags:
-        - mac
-    variables:
-        COMPILER_TYPE: "llvm"
-    before_script:
-        - source .ci/init_x86_64.sh
-        - mkdir -p build/ && cd build/
-
 
 #######################
 # Compilation targets #
@@ -115,15 +106,6 @@ cmp:el9-llvm:
         - .compile
     variables:
         COMPILER_TYPE: "llvm"
-
-cmp:macos-clang:
-    extends:
-        - .macos
-        - .compile
-    script:
-        - cmake -GNinja -DCMAKE_CXX_FLAGS="-Werror" -DCMAKE_BUILD_TYPE=RELEASE -DROOT_DIR=$ROOTSYS -DCMAKE_USE_RELATIVE_PATHS=TRUE -DEigen3_DIR=$Eigen3_DIR ..
-        - ninja -k0
-        - ninja install
 
 
 ##############
@@ -328,16 +310,6 @@ pkg:cc7-gcc:
         - job: cmp:cc7-gcc
           artifacts: true
 
-pkg:macos-clang:
-    extends:
-        - .macos
-        - .pack
-    tags:
-        - mac
-    needs:
-        - job: cmp:macos-clang
-          artifacts: true
-
 
 ########################
 # Automatic Deployment #
@@ -379,7 +351,6 @@ deploy:eos:
         - pkg:cc7-gcc
         - pkg:el9-gcc
         - pkg:el9-llvm
-        - pkg:macos-clang
     # Docker image with tools to deploy to EOS
     image: gitlab-registry.cern.ch/ci-tools/ci-web-deployer:latest
     script:
@@ -394,7 +365,6 @@ deploy:cvmfs:
         - pkg:cc7-gcc
         - pkg:el9-gcc
         - pkg:el9-llvm
-        - pkg:macos-clang
     tags:
         - cvmfs-deploy
     only:

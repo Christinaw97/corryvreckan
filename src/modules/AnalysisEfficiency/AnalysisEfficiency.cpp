@@ -130,24 +130,26 @@ void AnalysisEfficiency::initialize() {
                                                      1);
 
     title = m_detector->getName() + " Global efficiency map;x [mm];y [mm];#epsilon";
-    hGlobalEfficiencyMap_trackPos_TProfile = new TProfile2D("globalEfficiencyMap_trackPos_TProfile",
-                                                            title.c_str(),
-                                                            300,
-                                                            m_detector->displacement().X() - 1.5 * m_detector->getSize().X(),
-                                                            m_detector->displacement().X() + 1.5 * m_detector->getSize().X(),
-                                                            300,
-                                                            m_detector->displacement().Y() - 1.5 * m_detector->getSize().Y(),
-                                                            m_detector->displacement().Y() + 1.5 * m_detector->getSize().Y(),
-                                                            0,
-                                                            1);
-    hGlobalEfficiencyMap_trackPos = new TEfficiency("globalEfficiencyMap_trackPos",
-                                                    title.c_str(),
-                                                    300,
-                                                    m_detector->displacement().X() - 1.5 * m_detector->getSize().X(),
-                                                    m_detector->displacement().X() + 1.5 * m_detector->getSize().X(),
-                                                    300,
-                                                    m_detector->displacement().Y() - 1.5 * m_detector->getSize().Y(),
-                                                    m_detector->displacement().Y() + 1.5 * m_detector->getSize().Y());
+    hGlobalEfficiencyMap_trackPos_TProfile =
+        new TProfile2D("globalEfficiencyMap_trackPos_TProfile",
+                       title.c_str(),
+                       300,
+                       m_detector->displacement().X() - 1.5 * m_detector->getGlobalExtent().X(),
+                       m_detector->displacement().X() + 1.5 * m_detector->getGlobalExtent().X(),
+                       300,
+                       m_detector->displacement().Y() - 1.5 * m_detector->getGlobalExtent().Y(),
+                       m_detector->displacement().Y() + 1.5 * m_detector->getGlobalExtent().Y(),
+                       0,
+                       1);
+    hGlobalEfficiencyMap_trackPos =
+        new TEfficiency("globalEfficiencyMap_trackPos",
+                        title.c_str(),
+                        300,
+                        m_detector->displacement().X() - 1.5 * m_detector->getGlobalExtent().X(),
+                        m_detector->displacement().X() + 1.5 * m_detector->getGlobalExtent().X(),
+                        300,
+                        m_detector->displacement().Y() - 1.5 * m_detector->getGlobalExtent().Y(),
+                        m_detector->displacement().Y() + 1.5 * m_detector->getGlobalExtent().Y());
     hGlobalEfficiencyMap_trackPos->SetDirectory(this->getROOTDirectory());
 
     hDistanceCluster = new TH1D("distanceTrackHit",
@@ -571,7 +573,7 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
 
                 // discard tracks without intercept, using a tolerance defined
                 // by the radial cut which we will use later.
-                if(m_detector->hasIntercept(track.get(), -m_fake_rate_distance)) {
+                if(!m_detector->hasIntercept(track.get(), -m_fake_rate_distance)) {
                     continue;
                 }
 
@@ -629,23 +631,23 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         // track!
         if(!track_in_active) {
 
-            // iterate the dut pixels from clipboard
-            for(auto& pixel : pixels) {
-                fake_hits++;
-                hFakePixelCharge->Fill(pixel->charge());
-                fakePixelPerEventMap->Fill(pixel->column(), pixel->row(), 1);
-            }
-            hFakePixelPerEvent->Fill(fake_hits);
-            fakePixelPerEventVsTime->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
-            fakePixelPerEventVsTimeLong->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
-
             // get and iterate dut clusters from clipboard
             auto clusters = clipboard->getData<Cluster>(m_detector->getName());
             for(auto& cluster : clusters) {
                 fake_clusters++;
                 hFakeClusterCharge->Fill(cluster->charge());
                 hFakeClusterSize->Fill(static_cast<double>(cluster->size()));
+
+                for(auto& pixel : cluster->pixels()) {
+                    fake_hits++;
+                    hFakePixelCharge->Fill(pixel->charge());
+                    fakePixelPerEventMap->Fill(pixel->column(), pixel->row(), 1);
+                }
             }
+
+            hFakePixelPerEvent->Fill(fake_hits);
+            fakePixelPerEventVsTime->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
+            fakePixelPerEventVsTimeLong->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
             hFakeClusterPerEvent->Fill(fake_clusters);
         }
     }

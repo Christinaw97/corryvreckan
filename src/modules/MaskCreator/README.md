@@ -14,6 +14,7 @@ This module reads in `pixel` objects for each device from the clipboard, and mas
 Currently, two methods are available. The `localdensity` noise estimation method is taken from the Proteus framework [@proteus-repo] developed by Université de Genève.
 It uses a local estimate of the expected hit rate to find pixels that are a certain number of standard deviations away from this estimate.
 The second method, `frequency`, is a simple cut on a global pixel firing frequency which masks pixels with a hit rate larger than `frequency_cut` times the mean global hit rate.
+The bare occupancy is adjusted to account for pixel area in detectors with non-identical pixels (e.g. `PixelModuleDetector` and `RadialStripDetector`).
 
 The module appends the pixels to be masked to the mask files provided in the geometry file for each device.
 If no mask file is specified there, a new file `mask_<detector_name>.txt` is created in the globally configured output directory.
@@ -30,6 +31,7 @@ No masks are applied in this module as this is done by the respective event load
 * `mask_dead_pixels`: If `true`, the module will search for pixels without any recorded hits and add them to the mask file. Default is `false`.
 * `write_new_config`: If `true` and the detector config did not previously hold a mask file, then the new mask file is added to the outgoing config. Default is `false`.
 * `new_config_suffix`: If `write_new_config=true` and the detector config did not previously hold a mask file, add a suffix to the new mask file. Default is `""` (no suffix).
+* `square_big_pixel_weight`: The occupancy for masking is adjusted for pixel area - however, in some detectors, cross-talk between neighbours can also scale linearly with pixel size, giving localised occupancies that increase by the square of the pixel area. Setting this option to `true` divides the bare occupancy by the area squared (rather than just the area) to account for this. Defaults to `false`.
 
 ### Plots produced
 For each detector the following plots are produced:
