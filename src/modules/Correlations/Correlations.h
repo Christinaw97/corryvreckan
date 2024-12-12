@@ -78,7 +78,6 @@ namespace corryvreckan {
         bool do_time_cut_;
         bool corr_vs_time_;
         double time_binning_;
-        bool corr_vs_trigger_;
     };
 } // namespace corryvreckan
 #endif // CORRELATIONS_H
