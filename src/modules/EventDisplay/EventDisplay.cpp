@@ -27,20 +27,21 @@ StatusCode EventDisplay::run(const std::shared_ptr<Clipboard>& clipboard) {
     }
 
     std::string title = "map_event_" + std::to_string(event_number_);
-    auto* histogram = new TProfile2D(title.c_str(),
-                                     "rawValues; column; row; raw values",
-                                     detector_->nPixels().X(),
-                                     -0.5,
-                                     detector_->nPixels().X() - 0.5,
-                                     detector_->nPixels().Y(),
-                                     -0.5,
-                                     detector_->nPixels().Y() - 0.5);
+    auto histogram = new TProfile2D(title.c_str(),
+                                    "rawValues; column; row; raw values",
+                                    detector_->nPixels().X(),
+                                    -0.5,
+                                    detector_->nPixels().X() - 0.5,
+                                    detector_->nPixels().Y(),
+                                    -0.5,
+                                    detector_->nPixels().Y() - 0.5);
 
     for(const auto& pixel : pixels) {
         histogram->Fill(pixel->column(), pixel->row(), pixel->raw());
     }
 
     histogram->Write();
+    delete histogram;
     event_number_++;
 
     // Return value telling analysis to keep running
