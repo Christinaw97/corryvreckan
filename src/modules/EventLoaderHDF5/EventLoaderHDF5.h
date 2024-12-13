@@ -74,18 +74,8 @@ namespace corryvreckan {
         void fillBuffer();
         Event::Position getPosition(const std::shared_ptr<Event>& event, const std::shared_ptr<Hit>& hit) const;
 
-        // Sort buffer by timestamp to make sure to read them in chronological order.
-        // If timestamps are not available, sort by trigger number. If that fails, good luck
-        template <typename T> struct CompareTimeGreater {
-            bool operator()(const std::shared_ptr<T> a, const std::shared_ptr<T> b) {
-                if((a->timestamp > 0) && (b->timestamp > 0)) {
-                    return a->timestamp > b->timestamp;
-                } else {
-                    return a->trigger_number > b->trigger_number;
-                }
-            }
-        };
-        std::priority_queue<std::shared_ptr<Hit>, HitVector, CompareTimeGreater<Hit>> m_buffer;
+        std::priority_queue<std::shared_ptr<Hit>, HitVector, std::function<bool(std::shared_ptr<Hit>, std::shared_ptr<Hit>)>>
+            m_buffer;
     };
 
 } // namespace corryvreckan
