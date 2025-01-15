@@ -126,7 +126,8 @@ class Loader():
             # variables identified by the csv header by the run specific value
             try:
                 # check if the runnumber in csv is provided as list of values or range
-                runnrs = misc.parseBrackets(self.parameters[line]["runnumber"])
+                # convert to int in order to ignore leading zeros (zfill)
+                runnrs = list(map(int, misc.parseBrackets(self.parameters[line]["runnumber"])))
                 if not int(runnr) in runnrs and not runnr in runnrs:
                     continue
                 # process only the selected runnr
