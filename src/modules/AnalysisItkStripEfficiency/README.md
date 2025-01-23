@@ -3,19 +3,18 @@
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
 # AnalysisItkStripEfficiency
-**Maintainer**: Jens Dopke (<jens.dopke@stfc.ac.uk>)
+**Maintainer**: Jens Dopke (<jens.dopke@stfc.ac.uk>), Yajun He (<yajun.he@cern.ch>)
 **Module Type**: *DUT*
 **Detector Type**: *ITS_ABC*
 **Status**: Functional
 
 ### Description
-Needs updating, stolen from AnalysisEfficiency!
+Updating.
 
-This module measures the efficiency of the DUT by comparing its cluster positions with the interpolated track position at the DUT.
-It also comprises a range of histograms to investigate where inefficiencies might come from.
+This module is dedicated to the efficiency measurement of the ITk strip modules, i.e. barrel and endcap modules. It has overlap with `AnalysisEfficiency`. Details are following: 
 
 The efficiency is calculated as the fraction of tracks with associated clusters on the DUT over the the total number of tracks intersecting the DUT (or region-of-interest, if defined).
-Compared to the standard AnalysisEfficiency, this particular version also produces a split based on Time-of-Arrival of the trigger signal within the detectors frame of time: `eTimingEfficiency`
+Compared to the standard `AnalysisEfficiency`, this particular version also produces a split based on Time-of-Arrival of the trigger signal within the detectors frame of time: `eTimingEfficiency`
 It is stored in a ROOT `TEfficiency` object (see below).
 Its uncertainty is calculated using the default ROOT `TEfficiency` method which is applying a Clopper-Pearson confidence interval of one sigma.
 Analogue to a Gaussian sigma, this corresponds to the central 68.3% of a binomial distribution for the given efficiency but taking into account a lower limit of 0 and an upper limit of 1.
