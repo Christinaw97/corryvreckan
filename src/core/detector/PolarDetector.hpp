@@ -208,8 +208,16 @@ namespace corryvreckan {
          * @brief Get intrinsic spatial resolution of the detector
          * @param column Strip column (x-index) to calculate the resolution for
          * @param row Strip row (y-index) to calculate the resolution for
-         * @return Intrinsic spatial resolution in polar dimensions (Phi and R)
+         * @return approximate pitch x and pitch
          */
+        XYVector getPolarPitch(double row) const;
+        /**
+         * @brief Get intrinsic spatial resolution of the detector in polar coordinate
+         * @param column Strip column (x-index) to calculate the resolution for
+         * @param row Strip row (y-index) to calculate the resolution for
+         * @return pitch in angular and in row radius
+         */
+
         XYVector getSpatialResolution(double column = 0, double row = 0) const override;
 
         /**

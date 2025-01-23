@@ -71,8 +71,8 @@ namespace corryvreckan {
         TEfficiency* hGlobalEfficiencyMap_clustPos;
 
         TEfficiency* eTimingEfficiency;
-        TEfficiency* eInPixelEfficiency;
-        TEfficiency* eInStripEfficiency;
+        TEfficiency* eInColumnEfficiency;
+        TEfficiency* eInRowEfficiency;
 
         TProfile2D* hStripEfficiencyOddEven_TProfile;
         TEfficiency* eTotalEfficiency;

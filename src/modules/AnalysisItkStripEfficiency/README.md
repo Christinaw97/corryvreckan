@@ -24,7 +24,6 @@ More information can be found in the ROOT `TEfficiency` class reference, section
 ### Parameters
 * `time_cut_frameedge`: Parameter to discard telescope tracks at the frame edges (start and end of the current event window). Defaults to `20ns`.
 * `chi2ndof_cut`: Acceptance criterion for telescope tracks, defaults to a value of `3`.
-* `inpixel_bin_size`: Parameter to set the bin size of the in-pixel 2D efficiency histogram. This should be given in units of distance and the same value is used in both axes. Defaults to `1.0um`.
 * `inpixel_cut_edge`: Parameter to exclude tracks going within a cut-distance to the pixel edge. Effectively defines an in-pixel ROI. Defaults to `5um`.
 * `masked_pixel_distance_cut`: Distance (in pixels) to exclude tracks passing close to masked pixel. Defaults to `1`.
 * `require_associated_cluster_on`: Names of detectors which are required to have an associated cluster to the telescope tracks. Detectors listed here must be marked as `role = DUT` in the detector configuration file. Only tracks satisfying this requirement are accepted for the efficiency measurement. If empty, no detector is required. Default is empty.
@@ -49,6 +48,8 @@ For the DUT, the following plots are produced:
   * Histograms of the row and column difference of the matched and non-matched track time to the previous track
   * Histograms of the time difference of a matched (non-matched) cluster to a previous hit (not matter if noise or track)
   * Distribution of cluster-track distances
+  * Histogram of the in-strip efficiency in column direction
+  * Histogram of the in-strip efficiency in row direction
 
 * Other:
   * Value of total efficiency as `TEfficiency` including (asymmetric) error bars (total and restricted to in-pixel ROI)
@@ -56,9 +57,11 @@ For the DUT, the following plots are produced:
 
 
 ### Usage
-```toml
-[AnalysisItkStripEfficiency]
+```
+type = "its_abc"
+perimeter_exclude = 0
 chi2ndof_cut = 5
-file_ttc = eventfile.raw
+delay_cuts = 64, 0
+file_ttc = evetfile.raw
 ```
 [@root-tefficiency-class-ref]: https://root.cern.ch/doc/master/classTEfficiency.html#ae80c3189bac22b7ad15f57a1476ef75b
