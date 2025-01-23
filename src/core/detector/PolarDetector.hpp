@@ -210,7 +210,7 @@ namespace corryvreckan {
          * @param row Strip row (y-index) to calculate the resolution for
          * @return approximate pitch x and pitch
          */
-        XYVector getPolarPitch(double row) const;
+        XYVector getPolarPitch(double row = 0) const;
         /**
          * @brief Get intrinsic spatial resolution of the detector in polar coordinate
          * @param column Strip column (x-index) to calculate the resolution for
