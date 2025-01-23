@@ -1,7 +1,12 @@
 /**
  * @file
  * @brief Implementation of [AnalysisItkStripEfficiency] module
-
+ *
+ * @copyright Copyright (c) 2017-2020 CERN and the Corryvreckan authors.
+ * This software is distributed under the terms of the MIT License, copied verbatim in the file "LICENSE.md".
+ * In applying this license, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
+ * Intergovernmental Organization or submit itself to any jurisdiction.
+ * SPDX-License-Identifier: MIT
  */
 
 #include "AnalysisItkStripEfficiency.h"
@@ -25,8 +30,8 @@ AnalysisItkStripEfficiency::AnalysisItkStripEfficiency(Configuration& config, st
     config_.setDefault<double>("perimeter_exclude", 1.);
     config_.setDefault<double>("inpixel_bin_size", Units::get<double>(1.0, "um"));
     config_.setDefault<XYVector>("inpixel_cut_edge", {Units::get(5.0, "um"), Units::get(5.0, "um")});
-    config_.setDefault<double>("masked_pixel_distance_cut", 1.);
     config_.setDefault<std::string>("file_ttc", "");
+    config_.setDefault<double>("masked_pixel_distance_cut", 1.);
     config_.setDefault<std::string>("ttc_tag", "PTDC_DUT.BIT");
     config_.setDefault<std::string>("eudaq_loglevel", "ERROR");
     // config_.setDefault<std::vector<double>>("delay_cut", {Units::get<double>(14, "ns"), Units::get<double>(19, "ns")});
@@ -125,7 +130,7 @@ void AnalysisItkStripEfficiency::initialize() {
     pitch_y = static_cast<double>(Units::convert(m_detector->getPitch().Y(), "um"));
 
     auto nbins_x = static_cast<int>(std::ceil(m_detector->getPitch().X() / m_inpixelBinSize));
-    auto nbins_y = static_cast<int>(std::ceil(m_detector->getPitch().Y() / m_inpixelBinSize));
+    auto nbins_y = static_cast<int>(std::ceil(m_detector->getPitch().Y() / m_inpixelBinSize / 10.));
     if(nbins_x > 1e4 || nbins_y > 1e4) {
         throw InvalidValueError(config_, "inpixel_bin_size", "Too many bins for in-pixel histograms.");
     }
@@ -410,16 +415,15 @@ void AnalysisItkStripEfficiency::initialize() {
     // auto m_detector_polar = std::static_pointer_cast<ITkStripR0>(m_detector);
     // ai to resolve at telescope resolution 3-5 micron. ITk EC strip pitch ~ 70microns, 72/3 = 24
     // for 2 strips plot 2*24 = 48
-    title = "InPixelEfficiency;In-2-pixel-position;#epsilon";
-    eInPixelEfficiency = new TEfficiency("eInPixelEfficiency", title.c_str(), 48, 0.0, 2.0);
+    title = "InPixelEfficiency;In-2-pixel-position(mm);#epsilon";
+    eInPixelEfficiency = new TEfficiency(
+        "eInPixelEfficiency", title.c_str(), 40, 0.0 * m_detector->getPitch().X(), 2.0 * m_detector->getPitch().X());
     eInPixelEfficiency->SetDirectory(this->getROOTDirectory());
-    // }
-    // else{
-    //     title = "InPixelEfficiency;In-2-pixel-position;#epsilon";
-    //     eInPixelEfficiency =
-    //         new TEfficiency("eInPixelEfficiency",title.c_str(), 100, 0.0, 2.0);
-    //     eInPixelEfficiency->SetDirectory(this->getROOTDirectory());
-    // }
+
+    title = "InStripEfficiency;In-2-strip-position(mm);#epsilon";
+    eInStripEfficiency = new TEfficiency(
+        "eInStripEfficiency", title.c_str(), 200, 0.0 * m_detector->getPitch().Y(), 2.0 * m_detector->getPitch().Y());
+    eInStripEfficiency->SetDirectory(this->getROOTDirectory());
 
     title = m_detector->getName() + " even-odd efficiency;x [px];y [px];#epsilon";
     hStripEfficiencyOddEven_TProfile =
@@ -702,18 +706,22 @@ StatusCode AnalysisItkStripEfficiency::run(const std::shared_ptr<Clipboard>& cli
         localIntercept/pitch - floor(localIntercept/pitch) gives position within strip
          multiply factor *N gives position with N strips
         */
-        auto x_remainder = ((localIntercept.x() / (m_detector->getPitch().X() * 2.0)) -
-                            (floor(localIntercept.x() / (m_detector->getPitch().X() * 2.0)))) *
-                           2.0;
-        auto y_remainder = ((localIntercept.y() / (m_detector->getPitch().Y() * 2.0)) -
-                            (floor(localIntercept.y() / (m_detector->getPitch().Y() * 2.0)))) *
-                           2.0;
+        auto x_remainder =
+            (((localIntercept.x() + m_detector->getPitch().X() * 0.5) / (m_detector->getPitch().X() * 2.0)) -
+             (floor((localIntercept.x() + m_detector->getPitch().X() * 0.5) / (m_detector->getPitch().X() * 2.0)))) *
+            2.0 * m_detector->getPitch().X();
+        auto y_remainder =
+            (((localIntercept.y() + m_detector->getPitch().Y() * 0.5) / (m_detector->getPitch().Y() * 2.0)) -
+             (floor((localIntercept.y() + m_detector->getPitch().Y() * 0.5) / (m_detector->getPitch().Y() * 2.0)))) *
+            2.0 * m_detector->getPitch().Y();
         auto polar_det = std::dynamic_pointer_cast<PolarDetector>(m_detector);
         if(polar_det != nullptr) {
             auto localInterceptPolar = polar_det->getPolarPosition(localIntercept);
-            x_remainder = ((localInterceptPolar.x() / (m_detector->getPitch().X() * 2.0)) -
-                           (floor(localInterceptPolar.x() / (m_detector->getPitch().X() * 2.0)))) *
-                          2.0;
+            x_remainder =
+                (((localInterceptPolar.x() + m_detector->getPitch().X() * 0.5) / (m_detector->getPitch().X() * 2.0)) -
+                 (floor((localInterceptPolar.x() + m_detector->getPitch().X() * 0.5) /
+                        (m_detector->getPitch().X() * 2.0)))) *
+                2.0;
             y_remainder = ((localInterceptPolar.y() / (m_detector->getPitch().Y() * 2.0)) -
                            (floor(localInterceptPolar.y() / (m_detector->getPitch().Y() * 2.0)))) *
                           2.0;
@@ -722,10 +730,10 @@ StatusCode AnalysisItkStripEfficiency::run(const std::shared_ptr<Clipboard>& cli
         if(is_within_roi) {
             LOG(DEBUG) << "is_within_roi True, filling eTimingEfficiency";
             eTimingEfficiency->Fill(has_associated_cluster, delay);
-
-            if(delay < 5 || delay > 28) {
-                LOG(INFO) << "eTimingEfficiency was filled with " << has_associated_cluster << "  " << delay;
-            }
+            // unnecessary print outs
+            // if(delay < 5 || delay > 28) {
+            //     LOG(INFO) << "eTimingEfficiency was filled with " << has_associated_cluster << "  " << delay;
+            // }
 
             // LOG(DEBUG) << "eTimingEfficiency pointer print " << eTimingEfficiency;
 
@@ -740,6 +748,7 @@ StatusCode AnalysisItkStripEfficiency::run(const std::shared_ptr<Clipboard>& cli
             if(is_in_delay_window) {
                 LOG(DEBUG) << " is_within_roi & is_in_delay_window, filling eTotalEfficiency , " << has_associated_cluster;
                 eInPixelEfficiency->Fill(has_associated_cluster, x_remainder);
+                eInStripEfficiency->Fill(has_associated_cluster, y_remainder);
                 eTotalEfficiency->Fill(has_associated_cluster, 0); // use 0th bin for total efficiency
                 hPixelEfficiencyMap_trackPos_TProfile->Fill(xmod_um, ymod_um, has_associated_cluster);
                 hPixelEfficiencyMap_trackPos->Fill(has_associated_cluster, xmod_um, ymod_um);
