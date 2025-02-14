@@ -23,6 +23,7 @@ EventLoaderYarr::EventLoaderYarr(Configuration& config, std::shared_ptr<Detector
     m_bufferDepth = config.get<uint64_t>("buffer_depth", 100000);
 
     LOG(INFO) << "Detector name: " << m_detector->getName();
+    LOG(INFO) << "Trigger multiplicity has been set to " << m_triggerMultiplicity;
 
 }
 
@@ -77,8 +78,8 @@ void EventLoaderYarr::initialize() {
 
     // Create hitmap for detector
     std::string title = m_detector->getName() + " Hit map";
+    gStyle->SetPalette(kGreyScale);
     hHitMap = new TH2F("hitMap", title.c_str(), m_detector->nPixels().X(), -0.5, m_detector->nPixels().X() - 0.5, m_detector->nPixels().Y(), -0.5, m_detector->nPixels().Y() - 0.5);
-
 
 }
 
@@ -90,34 +91,41 @@ StatusCode EventLoaderYarr::run(const std::shared_ptr<Clipboard>& clipboard) {
         return StatusCode::EndRun;
     }
 
+    std::shared_ptr<Event> event;
 
-    this_tag = 0;
-    this_l1id = 0;
-    this_bcid = 0;
-    this_t_hits = 0;
-
-    // Read the header of the event
-    readHeader();
-    this_basetag = (this_tag & 252) >> 2;
-    this_exttag = (this_tag & 3);
-    this_time = ((this_tag >> 8) & (0xFFFFFF)) << 3;
-    header_read = true;
-
-    // Check if an event is defined or if we need to create it:
-    if(!clipboard->isEventDefined() || clipboard->getEvent()->getTriggerPosition(this_bcid) != Event::Position::DURING) {
-        // Create a new event with start and end times equal to this_time.
-        // Use the trigger number (this_bcid) to assign this event.
-        auto event = std::make_shared<Event>(this_time, this_time);
-        event->addTrigger(this_bcid, this_time);
+    if(!clipboard->isEventDefined()) {
+        event = std::make_shared<Event>();
         clipboard->putEvent(event);
+    } else {
+        event = clipboard->getEvent();
     }
 
     // Create PixelVector to store hits
     PixelVector pixels;
-    readHits(pixels);
+
+    // Loop through trigger window
+    for(int i = 0; i < m_triggerMultiplicity; i++) {
+        
+        // Read the trigger
+        this_tag = 0;
+        this_l1id = 0;
+        this_bcid = 0;
+        this_t_hits = 0;
+
+        // Read the header of the event
+        readHeader();
+        this_basetag = (this_tag & 252) >> 2;
+        this_exttag = (this_tag & 3);
+        this_time = ((this_tag >> 8) & (0xFFFFFF)) << 3;
+
+        event->addTrigger(this_l1id, this_time);
+        
+        readHits(pixels);
+    }
+
     if(!pixels.empty()) {
         clipboard->putData(pixels, m_detector->getName());
-        LOG(DEBUG) << "Added " << pixels.size() << " pixels to the clipboard";
+        LOG(DEBUG) << "Added " << pixels.size() << " pixels.";
     }
 
     // Fill the hitmap
@@ -130,11 +138,12 @@ StatusCode EventLoaderYarr::run(const std::shared_ptr<Clipboard>& clipboard) {
 
     // Return value telling analysis to keep running
     return StatusCode::Success;
+
 }
 
 void EventLoaderYarr::finalize(const std::shared_ptr<ReadonlyClipboard>&) { 
 
-    LOG(DEBUG) << "Analysed " << m_eventNumber << " events"; 
+    LOG(STATUS) << "Analysed " << m_eventNumber << " events"; 
 }
 
 
@@ -154,13 +163,14 @@ void EventLoaderYarr::readHits(PixelVector& pixels) {
         fileHandle.read(reinterpret_cast<char*>(&tot), sizeof(uint16_t));
 
         auto pixel = std::make_shared<Pixel>(
-            m_detector->getName(),              // Detector name.
-            col,                                // Column.
-            row,                                // Row.
-            static_cast<double>(tot),           // Charge (or calibrated charge if desired).
-            static_cast<double>(tot),           // Raw time over threshold.
-            static_cast<double>(this_time)      // Timestamp: every pixel in this event has the same time.
+            m_detector->getName(),                           // Detector name.
+            col,                                             // Column.
+            row,                                             // Row.
+            tot,                                             // Raw 
+            static_cast<double>(tot),                        // Charge: ToT is the charge.
+            static_cast<double>(this_time*1000000)           // Timestamp: every pixel in this event has the same time.
         );
+
         pixels.push_back(pixel);
     }
 }

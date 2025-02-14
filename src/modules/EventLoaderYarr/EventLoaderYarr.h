@@ -12,6 +12,7 @@
 #include <TCanvas.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TStyle.h>
 #include <iostream>
 #include <queue>
 #include <dirent.h>
