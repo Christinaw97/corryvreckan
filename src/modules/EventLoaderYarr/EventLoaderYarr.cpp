@@ -20,7 +20,6 @@ EventLoaderYarr::EventLoaderYarr(Configuration& config, std::shared_ptr<Detector
     m_inputDirectory = config_.getPath("input_directory");
 
     m_triggerMultiplicity = config_.get<int>("trigger_multiplicity", 17);
-    m_bufferDepth = config.get<uint64_t>("buffer_depth", 100000);
 
     LOG(INFO) << "Detector name: " << m_detector->getName();
     LOG(INFO) << "Trigger multiplicity has been set to " << m_triggerMultiplicity;
@@ -85,12 +84,6 @@ void EventLoaderYarr::initialize() {
 
 StatusCode EventLoaderYarr::run(const std::shared_ptr<Clipboard>& clipboard) {
 
-    if(fileHandle.peek() == EOF) {
-        LOG(INFO) << "Reached end-of-file. Closing file.";
-        fileHandle.close();
-        return StatusCode::EndRun;
-    }
-
     std::shared_ptr<Event> event;
 
     if(!clipboard->isEventDefined()) {
@@ -136,14 +129,24 @@ StatusCode EventLoaderYarr::run(const std::shared_ptr<Clipboard>& clipboard) {
     // Increment event counter
     m_eventNumber++;
 
-    // Return value telling analysis to keep running
-    return StatusCode::Success;
+    if(fileHandle.peek() == EOF) {
+        LOG(INFO) << "Reached end-of-file. Closing file.";
+        fileHandle.close();
+
+        // Finish the remaining modules for this event and then end the run
+        return StatusCode::EndRun;
+    }
+    else{
+        // Continue with next modules and then next event
+        return StatusCode::Success;
+    }
 
 }
 
 void EventLoaderYarr::finalize(const std::shared_ptr<ReadonlyClipboard>&) { 
 
     LOG(STATUS) << "Analysed " << m_eventNumber << " events"; 
+    LOG(DEBUG) << "Last BCID: " << this_bcid;
 }
 
 
