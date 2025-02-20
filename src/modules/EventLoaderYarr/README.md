@@ -19,6 +19,7 @@ This module loads data from YARR format binary files adding it to the clipboard 
 For each detector the following plots are produced:
 
 * 2D histogram of pixel hit positions
+* 1D histogram of number of hits vs timestamp
 
 ### Usage
 ```toml

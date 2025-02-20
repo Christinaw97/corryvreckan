@@ -18,7 +18,6 @@ EventLoaderYarr::EventLoaderYarr(Configuration& config, std::shared_ptr<Detector
 
     // Get the input directory from the configuration
     m_inputDirectory = config_.getPath("input_directory");
-
     m_triggerMultiplicity = config_.get<int>("trigger_multiplicity", 17);
 
     LOG(INFO) << "Detector name: " << m_detector->getName();
@@ -30,7 +29,6 @@ void EventLoaderYarr::initialize() {
 
     // Initialise member variables
     m_eventNumber = 0;
-
 
     // Open the input directory
     DIR* directory = opendir(m_inputDirectory.c_str());
@@ -79,22 +77,18 @@ void EventLoaderYarr::initialize() {
     std::string title = m_detector->getName() + " Hit map";
     gStyle->SetPalette(kGreyScale);
     hHitMap = new TH2F("hitMap", title.c_str(), m_detector->nPixels().X(), -0.5, m_detector->nPixels().X() - 0.5, m_detector->nPixels().Y(), -0.5, m_detector->nPixels().Y() - 0.5);
+    numHitsVsTime = new TH1F("numHitsVsTime", "Number of Hits vs. time; time [s]; # hits", 2880, 0, 86400);
 
 }
 
 StatusCode EventLoaderYarr::run(const std::shared_ptr<Clipboard>& clipboard) {
 
-    std::shared_ptr<Event> event;
-
-    if(!clipboard->isEventDefined()) {
-        event = std::make_shared<Event>();
-        clipboard->putEvent(event);
-    } else {
-        event = clipboard->getEvent();
-    }
-
     // Create PixelVector to store hits
     PixelVector pixels;
+
+    // Buffers to store trigger data from the trigger window
+    std::vector<uint16_t> triggerL1Ids;           
+    std::vector<uint32_t> triggerTimes;        
 
     // Loop through trigger window
     for(int i = 0; i < m_triggerMultiplicity; i++) {
@@ -111,9 +105,27 @@ StatusCode EventLoaderYarr::run(const std::shared_ptr<Clipboard>& clipboard) {
         this_exttag = (this_tag & 3);
         this_time = ((this_tag >> 8) & (0xFFFFFF)) << 3;
 
-        event->addTrigger(this_l1id, this_time);
+        triggerL1Ids.push_back(this_l1id);
+        triggerTimes.push_back(this_time);
         
+        // Read the hits of the event
         readHits(pixels);
+    }
+
+    m_event_time = (!triggerTimes.empty()) ? triggerTimes.front() : 0;
+
+    std::shared_ptr<Event> event;
+
+    if(!clipboard->isEventDefined()) {
+        event = std::make_shared<Event>(m_event_time, m_event_time);
+        clipboard->putEvent(event);
+    } else {
+        event = clipboard->getEvent();
+    }
+
+    // Add all trigger entries from the buffers to the event.
+    for (size_t i = 0; i < triggerL1Ids.size(); ++i) {
+        event->addTrigger(triggerL1Ids[i], triggerTimes[i]);
     }
 
     if(!pixels.empty()) {
@@ -121,9 +133,10 @@ StatusCode EventLoaderYarr::run(const std::shared_ptr<Clipboard>& clipboard) {
         LOG(DEBUG) << "Added " << pixels.size() << " pixels.";
     }
 
-    // Fill the hitmap
+    // Fill the plots
     for(auto& pixel : pixels) {
         hHitMap->Fill(pixel->column(), pixel->row());
+        numHitsVsTime->Fill(pixel->timestamp() / 1.0e9);
     }
 
     // Increment event counter
@@ -171,7 +184,7 @@ void EventLoaderYarr::readHits(PixelVector& pixels) {
             row,                                             // Row.
             tot,                                             // Raw 
             static_cast<double>(tot),                        // Charge: ToT is the charge.
-            static_cast<double>(this_time*1000000)           // Timestamp: every pixel in this event has the same time.
+            static_cast<double>(this_time)*1000000           // Timestamp: every pixel in this event has the same time.
         );
 
         pixels.push_back(pixel);

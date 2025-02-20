@@ -55,6 +55,7 @@ namespace corryvreckan {
 
     private:
         int m_eventNumber;
+        uint32_t m_event_time;
 
         // Event buffer
         uint32_t this_tag, this_time; 
@@ -73,6 +74,7 @@ namespace corryvreckan {
         
         // Root Plots
         TH2F* hHitMap;                          // Make a hitmap for each event
+        TH1F* numHitsVsTime;                    // Number of hits vs time
 
         // Helper Functions
         void readHeader();                      // Read the header of the event
