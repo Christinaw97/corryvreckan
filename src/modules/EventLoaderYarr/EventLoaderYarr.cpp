@@ -18,162 +18,149 @@ EventLoaderYarr::EventLoaderYarr(Configuration& config, std::shared_ptr<Detector
 
     // Get the input directory from the configuration
     m_inputDirectory = config_.getPath("input_directory");
-    m_triggerMultiplicity = config_.get<int>("trigger_multiplicity", 17);
-
     LOG(INFO) << "Detector name: " << m_detector->getName();
-    LOG(INFO) << "Trigger multiplicity has been set to " << m_triggerMultiplicity;
 
 }
 
 void EventLoaderYarr::initialize() {
-
-    // Initialise member variables
+    // Initialise event counter
     m_eventNumber = 0;
 
-    // Open the input directory
-    DIR* directory = opendir(m_inputDirectory.c_str());
-    if(directory == nullptr) {
-        throw ModuleError("Directory " + m_inputDirectory + " does not exist");
-    } else {
-        LOG(INFO) << "Found directory " << m_inputDirectory;
-    }
-
-
-    // Read all .raw files in the directory
-    dirent* entry;
-
-    // Buffer for file names:
-    std::vector<std::string> m_files;
-
-    // Grab the correct data file for the detector
-    while((entry = readdir(directory))) {
-        std::string filename = entry->d_name;
-        if(filename.find(".raw") != std::string::npos && filename.find(m_detector->getName()) != std::string::npos) {
-            m_files.push_back(m_inputDirectory + "/" + filename);
-            LOG(INFO) << "Found YARR data file: " << filename;
-        }
-    }
-    closedir(directory);
-    if(m_files.empty()) {
-        throw ModuleError("No raw data file found for detector " + m_detector->getName() + " in input directory.");
-    }
-    else if (m_files.size() > 1) {
-        throw ModuleError("Multiple raw data files found for detector " + m_detector->getName() + " in input directory.");
-    }
-    filename_ = m_files[0];
-
-
-    // Open the file
-    fileHandle.open(filename_, std::istream::in | std::istream::binary);
-    filePos = fileHandle.tellg();
+    // Locate and open the raw data file
+    m_filename = findRawFile(m_inputDirectory, m_detector->getName());
+    LOG(INFO) << "Opening file " << m_filename;
+    fileHandle.open(m_filename, std::istream::in | std::istream::binary);
     if(!fileHandle.good()){ 
-        throw(std::invalid_argument("Path " + filename_ + " could not be opened!"));
-    } else {
-        LOG(DEBUG) << "Opened file " << filename_;
-    }
+        throw(std::invalid_argument("Path " + m_filename + " could not be opened!"));
+    } 
+    LOG(DEBUG) << "Opened file " << m_filename;
 
+    
+    // Create and configure ROOT Histograms:
 
-    // Create hitmap for detector
+    // Hit map
     std::string title = m_detector->getName() + " Hit map";
-    gStyle->SetPalette(kGreyScale);
     hHitMap = new TH2F("hitMap", title.c_str(), m_detector->nPixels().X(), -0.5, m_detector->nPixels().X() - 0.5, m_detector->nPixels().Y(), -0.5, m_detector->nPixels().Y() - 0.5);
-    numHitsVsTime = new TH1F("numHitsVsTime", "Number of Hits vs. time; time [s]; # hits", 2880, 0, 86400);
+    gStyle->SetPalette(kGreyScale);
+
+    // Number of hits throughout a day
+    title = m_detector->getName() + " Number of Hits vs. time; time [s]; # hits";
+    numHitsVsTime = new TH1F("numHitsVsTime", title.c_str(), 2880, 0, 86400);
+
+    // Number of events vs absolute time (time across whole run)
+    title = m_detector->getName() + " Number of Events vs. absolute time; time [s]; # events";
+    eventsVsAbsoluteTime = new TH1F("eventsVsAbsoluteTime", title.c_str(), 2880, 0, 86400);
+    eventsVsAbsoluteTime->GetXaxis()->SetCanExtend(kTRUE);
+
+    // Number of hits vs absolute time (time across whole run)
+    title = m_detector->getName() + " Number of Hits vs. absolute time; time [s]; # hits";
+    numHitsVsAbsTime = new TH1F("numHitsVsAbsTime", title.c_str(), 2880, 0, 86400);
+    numHitsVsAbsTime->GetXaxis()->SetCanExtend(kTRUE);
 
 }
 
 StatusCode EventLoaderYarr::run(const std::shared_ptr<Clipboard>& clipboard) {
 
-    // Create PixelVector to store hits
+    // Create PixelVector to store hits and buffers to store trigger data
     PixelVector pixels;
-
-    // Buffers to store trigger data from the trigger window
     std::vector<uint16_t> triggerL1Ids;           
-    std::vector<uint32_t> triggerTimes;        
-
-    // Loop through trigger window
-    for(int i = 0; i < m_triggerMultiplicity; i++) {
-        
-        // Read the trigger
-        this_tag = 0;
-        this_l1id = 0;
-        this_bcid = 0;
-        this_t_hits = 0;
-
-        // Read the header of the event
-        readHeader();
-        this_basetag = (this_tag & 252) >> 2;
-        this_exttag = (this_tag & 3);
-        this_time = ((this_tag >> 8) & (0xFFFFFF)) << 3;
-
-        triggerL1Ids.push_back(this_l1id);
-        triggerTimes.push_back(this_time);
-        
-        // Read the hits of the event
-        readHits(pixels);
+    std::vector<uint32_t> triggerTimes;
+    
+    // Read the first trigger header to establish the current trigger window.
+    std::streampos headerStartPos = fileHandle.tellg();
+    auto firstHeader = readHeader();
+    uint16_t current_bcid = firstHeader.bcid;
+    triggerL1Ids.push_back(firstHeader.l1id);
+    triggerTimes.push_back(firstHeader.time);
+    if (firstHeader.numHits > 0) {
+        readHits(pixels, firstHeader.time, firstHeader.numHits);
     }
 
-    m_event_time = (!triggerTimes.empty()) ? triggerTimes.front() : 0;
+    // Loop through rest of trigger window
+    while (fileHandle.peek() != EOF) {
+        headerStartPos = fileHandle.tellg();
+        auto header = readHeader();
+        
+        // If the BCID has changed, rewind to before the header so the new event can handle it.
+        if (header.bcid != current_bcid) {
+            fileHandle.seekg(headerStartPos);
+            break;
+        }
 
+        triggerL1Ids.push_back(header.l1id);
+        triggerTimes.push_back(header.time);
+        readHits(pixels, header.time, header.numHits);
+    }
+
+    // Compute the absolute event time
+    m_absolute_event_time = adjustEventTime(triggerTimes);
+
+    // Get or create the event in the clipboard
     std::shared_ptr<Event> event;
-
     if(!clipboard->isEventDefined()) {
-        event = std::make_shared<Event>(m_event_time, m_event_time);
+        event = std::make_shared<Event>(m_absolute_event_time, m_absolute_event_time);
         clipboard->putEvent(event);
     } else {
         event = clipboard->getEvent();
     }
 
-    // Add all trigger entries from the buffers to the event.
-    for (size_t i = 0; i < triggerL1Ids.size(); ++i) {
-        event->addTrigger(triggerL1Ids[i], triggerTimes[i]);
+    // Add trigger entries from the buffers to the event
+    for (const auto& l1id : triggerL1Ids) {
+        event->addTrigger(l1id, static_cast<double>(m_absolute_event_time));
     }
 
+    // Add the pixels to the clipboard
     if(!pixels.empty()) {
         clipboard->putData(pixels, m_detector->getName());
         LOG(DEBUG) << "Added " << pixels.size() << " pixels.";
     }
 
     // Fill the plots
+    eventsVsAbsoluteTime->Fill(static_cast<double>(m_absolute_event_time) / 1000);          // Convert from ms to s
     for(auto& pixel : pixels) {
-        hHitMap->Fill(pixel->column(), pixel->row());
-        numHitsVsTime->Fill(pixel->timestamp() / 1.0e9);
+        hHitMap->Fill(pixel->column(), pixel->row());                                       // Fill the hit map
+        numHitsVsTime->Fill(pixel->timestamp() / 1.0e9);                                    // Convert from ns to s
+        numHitsVsAbsTime->Fill(static_cast<double>(m_absolute_event_time) / 1000);          // Convert from ms to s
     }
-
-    // Increment event counter
+    
+    // Finish up
     m_eventNumber++;
-
     if(fileHandle.peek() == EOF) {
-        LOG(INFO) << "Reached end-of-file. Closing file.";
+        LOG(STATUS) << "Reached end-of-file. Closing file.";
         fileHandle.close();
-
-        // Finish the remaining modules for this event and then end the run
         return StatusCode::EndRun;
     }
-    else{
-        // Continue with next modules and then next event
-        return StatusCode::Success;
-    }
+    return StatusCode::Success;
 
 }
 
 void EventLoaderYarr::finalize(const std::shared_ptr<ReadonlyClipboard>&) { 
+    LOG(INFO) << "Analysed " << m_eventNumber << " events"; 
+}
 
-    LOG(STATUS) << "Analysed " << m_eventNumber << " events"; 
-    LOG(DEBUG) << "Last BCID: " << this_bcid;
+// Helper functions:
+
+EventLoaderYarr::TriggerHeader EventLoaderYarr::readHeader() {
+    TriggerHeader header;
+
+    fileHandle.read(reinterpret_cast<char*> (&header.tag), sizeof(uint32_t));
+    fileHandle.read(reinterpret_cast<char*> (&header.l1id), sizeof(uint16_t));
+    fileHandle.read(reinterpret_cast<char*> (&header.bcid), sizeof(uint16_t));
+    fileHandle.read(reinterpret_cast<char*> (&header.numHits), sizeof(uint16_t));
+
+    // Derive additional header information from tag:
+    header.basetag = static_cast<uint8_t>((header.tag & 252) >> 2);
+    header.exttag  = static_cast<uint8_t>(header.tag & 3);
+    header.time    = ((header.tag >> 8) & 0xFFFFFF) << 3;
+
+    return header;
 }
 
 
-void EventLoaderYarr::readHeader() {
-    fileHandle.read(reinterpret_cast<char*> (&this_tag), sizeof(uint32_t));
-    fileHandle.read(reinterpret_cast<char*> (&this_l1id), sizeof(uint16_t));
-    fileHandle.read(reinterpret_cast<char*> (&this_bcid), sizeof(uint16_t));
-    fileHandle.read(reinterpret_cast<char*> (&this_t_hits), sizeof(uint16_t));
-}
-
-
-void EventLoaderYarr::readHits(PixelVector& pixels) {
-    for(uint16_t i = 0; i < this_t_hits; i++) {
+void EventLoaderYarr::readHits(PixelVector& pixels, uint32_t eventTime, uint16_t nHits) {
+    for(uint16_t i = 0; i < nHits; i++) {
         uint16_t col = 0, row = 0, tot = 0;
+
         fileHandle.read(reinterpret_cast<char*>(&col), sizeof(uint16_t));
         fileHandle.read(reinterpret_cast<char*>(&row), sizeof(uint16_t));
         fileHandle.read(reinterpret_cast<char*>(&tot), sizeof(uint16_t));
@@ -184,9 +171,59 @@ void EventLoaderYarr::readHits(PixelVector& pixels) {
             row,                                             // Row.
             tot,                                             // Raw 
             static_cast<double>(tot),                        // Charge: ToT is the charge.
-            static_cast<double>(this_time)*1000000           // Timestamp: every pixel in this event has the same time.
+            static_cast<double>(eventTime)*1e6               // Timestamp: every pixel in this event has the same time.
         );
 
         pixels.push_back(pixel);
     }
+}
+
+std::string EventLoaderYarr::findRawFile(const std::string& directory, const std::string& detectorName) {
+    // Open the input directory
+    DIR* dir = opendir(directory.c_str());
+
+    // Check if the directory exists
+    if(dir == nullptr) {
+        throw ModuleError("Directory " + directory + " does not exist");
+    } else {
+        LOG(INFO) << "Found directory " << directory;
+    }
+
+    std::vector<std::string> files;
+    dirent* entry;
+
+    // Read all .raw files in the directory
+    while((entry = readdir(dir))) {
+        std::string filename = entry->d_name;
+        if(filename.find(".raw") != std::string::npos && filename.find(detectorName) != std::string::npos) {
+            files.push_back(directory + "/" + filename);
+            LOG(INFO) << "Found YARR data file: " << filename;
+        }
+    }
+    closedir(dir);
+
+    // Check if any files were found
+    if(files.empty()) {
+        throw ModuleError("No raw data file found for detector " + detectorName + " in " + directory);
+    }
+    else if (files.size() > 1) {
+        throw ModuleError("Multiple raw data files found for detector " + detectorName + " in " + directory);
+    }
+
+    return files[0];
+}
+
+uint64_t EventLoaderYarr::adjustEventTime(const std::vector<uint32_t>& triggerTimes) {
+    // Use the first trigger's time as the current event time.
+    uint64_t current_time = (!triggerTimes.empty()) ? triggerTimes.front() : 0;
+
+    if (m_previous_time != 0 && current_time < m_previous_time) {
+        m_day_offset++; // increment day rollover counter
+        LOG(DEBUG) << "Day rollover detected. Total day offset: " << m_day_offset;
+    }
+
+    m_previous_time = current_time;
+    m_absolute_event_time = current_time + m_day_offset * 86400000; // 86400000 ms in a day
+
+    return m_absolute_event_time;
 }

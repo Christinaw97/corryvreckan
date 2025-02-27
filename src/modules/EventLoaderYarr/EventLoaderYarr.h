@@ -23,15 +23,16 @@
 
 namespace corryvreckan {
     /** @ingroup Modules
-     * @brief Module to do function
+     * @brief Module to load ATLAS ITkPixV2 YARR events from a raw file.
      *
-     * More detailed explanation of module
+     * This module reads a .raw file from a specified input directory (and detector name)
+     * and extracts trigger and hit data to be added to the clipboard. It also creates ROOT plots.
      */
     class EventLoaderYarr : public Module {
 
     public:
         /**
-         * @brief Constructor for this unique module
+         * @brief Constructor: retrieves configuration values (input directory, trigger multiplicity)
          * @param config Configuration object for this module as retrieved from the steering file
          * @param detector Pointer to the detector for this module instance
          */
@@ -39,12 +40,12 @@ namespace corryvreckan {
         ~EventLoaderYarr() {}
 
         /**
-         * @brief [Initialise this module]
+         * @brief [Initialise this module] : Look for the data file, open it and initialise histograms
          */
         void initialize() override;
 
         /**
-         * @brief [Run the function of this module]
+         * @brief [Run the function of this module] : Process a group of trigger events and update the clipboard accordingly
          */
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
 
@@ -55,30 +56,57 @@ namespace corryvreckan {
 
     private:
         int m_eventNumber;
-        uint32_t m_event_time;
+        uint64_t m_absolute_event_time;
 
-        // Event buffer
-        uint32_t this_tag, this_time; 
-        uint16_t this_l1id, this_bcid, this_t_hits;
-        uint8_t this_basetag, this_exttag;
+        // Input file-related member variables:
+        std::string m_inputDirectory;               // Input directory with .raw files
+        std::shared_ptr<Detector> m_detector;       // Detector pointer
+        std::string m_filename;                      // Name of the raw file
+        std::fstream fileHandle;                    // File stream for binary reading
+        int m_triggerMultiplicity;                  // Number of triggers to read per event
 
-        // Member variables
-        std::string m_inputDirectory;           // Input directory
-        std::shared_ptr<Detector> m_detector;   // Detector
-        std::string filename_;                  // Current file name
-        std::streampos filePos;                 // File position
-        std::fstream fileHandle;                // File handle
-        int m_triggerMultiplicity;              // Trigger multiplicity
-        uint64_t m_bufferDepth;                 // Buffer depth
-        bool header_read;                       // Header read flag
+        uint64_t m_previous_time = 0;               // Previous event time
+        uint64_t m_day_offset = 0;                  // Offset for the day rollover
+
+        // Helper struct to hold header information
+        struct TriggerHeader {
+            uint32_t tag;
+            uint16_t l1id;
+            uint16_t bcid;
+            uint16_t numHits;
+            uint8_t basetag;
+            uint8_t exttag;
+            uint32_t time;
+        };
         
         // Root Plots
-        TH2F* hHitMap;                          // Make a hitmap for each event
-        TH1F* numHitsVsTime;                    // Number of hits vs time
+        TH2F* hHitMap;                              // 2D hitmap for each detector plane
+        TH1F* numHitsVsTime;                        // Number of hits vs time
+        TH1F* eventsVsAbsoluteTime;                 // Number of events vs absolute time
+        TH1F* numHitsVsAbsTime;                     // Number of hits vs absolute time
 
-        // Helper Functions
-        void readHeader();                      // Read the header of the event
-        void readHits(PixelVector& pixels);     // Read the hits of the event
+        // Helper Functions:
+
+        // Read the header of the event
+        TriggerHeader readHeader();
+        
+        // Read the hits of the event
+        void readHits(
+            PixelVector& pixels,
+            uint32_t eventTime,
+            uint16_t nHits
+        );
+        
+        // Find the raw file in the input directory
+        std::string findRawFile(
+            const std::string& directory, 
+            const std::string& detectorName
+        );
+
+        // Compute the absolute event time
+        uint64_t adjustEventTime(
+            const std::vector<uint32_t>& triggerTimes
+        );
 
     };
 
