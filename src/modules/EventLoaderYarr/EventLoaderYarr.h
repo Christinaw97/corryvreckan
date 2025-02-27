@@ -63,7 +63,6 @@ namespace corryvreckan {
         std::shared_ptr<Detector> m_detector;       // Detector pointer
         std::string m_filename;                      // Name of the raw file
         std::fstream fileHandle;                    // File stream for binary reading
-        int m_triggerMultiplicity;                  // Number of triggers to read per event
 
         uint64_t m_previous_time = 0;               // Previous event time
         uint64_t m_day_offset = 0;                  // Offset for the day rollover
