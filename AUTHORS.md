@@ -16,6 +16,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * David Bacher, ETH Zürich, [dabacher](https://gitlab.cern.ch/dabacher)
 * Mélanie Marthe Bay, CERN, [mebay](https://gitlab.cern.ch/mebay)
 * Pascal Becht, University of Heidelberg, [pbecht](https://gitlab.cern.ch/pbecht)
+* Christian Bespin, University of Bonn, [cbespinv](https://gitlab.cern.ch/cbespinv)
 * Bogdan-Mihail Blidaru, University of Heidelberg, [mblidaru](https://gitlab.cern.ch/mblidaru)
 * Matthew Daniel Buckland, University of Liverpool, [mbucklan](https://gitlab.cern.ch/mbucklan)
 * Carsten Daniel Burgard, DESY, [cburgard](https://gitlab.cern.ch/cburgard)

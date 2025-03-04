@@ -38,8 +38,9 @@ namespace corryvreckan {
         struct Hit {
             int column;
             int row;
-            int charge;
-            unsigned long long timestamp;
+            int raw;
+            double charge;
+            double timestamp;
             uint32_t trigger_number;
         };
 
