@@ -189,7 +189,8 @@ namespace corryvreckan {
 
         /**
          * @brief Check whether given row and column parameters are within the detector's region-of-interest
-         * @param  col row The row and column to be checked
+         * @param  col The col to be checked
+         * @param  row The row to be checked
          * @return         Boolean indicating row+column affiliation with region-of-interest
          */
         bool isWithinROI(const int col, const int row) const override;
