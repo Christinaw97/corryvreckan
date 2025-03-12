@@ -292,6 +292,15 @@ bool PixelDetector::isWithinROI(Cluster* cluster) const {
     return true;
 }
 
+// Check if column and row number is within ROI:
+bool PixelDetector::isWithinROI(const int col, const int row) const {
+    if(m_roi.empty()) {
+        return true;
+    }
+
+    return (winding_number(std::make_pair(col, row), m_roi) != 0);
+}
+
 XYVector PixelDetector::getSize() const { return XYVector(m_pitch.X() * m_nPixels.X(), m_pitch.Y() * m_nPixels.Y()); }
 
 /* Winding number test for a point in a polygon

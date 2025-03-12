@@ -443,6 +443,13 @@ namespace corryvreckan {
         virtual bool isWithinROI(Cluster* cluster) const = 0;
 
         /**
+         * @brief Check whether given row and column parameters are within the detector's region-of-interest
+         * @param  col row The row and column to be checked
+         * @return         Boolean indicating row+column affiliation with region-of-interest
+         */
+        virtual bool isWithinROI(const int col, const int row) const = 0;
+
+        /**
          * @brief Return the thickness of the senosr assembly layer (sensor+support) in fractions of radiation length
          * @return thickness in fractions of radiation length
          */
