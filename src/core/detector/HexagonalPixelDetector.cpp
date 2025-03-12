@@ -171,6 +171,14 @@ bool HexagonalPixelDetector::isWithinROI(Cluster* cluster) const {
     }
     return true;
 }
+// Check if column and row is within ROI:
+bool HexagonalPixelDetector::isWithinROI(const int col, const int row) const {
+    if(m_roi.empty()) {
+        return true;
+    }
+
+    return (winding_number(std::make_pair(col, row), m_roi) != 0);
+}
 
 XYVector HexagonalPixelDetector::getSize() const {
     double matrix_x = (m_nPixels.X() + 0.5) * m_pitch.X();
