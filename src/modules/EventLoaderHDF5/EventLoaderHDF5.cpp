@@ -50,6 +50,14 @@ namespace corryvreckan {
                                m_detector->nPixels().Y(),
                                -0.5,
                                m_detector->nPixels().Y() - 0.5);
+            hTotMap = new TH2F("totMap",
+                               "ToT Map",
+                               m_detector->nPixels().X(),
+                               -0.5,
+                               m_detector->nPixels().X() - 0.5,
+                               m_detector->nPixels().Y(),
+                               -0.5,
+                               m_detector->nPixels().Y() - 0.5);
             hPixelToT = new TH1F("pixelToT", "Pixel ToT", 200, -0.5, 199.5);
         }
 
@@ -156,6 +164,7 @@ namespace corryvreckan {
                         m_detector->getName(), hit->column, hit->row, hit->charge, hit->charge, pixel_timestamp);
                     deviceData_.push_back(pixel);
                     hHitMap->Fill(pixel->column(), pixel->row());
+                    hTotMap->Fill(pixel->column(), pixel->row(), pixel->raw());
                     hPixelToT->Fill(pixel->raw());
                 }
                 m_buffer.pop();
