@@ -43,22 +43,22 @@ namespace corryvreckan {
         if(!m_detector->isAuxiliary()) {
             // Initialize hitmap and charge histograms
             hHitMap = new TH2F("hitMap",
-                               "Hit Map",
+                               "Hit Map;column;row;# events",
                                m_detector->nPixels().X(),
                                -0.5,
                                m_detector->nPixels().X() - 0.5,
                                m_detector->nPixels().Y(),
                                -0.5,
                                m_detector->nPixels().Y() - 0.5);
-            hTotMap = new TH2F("totMap",
-                               "ToT Map",
+            hTotMap = new TProfile2D("totMap",
+                               "ToT Map;column;row;# events",
                                m_detector->nPixels().X(),
                                -0.5,
                                m_detector->nPixels().X() - 0.5,
                                m_detector->nPixels().Y(),
                                -0.5,
                                m_detector->nPixels().Y() - 0.5);
-            hPixelToT = new TH1F("pixelToT", "Pixel ToT", 200, -0.5, 199.5);
+            hPixelToT = new TH1F("pixelToT", "Pixel ToT; ToT [LSB];# entries", 200, -0.5, 199.5);
         }
 
         // TODO: only define those if event is not defined yet. How to find out here?
