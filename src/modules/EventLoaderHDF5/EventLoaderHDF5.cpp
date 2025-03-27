@@ -14,7 +14,16 @@
 namespace corryvreckan {
 
     EventLoaderHDF5::EventLoaderHDF5(Configuration& config, std::shared_ptr<Detector> detector)
-        : Module(config, detector), m_detector(detector) {
+        : Module(config, detector), m_detector(detector),
+          m_buffer([sort_trg = config.get<bool>("sync_by_trigger", false)](const auto a, const auto b) noexcept {
+              // Sort buffer by timestamp to make sure to read them in chronological order.
+              // If timestamps are not available, sort by trigger number. If that fails, good luck
+              if(!sort_trg && (a->timestamp > 0) && (b->timestamp > 0)) {
+                  return a->timestamp > b->timestamp;
+              } else {
+                  return a->trigger_number > b->trigger_number;
+              }
+          }) {
         h5_datatype.insertMember("column", HOFFSET(Hit, column), H5::PredType::STD_U16LE);
         h5_datatype.insertMember("row", HOFFSET(Hit, row), H5::PredType::STD_U16LE);
         h5_datatype.insertMember("charge", HOFFSET(Hit, charge), H5::PredType::STD_U8LE);
