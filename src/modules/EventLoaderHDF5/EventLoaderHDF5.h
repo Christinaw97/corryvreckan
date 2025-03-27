@@ -15,6 +15,8 @@
 #include <H5Cpp.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TProfile2D.h>
+
 #include <queue>
 #include "core/module/Module.hpp"
 #include "objects/Pixel.hpp"
@@ -62,6 +64,7 @@ namespace corryvreckan {
 
         // Plots
         TH2F* hHitMap;
+        TProfile2D* hTotMap;
         TH1F* hPixelToT;
         TH1D* hClipboardEventStart;
         TH1D* hClipboardEventStart_long;
