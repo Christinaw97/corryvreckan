@@ -51,13 +51,13 @@ namespace corryvreckan {
                                -0.5,
                                m_detector->nPixels().Y() - 0.5);
             hTotMap = new TProfile2D("totMap",
-                               "ToT Map;column;row;# events",
-                               m_detector->nPixels().X(),
-                               -0.5,
-                               m_detector->nPixels().X() - 0.5,
-                               m_detector->nPixels().Y(),
-                               -0.5,
-                               m_detector->nPixels().Y() - 0.5);
+                                     "ToT Map;column;row;# events",
+                                     m_detector->nPixels().X(),
+                                     -0.5,
+                                     m_detector->nPixels().X() - 0.5,
+                                     m_detector->nPixels().Y(),
+                                     -0.5,
+                                     m_detector->nPixels().Y() - 0.5);
             hPixelToT = new TH1F("pixelToT", "Pixel ToT; ToT [LSB];# entries", 200, -0.5, 199.5);
         }
 
