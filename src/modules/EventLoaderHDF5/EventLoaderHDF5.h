@@ -30,7 +30,7 @@ namespace corryvreckan {
         EventLoaderHDF5(Configuration& config, std::shared_ptr<Detector> detector);
         ~EventLoaderHDF5() {}
 
-               // Standard algorithm functions
+        // Standard algorithm functions
         void initialize() override;
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard) override;
 
@@ -62,23 +62,23 @@ namespace corryvreckan {
         hsize_t f_total_records;
         hsize_t m_start_record;
 
-               // Plots
+        // Plots
         TH2F* hHitMap;
-        TProfile2D *hTotMap;
+        TProfile2D* hTotMap;
         TH1F* hPixelToT;
         TH1D* hClipboardEventStart;
         TH1D* hClipboardEventStart_long;
         TH1D* hClipboardEventEnd;
         TH1D* hClipboardEventDuration;
 
-               // Additional helper function
+        // Additional helper function
         std::vector<Hit> readChunk();
         bool loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector&);
         void fillBuffer();
         Event::Position getPosition(const std::shared_ptr<Event>& event, const std::shared_ptr<Hit>& hit) const;
 
-               // Sort buffer by timestamp to make sure to read them in chronological order.
-               // If timestamps are not available, sort by trigger number. If that fails, good luck
+        // Sort buffer by timestamp to make sure to read them in chronological order.
+        // If timestamps are not available, sort by trigger number. If that fails, good luck
         template <typename T> struct CompareTimeGreater {
             bool operator()(const std::shared_ptr<T> a, const std::shared_ptr<T> b) {
                 if((a->timestamp > 0) && (b->timestamp > 0)) {
