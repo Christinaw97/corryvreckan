@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef CORRYVRECKAN_SPIDRSIGNAL_H
-#define CORRYVRECKAN_SPIDRSIGNAL_H 1
+#ifndef CORRYVRECKAN_TIMERSIGNAL_H
+#define CORRYVRECKAN_TIMERSIGNAL_H 1
 
 #include <string>
 #include <typeindex>
@@ -20,16 +20,18 @@
 namespace corryvreckan {
     /**
      * @ingroup Objects
-     * @brief Signal recorded by the SPIDR readout system
+     * @brief Timing signal recorded by a readout system, such as e.g. a trigger
      */
-    class SpidrSignal : public Object {
+    class TimerSignal : public Object {
 
     public:
         // Constructors and destructors
-        SpidrSignal(){};
-        SpidrSignal(std::string type, double timestamp) : Object(timestamp), m_type(type){};
-        SpidrSignal(std::string type, double timestamp, size_t trigger)
-            : Object(timestamp), m_type(type), m_triggerNumber(trigger){};
+        TimerSignal() {};
+        TimerSignal(double timestamp) : Object(timestamp) {};
+
+        void setTag(std::string tag) { tag_ = std::move(tag); }
+
+        void setTriggerID(uint32_t trigger_id) { trigger_id_ = trigger_id; };
 
         /**
          * @brief Static member function to obtain base class for storage on the clipboard.
@@ -39,27 +41,24 @@ namespace corryvreckan {
          *
          * @return Class type of the base object
          */
-        static std::type_index getBaseType() { return typeid(SpidrSignal); }
+        static std::type_index getBaseType() { return typeid(TimerSignal); }
 
-        // Set properties
-        void type(std::string type) { m_type = type; }
-        std::string type() const { return m_type; }
-        size_t trigger() const { return m_triggerNumber; }
+        std::string getTag() const { return tag_; }
+        size_t getTriggerID() const { return trigger_id_; }
 
         void loadHistory() override {};
         void petrifyHistory() override {};
 
         // ROOT I/O class definition - update version number when you change this class!
-        ClassDefOverride(SpidrSignal, 4);
+        ClassDefOverride(TimerSignal, 4);
 
     protected:
-        // Member variables
-        std::string m_type;
-        size_t m_triggerNumber;
+        std::string tag_;
+        uint32_t trigger_id_;
     };
 
     // Vector type declaration
-    using SpidrSignalVector = std::vector<std::shared_ptr<SpidrSignal>>;
+    using TimerSignalVector = std::vector<std::shared_ptr<TimerSignal>>;
 } // namespace corryvreckan
 
-#endif // CORRYVRECKAN_SPIDRSIGNAL_H
+#endif // CORRYVRECKAN_TIMERSIGNAL_H
