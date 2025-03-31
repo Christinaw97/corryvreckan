@@ -161,7 +161,7 @@ void MaskCreator::localDensityEstimator() {
 
     estimateDensity(m_occupancy, m_bandwidthCol, m_bandwidthRow, m_density);
 
-    // calculate local signifance, i.e. (hits - density) / sqrt(density)
+    // calculate local significance, i.e. (hits - density) / sqrt(density)
     for(int icol = 1; icol <= m_occupancy->GetNbinsX(); ++icol) {
         for(int irow = 1; irow <= m_occupancy->GetNbinsY(); ++irow) {
             auto val = m_occupancy->GetBinContent(icol, irow);
