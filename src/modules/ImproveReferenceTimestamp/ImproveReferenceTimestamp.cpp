@@ -52,7 +52,7 @@ StatusCode ImproveReferenceTimestamp::run(const std::shared_ptr<Clipboard>& clip
     auto timerData = clipboard->getData<TimerSignal>(m_source);
     // Loop over all signals registered
     for(auto& signal : timerData) {
-        if(signal->getTag() == "trigger") {
+        if(signal->getType() == TimerType::TRIGGER) {
             trigger_times.push_back(signal->timestamp() - m_triggerLatency);
         }
     }

@@ -73,7 +73,7 @@ StatusCode AnalysisPowerPulsing::run(const std::shared_ptr<Clipboard>& clipboard
     for(auto& signal : timerData) {
         // Register the power on or power off time, and whether the shutter is
         // open or not
-        if(signal->getTag() == "shutterOpen") {
+        if(signal->getType() == TimerType::SHUTTER_OPEN) {
             // There may be multiple power on/off in 1 time window. At the moment,
             // take earliest if within 1ms -> 10us
             //     if(abs(Units::convert(signal->timestamp() - m_shutterOpenTime, "s")) < 0.00001) {
@@ -89,7 +89,7 @@ StatusCode AnalysisPowerPulsing::run(const std::shared_ptr<Clipboard>& clipboard
             m_shutterOpenTime = signal->timestamp();
             // LOG(DEBUG) << "Shutter opened at " << double(m_shutterOpenTime) / (4096. * 40000000.);
             LOG(DEBUG) << "Shutter opened at " << Units::display(m_shutterOpenTime, {"ns", "us"}); //, "s"});
-        } else if(signal->getTag() == "shutterClosed") {
+        } else if(signal->getType() == TimerType::SHUTTER_CLOSED) {
             // There may be multiple power on/off in 1 time window. At the moment,
             // take earliest if within 1ms
             // if(fabs(double(signal->timestamp() - m_shutterCloseTime) / (4096. * 40000000.)) < 0.001){

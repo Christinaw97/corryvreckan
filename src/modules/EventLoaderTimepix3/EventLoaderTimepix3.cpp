@@ -445,29 +445,28 @@ bool EventLoaderTimepix3::decodeNextWord() {
             const uint64_t powerOn = ((controlbits & 0x2) >> 1);
             const uint64_t shutterClosed = ((controlbits & 0x1));
 
-            auto powerSignal = std::make_shared<TimerSignal>(timestamp);
-            powerSignal->setTag(powerOn ? "powerOn" : "powerOff");
-
+            auto powerSignal =
+                std::make_shared<TimerSignal>(timestamp, (powerOn ? TimerType::POWER_ON : TimerType::POWER_OFF));
             sorted_signals_.push(powerSignal);
             LOG(DEBUG) << "Power is " << (powerOn ? "on" : "off") << " power! Time: " << Units::display(timestamp, "ns");
 
             LOG(TRACE) << "Shutter closed: " << hex << shutterClosed << dec;
 
-            auto shutterSignal = std::make_shared<TimerSignal>(timestamp);
-            shutterSignal->setTag(shutterClosed ? "shutterClosed" : "shutterOpen");
+            auto shutterSignal = std::make_shared<TimerSignal>(
+                timestamp, (shutterClosed ? TimerType::SHUTTER_OPEN : TimerType::SHUTTER_CLOSED));
 
             if(!shutterClosed) {
                 sorted_signals_.push(shutterSignal);
                 m_shutterOpen = true;
-                LOG(TRACE) << "Have opened shutter with signal " << shutterSignal->getTag() << " at time "
-                           << Units::display(timestamp, "ns");
+                LOG(TRACE) << "Have opened shutter with signal " << magic_enum::enum_name(shutterSignal->getType())
+                           << " at time " << Units::display(timestamp, "ns");
             }
 
             if(shutterClosed && m_shutterOpen) {
                 sorted_signals_.push(shutterSignal);
                 m_shutterOpen = false;
-                LOG(TRACE) << "Have closed shutter with signal " << shutterSignal->getTag() << " at time "
-                           << Units::display(timestamp, "ns");
+                LOG(TRACE) << "Have closed shutter with signal " << magic_enum::enum_name(shutterSignal->getType())
+                           << " at time " << Units::display(timestamp, "ns");
             }
 
             LOG(DEBUG) << "Shutter is " << (shutterClosed ? "closed" : "open")
@@ -506,11 +505,10 @@ bool EventLoaderTimepix3::decodeNextWord() {
             LOG(TRACE) << "Trigger time value of: " << triggerTime;
             m_syncTimeTDC = timestamp_raw;
 
-            int triggerID = static_cast<uint32_t>(triggerNumber + (m_triggerOverflowCounter << 12));
+            auto triggerID = static_cast<uint32_t>(triggerNumber + (m_triggerOverflowCounter << 12));
             m_prevTriggerNumber = triggerNumber;
 
-            auto triggerSignal = std::make_shared<TimerSignal>(triggerTime);
-            triggerSignal->setTag("trigger");
+            auto triggerSignal = std::make_shared<TimerSignal>(triggerTime, TimerType::TRIGGER);
             triggerSignal->setTriggerID(triggerID);
 
             sorted_signals_.push(triggerSignal);
