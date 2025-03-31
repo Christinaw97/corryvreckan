@@ -2,15 +2,19 @@
 # SPDX-FileCopyrightText: 2017-2024 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
+
 # EventLoaderMuPixTelescope
+
 **Maintainer**: Lennart Huth (<lennart.huth@desy.de>)
 **Module Type**: *DETECTOR*
 **Status**: Work in progress
 
 ### Description
+
 This module reads in and converts data taken with the MuPix telescope or a single mupix plane.
 It requires one input file which contains the data of all planes used.
 The `EventLoaderMuPixTelescope` supports a list of sensors:
+
 * MuPix8
 * MuPix9
 * MuPix10
@@ -26,7 +30,7 @@ Everything behind the first `_` is used as tag, if none found the tag is assumed
 The correct type is given by the `type` in the geometry.
 It is assumed that the timestamp has 10bit and runs at a frequency of 125 MHz (8ns bins)
 
-### Event definition:
+### Event definition
 
 * Sorted telescope data: The loader can define its own events as the full
 information of all systems is stored in an telescope event.
@@ -36,9 +40,11 @@ to match the internal time structure) for standalone telescope data. Otherwise
 any other event definition (`EventLoaderEUDAQ2` `EventDefinitionM26`) can be used.
 
 ### Dependencies
+
 This module requires a installation of the mupix8_daq package that is used by the Mu3e pixel group to read out the sensors. This library is non-public. Authorized users can download it via https://bitbucket.org/mu3e/mupix8_daq.git
 
 ### Parameters
+
 * `input_directory`: Defines the input file. No default.
 * `run`: 6 digit run number, with leading zeros being automatically added, to
 open the data file with the standard format `telescope_run_RUN.blck`.`run` and
@@ -58,6 +64,7 @@ frequency. Defaults to `false`.
 * `nbits_tot`: Number of bits available for the tot. Defaults to `6`.
 * `ckdivend`: Clock divider for the timestamp clock. Defaults to `0`.
 * `ckdivend2`: Clock divider for the ToT clock. Defaults to `7`.
+
 ### Plots produced
 
 For all detectors, the following plots are produced:
@@ -70,11 +77,12 @@ For all detectors, the following plots are produced:
 * 1D histogram with the number of pixels averaged over 1k events as function of event number
 
 ### Usage
+
 ```toml
 [EventLoaderMuPixTelescope]
 input_directory = "/path/to/file"
 Run = 1234
-is_sorted = false 
+is_sorted = false
 ts2_is_gray = false
 
 ```
