@@ -10,7 +10,6 @@
  */
 
 #include "EventLoaderWaveform.h"
-#include "objects/SpidrSignal.hpp"
 #include "objects/Waveform.hpp"
 
 using namespace corryvreckan;

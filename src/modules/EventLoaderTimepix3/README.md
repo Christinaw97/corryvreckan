@@ -11,7 +11,7 @@
 ### Description
 This module loads raw data from a Timepix3 [@timepix3] device and adds it to the clipboard. The input file must have extension `.dat` and are sorted into time order via the data file serial numbers. This code also identifies `trimdac` files and applies this mask to the pixels.
 
-The data can be split into events using an event length in time, or using a maximum number of hits on a detector plane. `SpidrSignal` and `pixel` objects are loaded to the clipboard for each detector.
+The data can be split into events using an event length in time, or using a maximum number of hits on a detector plane. `TimerSignal` and `pixel` objects are loaded to the clipboard for each detector.
 
 The hit timestamps are derived from the 40 MHz TOA counter and the fast on-pixel oscillator, which is measuring the precise hit arrival phase within to the global 40 MHz clock.
 In Timepix3, the phase of the 40 MHz clock can be shifted from one double column to the next by 22.5 degree by the clock generator in order to minimize the instant digital power supply due to the pixel matrix clock tree.
