@@ -40,7 +40,19 @@ namespace corryvreckan {
          */
         TimerSignal() = default;
 
+        /**
+         * @brief Construct a timer signal without type
+         *
+         * @param timestamp Absolute timestamp of the timer signal
+         */
         TimerSignal(double timestamp) : Object(timestamp) {};
+
+        /**
+         * @brief Construct timer signal with type
+         *
+         * @param timestamp Absolute timestamp of the timer signal
+         * @param type Type of the timer signal
+         */
         TimerSignal(double timestamp, TimerType type) : Object(timestamp), type_(type) {};
 
         /**
@@ -53,11 +65,36 @@ namespace corryvreckan {
          */
         static std::type_index getBaseType() { return typeid(TimerSignal); }
 
+        /**
+         * @brief Set tag
+         *
+         * @param tag Tag to set
+         */
         void setTag(std::string tag) { tag_ = std::move(tag); }
+
+        /**
+         * qbrief Set trigger ID this timer signal should be associated with
+         *
+         * @param trigger_id Trigger ID to be stored
+         */
         void setTriggerID(uint32_t trigger_id) { trigger_id_ = trigger_id; };
 
+        /**
+         * @brief Obtain timer signal type
+         * @return Timer type
+         */
         TimerType getType() const { return type_; }
+
+        /**
+         * @brief Obtain timer tag
+         * @return Tag of the timer signal
+         */
         std::string getTag() const { return tag_; }
+
+        /**
+         * @brief Obtain the trigger ID this timer signal is associated to
+         * @return Trigger ID
+         */
         size_t getTriggerID() const { return trigger_id_; }
 
         // ROOT I/O class definition - update version number when you change this class!
