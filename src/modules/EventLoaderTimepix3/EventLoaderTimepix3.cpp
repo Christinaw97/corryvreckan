@@ -425,8 +425,7 @@ bool EventLoaderTimepix3::decodeNextWord() {
         if(!m_detector->isDUT()) {
             LOG(WARNING)
                 /* << "Current time: " << Units::display(event->start(), {"s", "ms", "us", "ns"}) */
-                << " detector " << detectorID << " "
-                << "header == 0x0! (indicates power pulsing.) Ignoring this.";
+                << " detector " << detectorID << " " << "header == 0x0! (indicates power pulsing.) Ignoring this.";
             return true;
         }
         // Note that the following code is probably outdated and/or not much tested

@@ -46,8 +46,8 @@ namespace corryvreckan {
         std::string type() const { return m_type; }
         size_t trigger() const { return m_triggerNumber; }
 
-        void loadHistory() override{};
-        void petrifyHistory() override{};
+        void loadHistory() override {};
+        void petrifyHistory() override {};
 
         // ROOT I/O class definition - update version number when you change this class!
         ClassDefOverride(SpidrSignal, 4);

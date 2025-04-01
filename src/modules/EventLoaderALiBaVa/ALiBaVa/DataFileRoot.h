@@ -140,7 +140,7 @@ public:
     virtual void rewind() = 0;
 
     /// Save the current state of the file
-    virtual void save(){};
+    virtual void save() {};
 
     /// Restore the last saved state of the file
     virtual void restore() { rewind(); }
@@ -158,11 +158,11 @@ public:
      */
     virtual int read_data() = 0;
 
-    virtual void check_point(unsigned int, const char*){};
+    virtual void check_point(unsigned int, const char*) {};
     virtual void new_file(unsigned int, const char*) {}
     virtual void start_of_run(unsigned int, const char*) {}
     virtual void end_of_run(unsigned int, const char*) {}
-    virtual void new_data_block(unsigned int, const char*){};
+    virtual void new_data_block(unsigned int, const char*) {};
 
     // The data format version
     int version() const { return _version; }

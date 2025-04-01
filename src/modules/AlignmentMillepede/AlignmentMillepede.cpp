@@ -1131,11 +1131,8 @@ bool AlignmentMillepede::printResults() {
                       << "   " << std::setw(10) << m_bgvec[i] << "   " << std::setw(8) << std::setprecision(2) << err
                       << "   " << std::setw(9) << std::setprecision(2) << pull << "   " << std::setw(9) << gcor;
         } else {
-            LOG(INFO) << std::setw(3) << i << "   " << std::setw(10) << "OFF"
-                      << "   " << std::setw(10) << "OFF"
-                      << "   " << std::setw(8) << "OFF"
-                      << "   " << std::setw(9) << "OFF"
-                      << "   " << std::setw(9) << "OFF";
+            LOG(INFO) << std::setw(3) << i << "   " << std::setw(10) << "OFF" << "   " << std::setw(10) << "OFF" << "   "
+                      << std::setw(8) << "OFF" << "   " << std::setw(9) << "OFF" << "   " << std::setw(9) << "OFF";
         }
         if((i + 1) % (m_nagb / 6) == 0)
             LOG(INFO) << line;
