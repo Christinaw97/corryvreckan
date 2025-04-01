@@ -67,6 +67,7 @@ namespace corryvreckan {
         TH2F* hHitMap;
         TProfile2D* hTotMap;
         TH1F* hPixelToT;
+        TH1F* hPixelCharge;
         TH1D* hClipboardEventStart;
         TH1D* hClipboardEventStart_long;
         TH1D* hClipboardEventEnd;

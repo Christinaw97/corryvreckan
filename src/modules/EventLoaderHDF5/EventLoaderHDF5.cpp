@@ -69,6 +69,7 @@ namespace corryvreckan {
                                      -0.5,
                                      m_detector->nPixels().Y() - 0.5);
             hPixelToT = new TH1F("pixelToT", "Pixel ToT; ToT [LSB];# entries", 200, -0.5, 199.5);
+            hPixelCharge = new TH1F("pixelCharge", "pixel charge [a.u.];# entries", 1000, 0, 5000);
         }
 
         // TODO: only define those if event is not defined yet. How to find out here?
@@ -176,6 +177,7 @@ namespace corryvreckan {
                     hHitMap->Fill(pixel->column(), pixel->row());
                     hTotMap->Fill(pixel->column(), pixel->row(), pixel->raw());
                     hPixelToT->Fill(pixel->raw());
+                    hPixelCharge->Fill(pixel->charge());
                 }
                 m_buffer.pop();
             }
