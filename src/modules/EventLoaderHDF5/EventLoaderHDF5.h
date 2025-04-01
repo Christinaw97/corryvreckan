@@ -38,8 +38,9 @@ namespace corryvreckan {
         struct Hit {
             int column;
             int row;
-            int charge;
-            unsigned long long timestamp;
+            int raw;
+            double charge;
+            double timestamp;
             uint32_t trigger_number;
         };
 
@@ -66,6 +67,7 @@ namespace corryvreckan {
         TH2F* hHitMap;
         TProfile2D* hTotMap;
         TH1F* hPixelToT;
+        TH1F* hPixelCharge;
         TH1D* hClipboardEventStart;
         TH1D* hClipboardEventStart_long;
         TH1D* hClipboardEventEnd;

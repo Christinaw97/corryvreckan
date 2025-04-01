@@ -26,8 +26,9 @@ namespace corryvreckan {
           }) {
         h5_datatype.insertMember("column", HOFFSET(Hit, column), H5::PredType::STD_U16LE);
         h5_datatype.insertMember("row", HOFFSET(Hit, row), H5::PredType::STD_U16LE);
-        h5_datatype.insertMember("charge", HOFFSET(Hit, charge), H5::PredType::STD_U8LE);
-        h5_datatype.insertMember("timestamp", HOFFSET(Hit, timestamp), H5::PredType::STD_U64LE);
+        h5_datatype.insertMember("raw", HOFFSET(Hit, raw), H5::PredType::STD_U8LE);
+        h5_datatype.insertMember("charge", HOFFSET(Hit, charge), H5::PredType::IEEE_F64LE);
+        h5_datatype.insertMember("timestamp", HOFFSET(Hit, timestamp), H5::PredType::IEEE_F64LE);
         h5_datatype.insertMember("trigger_number", HOFFSET(Hit, trigger_number), H5::PredType::STD_U32LE);
 
         m_fileName = config.getPath("filename");
@@ -68,6 +69,7 @@ namespace corryvreckan {
                                      -0.5,
                                      m_detector->nPixels().Y() - 0.5);
             hPixelToT = new TH1F("pixelToT", "Pixel ToT; ToT [LSB];# entries", 200, -0.5, 199.5);
+            hPixelCharge = new TH1F("pixelCharge", "pixel charge [a.u.];# entries", 1000, 0, 5000);
         }
 
         // TODO: only define those if event is not defined yet. How to find out here?
@@ -170,11 +172,12 @@ namespace corryvreckan {
                         pixel_timestamp = shiftedTimestamp;
                     }
                     auto pixel = std::make_shared<Pixel>(
-                        m_detector->getName(), hit->column, hit->row, hit->charge, hit->charge, pixel_timestamp);
+                        m_detector->getName(), hit->column, hit->row, hit->raw, hit->charge, pixel_timestamp);
                     deviceData_.push_back(pixel);
                     hHitMap->Fill(pixel->column(), pixel->row());
                     hTotMap->Fill(pixel->column(), pixel->row(), pixel->raw());
                     hPixelToT->Fill(pixel->raw());
+                    hPixelCharge->Fill(pixel->charge());
                 }
                 m_buffer.pop();
             }
@@ -227,7 +230,6 @@ namespace corryvreckan {
             if(trigger_position == Event::Position::BEFORE) {
                 LOG(DEBUG) << "(Shifted) trigger ID " << shiftedTriggerId
                            << " is before triggers registered in Corryvreckan event";
-                // LOG(DEBUG) << "(Shifted) Trigger ID " << trigger_after_shift
             } else if(trigger_position == Event::Position::AFTER) {
                 LOG(DEBUG) << "(Shifted) trigger ID " << shiftedTriggerId
                            << " is after triggers registered in Corryvreckan event";
