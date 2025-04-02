@@ -65,7 +65,7 @@
      triggerL1Ids.push_back(firstHeader.l1id);
      triggerTimes.push_back(first_timestamp);
      if(firstHeader.bcid != event_number_)
-         LOG(WARNING) << "BCID vs Event Number mismatch: " << firstHeader.bcid << " vs. " << event_number_;
+         LOG(WARNING) << "BCID vs Event Number Desynchronization: " << firstHeader.bcid << " vs. " << event_number_;
      if(firstHeader.numHits > 0)
          read_hits(pixels, first_timestamp, firstHeader.numHits);
  
@@ -93,6 +93,13 @@
          clipboard->putEvent(event);
      } else {
          event = clipboard->getEvent();
+         for(const auto& triggerTime : triggerTimes) {
+             const auto position = event->getTimestampPosition(triggerTime);
+             if(position != Event::Position::DURING) {
+                 LOG(WARNING) << "Event timestamp (" << first_timestamp << ") is not in the expected position between "
+                              << event->start() << " and " << event->end() << ".";
+             }
+         }
      }
  
      // Add trigger entries and pixels to the event
