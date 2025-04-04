@@ -44,6 +44,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Simon Koch, University of Oxford, [sfkoch](https://gitlab.cern.ch/sfkoch)
 * Fabian Lex, University of Freiburg, [lex](https://gitlab.cern.ch/lex)
 * Magnus Mager, CERN, [mmager](https://gitlab.cern.ch/mmager)
+* Pranav Manoj, LBL, [pmanoj](https://gitlab.cern.ch/pmanoj)
 * Keerthi Nakkalil, University Bonn/DESY, [nakkalil](https://gitlab.cern.ch/nakkalil)
 * Andreas Matthias Nürnberg, KIT, [nurnberg](https://gitlab.cern.ch/nurnberg)
 * Ryunosuke O'Neil, University of Edinburgh, [roneil](https://gitlab.cern.ch/roneil)
