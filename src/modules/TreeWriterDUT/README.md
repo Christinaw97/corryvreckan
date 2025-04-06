@@ -2,13 +2,16 @@
 # SPDX-FileCopyrightText: 2017-2024 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
+
 # TreeWriterDUT
-**Maintainer**: Morag Williams (<morag.williams@cern.ch>)   
+
+**Maintainer**: Morag Williams (<morag.williams@cern.ch>)  
 **Module Type**: *DUT*  
 **Detector Type**: *all*  
 **Status**: Functional  
 
 ### Description
+
 This module writes out data from a Timepix3 DUT for timing analysis. The output ROOT tree contains data in branches. This is intended for analysis of the timing capabilities of Timepix3 devices of different thicknesses.
 
 For each track associated DUT `cluster` object the following information is written out:
@@ -30,10 +33,12 @@ For each `track` with associated DUT `clusters` the following information is wri
 * Intercept with the DUT (3D position vector)
 
 ### Parameters
+
 * `file_name`: Name of the data file to create, relative to the output directory of the framework. The file extension `.root` will be appended if not present. Default value is `outputTuples.root`.
 * `tree_name`: Name of the tree inside the output ROOT file. Default value is `tree`.
 
 ### Usage
+
 ```toml
 [TreeWriterDUT]
 file_name = "myOutputFile.root"

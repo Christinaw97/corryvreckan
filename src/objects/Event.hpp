@@ -178,8 +178,8 @@ namespace corryvreckan {
          */
         void print(std::ostream& out) const override;
 
-        void loadHistory() override{};
-        void petrifyHistory() override{};
+        void loadHistory() override {};
+        void petrifyHistory() override {};
 
     protected:
         // Timestamp of the end of the event

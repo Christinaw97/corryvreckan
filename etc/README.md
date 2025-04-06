@@ -16,13 +16,14 @@ Please make sure, the information is correct.
 
 Usage:
 
-```
+```shell
 ./etc/addModule.sh
 ```
 
 Example Output:
-```
-$ ./etc/addModule.sh 
+
+```shell
+$ ./etc/addModule.sh
 
 Preparing code basis for a new module:
 
@@ -46,7 +47,7 @@ Re-run CMake in order to build your new module.
 
 Script to facilitate the compilation of Corryvreckan on the CERN LXPLUS Linux cluster. Sourcing the script via
 
-```
+```shell
 source etc/setup_lxplus.sh
 ```
 

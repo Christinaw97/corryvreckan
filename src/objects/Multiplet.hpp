@@ -92,7 +92,7 @@ namespace corryvreckan {
         std::shared_ptr<Track> getDownstreamTracklet() { return m_downstream; };
 
         ROOT::Math::XYPoint getKinkAt(const std::string&) const override;
-        void setVolumeScatter(double) override{};
+        void setVolumeScatter(double) override {};
 
     private:
         std::shared_ptr<Track> m_upstream;

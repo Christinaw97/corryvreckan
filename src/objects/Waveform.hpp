@@ -52,8 +52,8 @@ namespace corryvreckan {
         // ROOT I/O class definition - update version number when you change this class!
         ClassDefOverride(Waveform, 1);
 
-        void loadHistory() override{};
-        void petrifyHistory() override{};
+        void loadHistory() override {};
+        void petrifyHistory() override {};
     };
 
     // Vector type declaration

@@ -168,7 +168,7 @@ tst:sim:
     variables:
         COMPILER_TYPE: "llvm"
     before_script:
-        - export CXX=/usr/bin/clang++-12
+        - export CXX=/usr/bin/clang++
         - export PATH=~/.local/bin:$PATH
         - mkdir -p build/ && cd build/
 
@@ -204,7 +204,7 @@ fmt:codespell:
     extends: .format
     script:
         - cd ../
-        - codespell --ignore-words .gitlab/ci/codespell_ignored_words.txt --quiet-level 2 --skip ".git,.gitlab,cmake,3rdparty,*.svg,*.pdf,LICENSES"
+        - codespell
 
 fmt:reuse:
     image:

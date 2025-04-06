@@ -68,4 +68,3 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Bong-Hwi Lim, University of Turin, [blim](https://gitlab.cern.ch/blim)
 
 This project strongly profits from the developments done for the [Allpix Squared project](https://cern.ch/allpix-squared) which is released under the MIT license. Especially the configuration class, the module instantiation logic and the file reader and writer modules have profited heavily by their corresponding framework components in Allpix Squared.
-

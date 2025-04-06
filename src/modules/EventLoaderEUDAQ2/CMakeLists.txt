@@ -13,4 +13,3 @@ TARGET_LINK_LIBRARIES(${MODULE_NAME} ${EUDAQ2_LIBRARY} eudaq::core)
 
 # Provide standard install target
 CORRYVRECKAN_MODULE_INSTALL(${MODULE_NAME})
-
