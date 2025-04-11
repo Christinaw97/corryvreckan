@@ -49,7 +49,8 @@ namespace corryvreckan {
          * @param detectorID Name of the detector providing the timer signal
          * @param timestamp Absolute timestamp of the timer signal
          */
-        TimerSignal(double timestamp) : Object(timestamp){};
+
+        TimerSignal(std::string detectorID, double timestamp) : Object(std::move(detectorID),timestamp) {};
 
         /**
          * @brief Construct timer signal with type
@@ -58,7 +59,7 @@ namespace corryvreckan {
          * @param timestamp Absolute timestamp of the timer signal
          * @param type Type of the timer signal
          */
-        TimerSignal(double timestamp, TimerType type) : Object(timestamp), type_(type){};
+        TimerSignal(std::string detectorID, double timestamp, TimerType type) : Object(std::move(detectorID), timestamp), type_(type) {};
 
         /**
          * @brief Static member function to obtain base class for storage on the clipboard.
