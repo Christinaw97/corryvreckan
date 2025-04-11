@@ -19,6 +19,7 @@
 #include "core/module/Module.hpp"
 #include "objects/Cluster.hpp"
 #include "objects/Pixel.hpp"
+#include "objects/TimerSignal.hpp"
 
 namespace corryvreckan {
     /** @ingroup Modules
