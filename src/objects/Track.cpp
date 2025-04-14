@@ -59,6 +59,7 @@ void Track::Plane::loadHistory() { cluster_.get(); }
 void Track::Plane::petrifyHistory() { cluster_.store(); }
 
 void Track::addCluster(const Cluster* cluster) { track_clusters_.emplace_back(const_cast<Cluster*>(cluster)); }
+void Track::addTimerSignal(const TimerSignal* timer_signal) { track_timer_signals_.emplace_back(const_cast<TimerSignal*>(timer_signal)); }
 void Track::addAssociatedCluster(const Cluster* cluster) {
     associated_clusters_[cluster->getDetectorID()].emplace_back(const_cast<Cluster*>(cluster));
 }
@@ -75,6 +76,20 @@ std::vector<Cluster*> Track::getClusters() const {
 
     // Return as a vector of pixels
     return clustervec;
+}
+
+std::vector<TimerSignal*> Track::getTimerSignals() const {
+    std::vector<TimerSignal*> timer_signal_vec;
+    for(const auto& ts : track_timer_signals_) {
+        auto* timer_signal = ts.get();
+        if(timer_signal == nullptr) {
+            throw MissingReferenceException(typeid(*this), typeid(TimerSignal));
+        }
+        timer_signal_vec.emplace_back(timer_signal);
+    }
+
+    // Return as a vector of pixels
+    return timer_signal_vec;
 }
 
 std::vector<Cluster*> Track::getAssociatedClusters(const std::string& detectorID) const {
