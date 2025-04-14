@@ -205,7 +205,7 @@ void Correlations::initialize() {
                                                        -1 * time_cut_ - time_binning_ / 2.,
                                                        time_cut_ - time_binning_ / 2.);
     // check if the detector is auxilliary, in which case only the per pixel time plots are interesting
-    if (m_detector->getRoles() == DetectorRole::AUXILIARY){
+    if (m_detector->isAuxiliary()){
         title = m_detector->getName() + "Reference pixel time stamp - pixel time stamp;t_{ref}-t [ns];events";
         correlationTime_px = new TH1F("correlationTime_px",
                                       title.c_str(),

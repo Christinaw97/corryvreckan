@@ -20,6 +20,7 @@
 #include <TRef.h>
 
 #include "Cluster.hpp"
+#include "TimerSignal.hpp"
 #include "exceptions.h"
 
 namespace corryvreckan {
@@ -65,9 +66,14 @@ namespace corryvreckan {
         std::string getType() const;
 
         /**
-         * * @brief Add a cluster to the tack, which will be used in the fit
+         * * @brief Add a cluster to the track, which will be used in the fit
          * * @param cluster Pointer to cluster to be added */
         void addCluster(const Cluster* cluster);
+
+        /**
+         * * @brief Add a timersignal to the track, will be ignored in the fit but can be used for timestamp calculations
+         * * @param timer_signal Pointer to timersignal to be added */
+        void addTimerSignal(const TimerSignal* timer_signal);
 
         /**
          * @brief Associate a cluster to a track, will not be part of the fit
@@ -157,6 +163,13 @@ namespace corryvreckan {
         bool isAssociated(Cluster* cluster) const;
 
         /**
+         * @brief Check if timersignal is associated
+         * @param timer_signal Pointer to the timersignal to be checked
+         * @return True if the timersignal is associated to the track, false if not.
+         */
+        bool isAssociated(TimerSignal* timer_signal) const;
+
+        /**
          * @brief Check if this Track has a cluster from a given detector
          * @param  detectorID DetectorID of the detector to check
          * @return True if detector has a cluster on this Track, false if not.
@@ -169,6 +182,13 @@ namespace corryvreckan {
          * @return Track cluster from the required detector, nullptr if not found
          */
         Cluster* getClusterFromDetector(std::string detectorID) const;
+
+        /**
+         * @brief Get a Track timersignal from a given detector
+         * @param  detectorID DetectorID of the desired detector
+         * @return Track timersignal from the required detector, nullptr if not found
+         */
+        Cluster* getTimerSignalFromDetector(std::string detectorID) const;
 
         /**
          * @brief Get the number of clusters used for track fit
@@ -324,7 +344,9 @@ namespace corryvreckan {
         std::vector<Plane> getPlanes();
         const Plane* get_plane(const std::string& detetorID) const;
         std::vector<PointerWrapper<Cluster>> track_clusters_;
+        std::vector<PointerWrapper<TimerSignal>> track_timer_signals_;
         std::map<std::string, std::vector<PointerWrapper<Cluster>>> associated_clusters_;
+        std::map<std::string, std::vector<PointerWrapper<TimerSignal>>> associated_timer_signals_;
         std::map<std::string, ROOT::Math::XYPoint> residual_local_;
         std::map<std::string, ROOT::Math::XYZPoint> residual_global_;
 

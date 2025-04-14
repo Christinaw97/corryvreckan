@@ -37,6 +37,7 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     config_.setDefault<bool>("volume_scattering", false);
     config_.setDefault<bool>("reject_by_roi", false);
     config_.setDefault<bool>("unique_cluster_usage", false);
+    config_.setDefault<bool>("ignore_auxiliary", true);
 
     if(config_.count({"time_cut_rel", "time_cut_abs"}) == 0) {
         config_.setDefault("time_cut_rel", 3.0);
@@ -72,6 +73,7 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     use_volume_scatterer_ = config_.get<bool>("volume_scattering");
     reject_by_ROI_ = config_.get<bool>("reject_by_roi");
     unique_cluster_usage_ = config_.get<bool>("unique_cluster_usage");
+    exclude_auxiliary_ = config_.get<bool>("exclude_auxiliary");
 
     // print a warning if volumeScatterer are used as this causes fit failures
     // that are still not understood
@@ -374,9 +376,10 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             size_t detector_nr = 2;
             // Get all detectors here to also include passive layers which might contribute to scattering
             for(auto& detector : get_detectors()) {
-                if(detector->isAuxiliary()) {
+                if(detector->isAuxiliary() && exclude_auxiliary_) {
                     continue;
                 }
+                // moved auxiliary question from here to later.
                 auto detectorID = detector->getName();
                 LOG(TRACE) << "Registering detector " << detectorID << " at z = " << detector->displacement().z();
 
@@ -389,7 +392,9 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 if(detector == reference_first || detector == reference_last) {
                     continue;
                 }
-
+                if(detector->isAuxiliary()) {
+                    continue;
+                }
                 if(exclude_DUT_ && detector->isDUT()) {
                     LOG(DEBUG) << "Skipping DUT plane.";
                     continue;
