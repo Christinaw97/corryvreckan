@@ -37,7 +37,7 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     config_.setDefault<bool>("volume_scattering", false);
     config_.setDefault<bool>("reject_by_roi", false);
     config_.setDefault<bool>("unique_cluster_usage", false);
-    config_.setDefault<bool>("ignore_auxiliary", true);
+    config_.setDefault<bool>("exclude_auxiliary", true);
 
     if(config_.count({"time_cut_rel", "time_cut_abs"}) == 0) {
         config_.setDefault("time_cut_rel", 3.0);
@@ -112,6 +112,8 @@ void Tracking4D::initialize() {
     trackTime = new TH1F("trackTime", title.c_str(), 1000, 0, 460.8);
     title = "Track time with respect to first trigger;track time - trigger;events";
     trackTimeTrigger = new TH1F("trackTimeTrigger", title.c_str(), 1000, -230.4, 230.4);
+    title = "Track time with respect to timersignals;track time - timer signal time;events";
+    trackTime_v_timer_signal = new TH1F("trackTime_v_timer_signal", title.c_str(), 1000, -230.4, 230.4);
     title = "Track time with respect to first trigger vs. track chi2;track time - trigger;track #chi^{2};events";
     trackTimeTriggerChi2 = new TH2F("trackTimeTriggerChi2", title.c_str(), 1000, -230.4, 230.4, 15, 0, 15);
     tracksVsTime = new TH1F("tracksVsTime", "Number of tracks vs. time; time [s]; # entries", 3e6, 0, 3e3);
@@ -283,13 +285,6 @@ double Tracking4D::calculate_average_timestamp(const Track* track) {
         sum_weights += weight;
         sum_weighted_time += (static_cast<double>(Units::convert(cluster->timestamp(), "ns")) - time_of_flight) * weight;
     }
-    for (auto& timer_signal : track->getTimerSignals()){
-        double weight = 1 / (time_cuts_[get_detector(timer_signal->getDetectorID())]);
-        double planeZ = get_detector(timer_signal->getDetectorID())->displacement().Z();
-        double time_of_flight = static_cast<double>(Units::convert(planeZ, "mm") / (299.792458));
-        sum_weights += weight;
-        sum_weighted_time += (static_cast<double>(Units::convert(timer_signal->timestamp(), "ns")) - time_of_flight) * weight;
-    }
     return (sum_weighted_time / sum_weights);
 }
 
@@ -383,7 +378,9 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             size_t detector_nr = 2;
             // Get all detectors here to also include passive layers which might contribute to scattering
             for(auto& detector : get_detectors()) {
-
+                if(detector->isAuxiliary() && exclude_auxiliary_) {
+                    continue;
+                }
                 // moved auxiliary question from here to later.
                 auto detectorID = detector->getName();
                 LOG(TRACE) << "Registering detector " << detectorID << " at z = " << detector->displacement().z();
@@ -406,8 +403,8 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 double closest_timer_signal_distance = timeCut;
                 for(size_t ts = 0; ts < timer_signals.size(); ts++) {
                     auto timer_signal = timer_signals[ts].get();
-                    if ((timer_signal->timestamp() - refTrack.timestamp()) > timeCut) continue;
-                    double time_distance = (timer_signal->timestamp() - refTrack.timestamp());
+                    double time_distance = abs((timer_signal->timestamp() - refTrack.timestamp()));
+                    if (time_distance > timeCut) continue;
                     if (time_distance < closest_timer_signal_distance){
                         closest_timer_signal = timer_signal;
                         closest_timer_signal_distance = time_distance;
@@ -415,12 +412,15 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 }
                 if(closest_timer_signal == nullptr) {
                     LOG(DEBUG) << "No timersignals within time cut";
-                    continue;
                 }
-                refTrack.addTimerSignal(closest_timer_signal);
-                track->addTimerSignal(closest_timer_signal);
+                else{
+                    LOG(DEBUG) << "Adding timersignals from " << detector->getName() << " to track object";
+                    refTrack.addTimerSignal(closest_timer_signal);
+                    track->addTimerSignal(closest_timer_signal);
+                }
 
                 if(detector->isAuxiliary()) {
+                    LOG(DEBUG) << "Skipping auxiliary plane for spatial tracking.";
                     continue;
                 }
                 if(exclude_DUT_ && detector->isDUT()) {
@@ -518,7 +518,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             auto foundRequiredDetector = [this](Track* t) {
                 for(auto& requireDet : require_detectors_) {
                     if(!requireDet.empty() && !t->hasDetector(requireDet)) {
-                        LOG(DEBUG) << "No cluster from required detector " << requireDet << " on the track.";
+                        LOG(DEBUG) << "No cluster or timersignal from required detector " << requireDet << " on the track.";
                         return false;
                     }
                 }
@@ -564,7 +564,13 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                            << " as track timestamp.";
             } else {
                 // use timestamp of required detector:
-                double track_timestamp = track->getClusterFromDetector(timestamp_from_)->timestamp();
+                double track_timestamp;
+                if (get_detector(timestamp_from_)->isAuxiliary()){
+                    track_timestamp = track->getTimerSignalFromDetector(timestamp_from_)->timestamp();
+                }
+                else{
+                    track_timestamp = track->getClusterFromDetector(timestamp_from_)->timestamp();
+                }
                 LOG(DEBUG) << "Using timestamp of detector " << timestamp_from_
                            << " as track timestamp: " << Units::display(track_timestamp, "us");
                 track->setTimestamp(track_timestamp);
@@ -621,7 +627,9 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 static_cast<double>(Units::convert(track->timestamp() - triggers.begin()->second, "us")),
                 track->getChi2ndof());
         }
-
+        for (auto const& ts : track->getTimerSignals()){
+            trackTime_v_timer_signal->Fill(static_cast<double>(Units::convert(track->timestamp() - ts->timestamp(), "us")));
+        }
         trackChi2->Fill(track->getChi2());
         clustersPerTrack->Fill(static_cast<double>(track->getNClusters()));
         trackChi2ndof->Fill(track->getChi2ndof());
