@@ -59,7 +59,9 @@ void Track::Plane::loadHistory() { cluster_.get(); }
 void Track::Plane::petrifyHistory() { cluster_.store(); }
 
 void Track::addCluster(const Cluster* cluster) { track_clusters_.emplace_back(const_cast<Cluster*>(cluster)); }
-void Track::addTimerSignal(const TimerSignal* timer_signal) { track_timer_signals_.emplace_back(const_cast<TimerSignal*>(timer_signal)); }
+void Track::addTimerSignal(const TimerSignal* timer_signal) {
+    track_timer_signals_.emplace_back(const_cast<TimerSignal*>(timer_signal));
+}
 void Track::addAssociatedCluster(const Cluster* cluster) {
     associated_clusters_[cluster->getDetectorID()].emplace_back(const_cast<Cluster*>(cluster));
 }
@@ -179,7 +181,7 @@ bool Track::isAssociated(Cluster* cluster) const {
     return true;
 }
 
-//bool Track::hasDetector(const std::string& detectorID) const {
+// bool Track::hasDetector(const std::string& detectorID) const {
 //    auto it = find_if(track_clusters_.begin(), track_clusters_.end(), [&detectorID](auto& cl) {
 //        return cl.get()->getDetectorID() == detectorID;
 //    });

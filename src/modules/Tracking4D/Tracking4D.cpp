@@ -404,16 +404,16 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 for(size_t ts = 0; ts < timer_signals.size(); ts++) {
                     auto timer_signal = timer_signals[ts].get();
                     double time_distance = abs((timer_signal->timestamp() - refTrack.timestamp()));
-                    if (time_distance > timeCut) continue;
-                    if (time_distance < closest_timer_signal_distance){
+                    if(time_distance > timeCut)
+                        continue;
+                    if(time_distance < closest_timer_signal_distance) {
                         closest_timer_signal = timer_signal;
                         closest_timer_signal_distance = time_distance;
                     }
                 }
                 if(closest_timer_signal == nullptr) {
                     LOG(DEBUG) << "No timersignals within time cut";
-                }
-                else{
+                } else {
                     LOG(DEBUG) << "Adding timersignals from " << detector->getName() << " to track object";
                     refTrack.addTimerSignal(closest_timer_signal);
                     track->addTimerSignal(closest_timer_signal);
@@ -444,7 +444,6 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                     LOG(TRACE) << "Skipping detector " << detector->getName() << " as it has 0 clusters.";
                     continue;
                 }
-
 
                 // Get all neighbors within the timing cut
                 LOG(DEBUG) << "Searching for neighboring cluster on device " << detector->getName();
@@ -565,10 +564,9 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             } else {
                 // use timestamp of required detector:
                 double track_timestamp;
-                if (get_detector(timestamp_from_)->isAuxiliary()){
+                if(get_detector(timestamp_from_)->isAuxiliary()) {
                     track_timestamp = track->getTimerSignalFromDetector(timestamp_from_)->timestamp();
-                }
-                else{
+                } else {
                     track_timestamp = track->getClusterFromDetector(timestamp_from_)->timestamp();
                 }
                 LOG(DEBUG) << "Using timestamp of detector " << timestamp_from_
@@ -627,7 +625,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 static_cast<double>(Units::convert(track->timestamp() - triggers.begin()->second, "us")),
                 track->getChi2ndof());
         }
-        for (auto const& ts : track->getTimerSignals()){
+        for(auto const& ts : track->getTimerSignals()) {
             trackTime_v_timer_signal->Fill(static_cast<double>(Units::convert(track->timestamp() - ts->timestamp(), "us")));
         }
         trackChi2->Fill(track->getChi2());
