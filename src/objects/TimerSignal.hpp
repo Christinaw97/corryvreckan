@@ -14,6 +14,9 @@
 
 #include <string>
 #include <typeindex>
+#include <TRef.h>
+
+#include <iostream>
 
 #include "Object.hpp"
 
@@ -43,6 +46,7 @@ namespace corryvreckan {
         /**
          * @brief Construct a timer signal without type
          *
+         * @param detectorID Name of the detector providing the timer signal
          * @param timestamp Absolute timestamp of the timer signal
          */
         TimerSignal(double timestamp) : Object(timestamp){};
@@ -50,6 +54,7 @@ namespace corryvreckan {
         /**
          * @brief Construct timer signal with type
          *
+         * @param detectorID Name of the detector providing the timer signal
          * @param timestamp Absolute timestamp of the timer signal
          * @param type Type of the timer signal
          */
@@ -98,10 +103,17 @@ namespace corryvreckan {
         size_t getTriggerID() const { return trigger_id_; }
 
         // ROOT I/O class definition - update version number when you change this class!
-        ClassDefOverride(TimerSignal, 5);
+        ClassDefOverride(TimerSignal, 6);
 
         void loadHistory() override {};
         void petrifyHistory() override {};
+
+        /**
+         * @brief Print an ASCII representation of TimerSignal to the given stream
+         * @param out Stream to print to
+         */
+        void print(std::ostream& out) const override;
+
 
     protected:
         TimerType type_{TimerType::NONE};
