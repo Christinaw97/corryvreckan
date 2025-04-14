@@ -283,6 +283,13 @@ double Tracking4D::calculate_average_timestamp(const Track* track) {
         sum_weights += weight;
         sum_weighted_time += (static_cast<double>(Units::convert(cluster->timestamp(), "ns")) - time_of_flight) * weight;
     }
+    for (auto& timer_signal : track->getTimerSignals()){
+        double weight = 1 / (time_cuts_[get_detector(timer_signal->getDetectorID())]);
+        double planeZ = get_detector(timer_signal->getDetectorID())->displacement().Z();
+        double time_of_flight = static_cast<double>(Units::convert(planeZ, "mm") / (299.792458));
+        sum_weights += weight;
+        sum_weighted_time += (static_cast<double>(Units::convert(timer_signal->timestamp(), "ns")) - time_of_flight) * weight;
+    }
     return (sum_weighted_time / sum_weights);
 }
 
@@ -376,9 +383,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             size_t detector_nr = 2;
             // Get all detectors here to also include passive layers which might contribute to scattering
             for(auto& detector : get_detectors()) {
-                if(detector->isAuxiliary() && exclude_auxiliary_) {
-                    continue;
-                }
+
                 // moved auxiliary question from here to later.
                 auto detectorID = detector->getName();
                 LOG(TRACE) << "Registering detector " << detectorID << " at z = " << detector->displacement().z();
@@ -392,6 +397,29 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 if(detector == reference_first || detector == reference_last) {
                     continue;
                 }
+
+                // Add timersignal to track this happens before the check for auxiliary as they can also provide timersignals
+                // they are handled differently than clusters as they have no spatial information
+                auto timer_signals = clipboard->getData<TimerSignal>(detector->getName());
+                TimerSignal* closest_timer_signal = nullptr;
+                double timeCut = std::max(time_cut_ref_track, time_cuts_[detector]);
+                double closest_timer_signal_distance = timeCut;
+                for(size_t ts = 0; ts < timer_signals.size(); ts++) {
+                    auto timer_signal = timer_signals[ts].get();
+                    if ((timer_signal->timestamp() - refTrack.timestamp()) > timeCut) continue;
+                    double time_distance = (timer_signal->timestamp() - refTrack.timestamp());
+                    if (time_distance < closest_timer_signal_distance){
+                        closest_timer_signal = timer_signal;
+                        closest_timer_signal_distance = time_distance;
+                    }
+                }
+                if(closest_timer_signal == nullptr) {
+                    LOG(DEBUG) << "No timersignals within time cut";
+                    continue;
+                }
+                refTrack.addTimerSignal(closest_timer_signal);
+                track->addTimerSignal(closest_timer_signal);
+
                 if(detector->isAuxiliary()) {
                     continue;
                 }
@@ -399,7 +427,6 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                     LOG(DEBUG) << "Skipping DUT plane.";
                     continue;
                 }
-
                 if(detector->isPassive()) {
                     LOG(DEBUG) << "Skipping passive plane.";
                     continue;
@@ -413,11 +440,11 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                                << trees.size() << " - " << detector_nr << " < " << min_hits_on_track_;
                     continue;
                 }
-
                 if(trees.count(detector) == 0) {
                     LOG(TRACE) << "Skipping detector " << detector->getName() << " as it has 0 clusters.";
                     continue;
                 }
+
 
                 // Get all neighbors within the timing cut
                 LOG(DEBUG) << "Searching for neighboring cluster on device " << detector->getName();
@@ -428,7 +455,6 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 double closestClusterDistance = sqrt(spatial_cuts_[detector].x() * spatial_cuts_[detector].x() +
                                                      spatial_cuts_[detector].y() * spatial_cuts_[detector].y());
 
-                double timeCut = std::max(time_cut_ref_track, time_cuts_[detector]);
                 LOG(DEBUG) << "Using timing cut of " << Units::display(timeCut, {"ns", "us", "s"});
 
                 auto neighbors = trees[detector].getAllElementsInTimeWindow(refTrack.timestamp(), timeCut);

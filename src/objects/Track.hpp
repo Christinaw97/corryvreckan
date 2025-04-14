@@ -72,7 +72,7 @@ namespace corryvreckan {
 
         /**
          * * @brief Add a timersignal to the track, will be ignored in the fit but can be used for timestamp calculations
-         * * @param timer_signal Pointer to timersignal to be added */
+         * * @param TimerSignal Pointer to timersignal to be added */
         void addTimerSignal(const TimerSignal* timer_signal);
 
         /**
@@ -150,10 +150,18 @@ namespace corryvreckan {
         std::vector<Cluster*> getClusters() const;
 
         /**
+         * @brief Get the timersignals contained in the track
+         * @return vector of TimerSignal* associated to the track
+         */
+        std::vector<TimerSignal*> getTimerSignals() const;
+
+        /**
          * @brief Get the clusters associated to the track
          * @return vector of cluster* associated to the track
          */
         std::vector<Cluster*> getAssociatedClusters(const std::string& detectorID) const;
+
+
 
         /**
          * @brief Check if cluster is associated
@@ -161,13 +169,6 @@ namespace corryvreckan {
          * @return True if the cluster is associated to the track, false if not.
          */
         bool isAssociated(Cluster* cluster) const;
-
-        /**
-         * @brief Check if timersignal is associated
-         * @param timer_signal Pointer to the timersignal to be checked
-         * @return True if the timersignal is associated to the track, false if not.
-         */
-        bool isAssociated(TimerSignal* timer_signal) const;
 
         /**
          * @brief Check if this Track has a cluster from a given detector
