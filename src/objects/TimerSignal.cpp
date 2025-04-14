@@ -11,9 +11,7 @@
 
 #include "TimerSignal.hpp"
 
-
 using namespace corryvreckan;
-
 
 void TimerSignal::print(std::ostream& out) const {
     out << "TimerSignal " << this->timestamp() << ", " << this->trigger_id_ << ", " << this->tag_;

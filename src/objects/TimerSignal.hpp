@@ -12,9 +12,9 @@
 #ifndef CORRYVRECKAN_TIMERSIGNAL_H
 #define CORRYVRECKAN_TIMERSIGNAL_H 1
 
+#include <TRef.h>
 #include <string>
 #include <typeindex>
-#include <TRef.h>
 
 #include <iostream>
 
@@ -105,15 +105,14 @@ namespace corryvreckan {
         // ROOT I/O class definition - update version number when you change this class!
         ClassDefOverride(TimerSignal, 6);
 
-        void loadHistory() override {};
-        void petrifyHistory() override {};
+        void loadHistory() override{};
+        void petrifyHistory() override{};
 
         /**
          * @brief Print an ASCII representation of TimerSignal to the given stream
          * @param out Stream to print to
          */
         void print(std::ostream& out) const override;
-
 
     protected:
         TimerType type_{TimerType::NONE};

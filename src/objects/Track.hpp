@@ -161,8 +161,6 @@ namespace corryvreckan {
          */
         std::vector<Cluster*> getAssociatedClusters(const std::string& detectorID) const;
 
-
-
         /**
          * @brief Check if cluster is associated
          * @param cluster Pointer to the clusterto be checked
@@ -336,7 +334,7 @@ namespace corryvreckan {
             double z_, x_x0_;
             std::string name_;
             PointerWrapper<Cluster> cluster_;
-            //PointerWrapper<TimerSignal> timer_signal_;
+            // PointerWrapper<TimerSignal> timer_signal_;
             Transform3D to_local_;
         };
 
@@ -348,7 +346,7 @@ namespace corryvreckan {
         std::vector<PointerWrapper<Cluster>> track_clusters_;
         std::vector<PointerWrapper<TimerSignal>> track_timer_signals_;
         std::map<std::string, std::vector<PointerWrapper<Cluster>>> associated_clusters_;
-        //std::map<std::string, std::vector<PointerWrapper<TimerSignal>>> associated_timer_signals_;
+        // std::map<std::string, std::vector<PointerWrapper<TimerSignal>>> associated_timer_signals_;
         std::map<std::string, ROOT::Math::XYPoint> residual_local_;
         std::map<std::string, ROOT::Math::XYZPoint> residual_global_;
 

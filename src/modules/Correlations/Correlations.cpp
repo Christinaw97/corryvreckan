@@ -205,7 +205,7 @@ void Correlations::initialize() {
                                                        -1 * time_cut_ - time_binning_ / 2.,
                                                        time_cut_ - time_binning_ / 2.);
     // check if the detector is auxilliary, in which case only the per pixel time plots are interesting
-    if (m_detector->isAuxiliary()){
+    if(m_detector->isAuxiliary()) {
         title = m_detector->getName() + "Reference pixel time stamp - pixel time stamp;t_{ref}-t [ns];events";
         correlationTime_px = new TH1F("correlationTime_px",
                                       title.c_str(),
@@ -217,7 +217,8 @@ void Correlations::initialize() {
                 LOG(WARNING) << "Very large 2D histograms are created with ((2 * time_cut_ / time_binning_ * 3e3) ="
                              << (2 * time_cut_ / time_binning_ * 3e3)
                              << ") bins. This might lead to crashes if limited memory is available.";
-            title = m_detector->getName() + "Reference pixel time stamp - pixel timestamp over time;t [s];t_{ref}-t [ns];events";
+            title =
+                m_detector->getName() + "Reference pixel time stamp - pixel timestamp over time;t [s];t_{ref}-t [ns];events";
             correlationTimeOverTime_px = new TH2F("correlationTimeOverTime_px",
                                                   title.c_str(),
                                                   3e3,
@@ -230,8 +231,7 @@ void Correlations::initialize() {
         // Timing plots
         title = m_detector->getName() + ": event time;t [s];events";
         eventTimes = new TH1F("eventTimes", title.c_str(), 3000000, -1e-5, 300 - 1e-5);
-    }
-    else{
+    } else {
         // Simple hit map
         title = m_detector->getName() + ": hitmap;x [px];y [px];events";
         hitmap = new TH2F("hitmap",
@@ -345,6 +345,7 @@ void Correlations::initialize() {
                                               -1 * time_cut_ - time_binning_ / 2.,
                                               time_cut_ - time_binning_ / 2.);
 
+
         title = m_detector->getName() + " Cross-Correlation XY versus time;t [s];x_{ref}-y [mm];events";
         name = "correlationXYVsTime";
         correlationXYVsTime = new TH2F(name.c_str(), title.c_str(), 600, -2.5, 3e3 - 2.5, 200, -10.05, 9.95);
@@ -352,6 +353,7 @@ void Correlations::initialize() {
         title = m_detector->getName() + " Cross-Correlation YX versus time;t [s];y_{ref}-x [mm];events";
         name = "correlationYXVsTime";
         correlationYXVsTime = new TH2F(name.c_str(), title.c_str(), 600, -2.5, 3e3 - 2.5, 200, -10.05, 9.95);
+
 
         title = m_detector->getName() +
                 "Reference cluster time stamp - cluster time stamp over time;t [s];t_{ref}-t [ns];events";
@@ -534,7 +536,8 @@ StatusCode Correlations::run(const std::shared_ptr<Clipboard>& clipboard) {
             double timeDiff = refPixel->timestamp() - timer_signal->timestamp();
             correlationTime_px->Fill(static_cast<double>(Units::convert(timeDiff, "ns")));
             if(corr_vs_time_) {
-                correlationTimeOverTime_px->Fill(static_cast<double>(Units::convert(timer_signal->timestamp(), "s")), timeDiff);
+                correlationTimeOverTime_px->Fill(static_cast<double>(Units::convert(timer_signal->timestamp(), "s")),
+                                                 timeDiff);
             }
         }
     }
