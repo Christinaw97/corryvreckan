@@ -189,7 +189,7 @@ namespace corryvreckan {
          * @param  detectorID DetectorID of the desired detector
          * @return Track timersignal from the required detector, nullptr if not found
          */
-        Cluster* getTimerSignalFromDetector(std::string detectorID) const;
+        TimerSignal* getTimerSignalFromDetector(std::string detectorID) const;
 
         /**
          * @brief Get the number of clusters used for track fit

@@ -42,6 +42,7 @@ namespace corryvreckan {
         TH1F* trackChi2ndof;
         TH1F* trackTime;
         TH1F* trackTimeTrigger;
+        TH1F* trackTime_v_timer_signal;
         TH2F* trackTimeTriggerChi2;
         TH1F* tracksPerEvent;
         TH1F* trackAngleX;
