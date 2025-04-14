@@ -179,6 +179,15 @@ namespace corryvreckan {
                     } else {
                         pixel_timestamp = shiftedTimestamp;
                     }
+
+                    if(m_detector->masked(hit->column, hit->row)) {
+                        LOG(TRACE) << "Masking pixel (col, row) = (" << hit->column << ", " << hit->row << ")";
+                        m_buffer.pop();
+                        continue;
+                    } else {
+                        LOG(TRACE) << "Storing (col, row, timestamp) = (" << hit->column << ", " << hit->row << ", "
+                                   << Units::display(pixel_timestamp, {"ns", "us", "ms"}) << ") from HDF5 event data";
+                    }
                     auto pixel = std::make_shared<Pixel>(
                         m_detector->getName(), hit->column, hit->row, hit->raw, hit->charge, pixel_timestamp);
                     deviceData_.push_back(pixel);
