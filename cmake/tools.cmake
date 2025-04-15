@@ -1,12 +1,12 @@
-# SPDX-FileCopyrightText: 2017-2024 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2016-2025 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: MIT
 
 # Retrieve the project version string from git describe
 FUNCTION(get_version project_version)
     # Check if this is a source tarball build
-    IF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
+    IF(NOT EXISTS ${CMAKE_SOURCE_DIR}/.git)
         SET(source_package 1)
-    ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
+    ENDIF(NOT EXISTS ${CMAKE_SOURCE_DIR}/.git)
 
     # Set package version
     IF(NOT source_package)
@@ -15,27 +15,28 @@ FUNCTION(get_version project_version)
         # Get the version from last git tag plus number of additional commits:
         FIND_PACKAGE(Git QUIET)
         IF(GIT_FOUND)
-            EXEC_PROGRAM(
-                git ${CMAKE_CURRENT_SOURCE_DIR}
-                ARGS describe --tags HEAD
+            EXECUTE_PROCESS(
+                COMMAND git describe --tags HEAD
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                 OUTPUT_VARIABLE version
-                RETURN_VALUE status)
+                RESULT_VARIABLE status
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
             IF(status AND NOT status EQUAL 0)
                 MESSAGE(STATUS "Git repository present, but could not find any tags.")
                 SET(${project_version} "${${project_version}}-unknown")
             ELSE()
                 STRING(REGEX REPLACE "^release-" "" version ${version})
                 STRING(REGEX REPLACE "([v0-9.]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1-\\2-\\3" ${project_version} ${version})
-                EXEC_PROGRAM(
-                    git ARGS
-                    status --porcelain ${CMAKE_CURRENT_SOURCE_DIR}
+                EXECUTE_PROCESS(
+                    COMMAND git status --porcelain
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                     OUTPUT_VARIABLE PROJECT_STATUS)
                 IF(PROJECT_STATUS STREQUAL "")
                     MESSAGE(STATUS "Git project directory is clean.")
-                ELSE(PROJECT_STATUS STREQUAL "")
-                    MESSAGE(STATUS "Git project directory is dirty:\n ${PROJECT_STATUS}.")
+                ELSE()
+                    MESSAGE(STATUS "Git project directory is dirty:\n${PROJECT_STATUS}.")
                     SET(${project_version} "${${project_version}}-dirty")
-                ENDIF(PROJECT_STATUS STREQUAL "")
+                ENDIF()
 
                 # Check if commit flag has been set by the CI:
                 IF(DEFINED ENV{CI_COMMIT_TAG})
@@ -65,18 +66,24 @@ FUNCTION(get_version project_version)
         PARENT_SCOPE)
 ENDFUNCTION()
 
-FUNCTION(add_runtime_dep RUNTIME_NAME)
-    GET_FILENAME_COMPONENT(THISPROG ${RUNTIME_NAME} PROGRAM)
-    LIST(APPEND CORRY_RUNTIME_DEPS ${THISPROG})
-    LIST(REMOVE_DUPLICATES CORRY_RUNTIME_DEPS)
-    SET(CORRY_RUNTIME_DEPS ${CORRY_RUNTIME_DEPS} CACHE INTERNAL "CORRY_RUNTIME_DEPS")
+# Add runtime dependency requirement to the list for generating a bash source file
+FUNCTION(add_runtime_dep runtime_name)
+    GET_FILENAME_COMPONENT(THISPROG ${runtime_name} PROGRAM)
+    LIST(APPEND _CORRY_RUNTIME_DEPS ${THISPROG})
+    LIST(REMOVE_DUPLICATES _CORRY_RUNTIME_DEPS)
+    SET(_CORRY_RUNTIME_DEPS
+        ${_CORRY_RUNTIME_DEPS}
+        CACHE INTERNAL "CORRY_RUNTIME_DEPS")
 ENDFUNCTION()
 
-FUNCTION(add_runtime_lib RUNTIME_NAME)
-    FOREACH(name ${RUNTIME_NAME})
+# Add runtime-library requirement to the list for generating a bash source file
+FUNCTION(add_runtime_lib runtime_name)
+    FOREACH(name ${runtime_name})
         GET_FILENAME_COMPONENT(THISLIB ${name} DIRECTORY)
-        LIST(APPEND CORRY_RUNTIME_LIBS ${THISLIB})
-        LIST(REMOVE_DUPLICATES CORRY_RUNTIME_LIBS)
-        SET(CORRY_RUNTIME_LIBS ${CORRY_RUNTIME_LIBS} CACHE INTERNAL "CORRY_RUNTIME_LIBS")
+        LIST(APPEND _CORRY_RUNTIME_LIBS ${THISLIB})
+        LIST(REMOVE_DUPLICATES _CORRY_RUNTIME_LIBS)
+        SET(_CORRY_RUNTIME_LIBS
+            ${_CORRY_RUNTIME_LIBS}
+            CACHE INTERNAL "CORRY_RUNTIME_LIBS")
     ENDFOREACH()
 ENDFUNCTION()

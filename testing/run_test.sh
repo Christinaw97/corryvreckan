@@ -1,3 +1,4 @@
+#!/bin/bash
 ABSOLUTE_PATH="$( cd "$( dirname "${BASH_SOURCE}" )" && pwd )"
 
 # First argument is the data set to be used, ask for the download:

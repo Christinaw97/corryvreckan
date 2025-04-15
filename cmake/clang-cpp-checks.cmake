@@ -1,30 +1,21 @@
-# SPDX-FileCopyrightText: 2017-2024 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2017-2025 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: MIT
 
 # Additional targets to perform clang-format/clang-tidy/cppcheck
 
 # Check if the git hooks are installed and up-to-date:
 IF(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
-    SET(HOOK_MISSING OFF)
-    SET(HOOK_OUTDATED OFF)
-    FOREACH(hook pre-commit-clang-format pre-push-tag-version)
-        SET(HOOK_SRC "${CMAKE_SOURCE_DIR}/etc/git-hooks/${hook}-hook")
-        SET(HOOK_DST "${CMAKE_SOURCE_DIR}/.git/hooks/${hook}")
-        IF(NOT EXISTS ${HOOK_DST})
-            SET(HOOK_MISSING ON)
+    IF(EXISTS "${CMAKE_SOURCE_DIR}/.git/hooks/pre-commit-clang-format")
+        MESSAGE(WARNING "Git hooks are outdated - this project has moved to the pre-commit framework. Install via "
+                "pre-commit install -f"
+                " and delete the file .git/hooks/pre-commit-clang-format")
+    ELSE()
+        IF(NOT EXISTS "${CMAKE_SOURCE_DIR}/.git/hooks/pre-commit")
+            MESSAGE(WARNING "Git hooks are not installed - install via "
+                    "pre-commit install")
         ELSE()
-            EXECUTE_PROCESS(COMMAND "cmake" "-E" "compare_files" ${HOOK_SRC} ${HOOK_DST} RESULT_VARIABLE HOOKS_DIFFER)
-            IF(${HOOKS_DIFFER})
-                SET(HOOK_OUTDATED ON)
-            ENDIF()
+            MESSAGE(STATUS "Found pre-commit hooks installed.")
         ENDIF()
-    ENDFOREACH()
-    IF(${HOOK_MISSING})
-        MESSAGE(WARNING "Git hooks are not installed - consider installing them via "
-                        "${CMAKE_SOURCE_DIR}/etc/git-hooks/install-hooks.sh")
-    ELSEIF(${HOOK_OUTDATED})
-        MESSAGE(WARNING "Git hooks are outdated - consider updating them via "
-                        "${CMAKE_SOURCE_DIR}/etc/git-hooks/install-hooks.sh")
     ENDIF()
 ENDIF()
 
@@ -37,10 +28,11 @@ ENDIF()
 # Adding clang-format check and formatter if found
 FIND_PROGRAM(CLANG_FORMAT NAMES "clang-format-${CLANG_FORMAT_VERSION}" "clang-format")
 IF(CLANG_FORMAT)
-    EXEC_PROGRAM(
-        ${CLANG_FORMAT} ${CMAKE_CURRENT_SOURCE_DIR}
-        ARGS --version
-        OUTPUT_VARIABLE CLANG_VERSION)
+    EXECUTE_PROCESS(
+        COMMAND ${CLANG_FORMAT} --version
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE CLANG_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
     STRING(REGEX REPLACE ".* ([0-9]+)\\.[0-9]+\\.[0-9]+.*" "\\1" CLANG_MAJOR_VERSION ${CLANG_VERSION})
 
     # Let's treat macOS differently because they don't have up-to-date versions
@@ -86,10 +78,11 @@ FIND_PROGRAM(CLANG_TIDY NAMES "clang-tidy-${CLANG_TIDY_VERSION}" "clang-tidy")
 # Enable clang tidy only if using a clang compiler
 IF(CLANG_TIDY AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
-    EXEC_PROGRAM(
-        ${CLANG_TIDY} ${CMAKE_CURRENT_SOURCE_DIR}
-        ARGS --version
-        OUTPUT_VARIABLE CTIDY_VERSION)
+    EXECUTE_PROCESS(
+        COMMAND ${CLANG_TIDY} --version
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE CTIDY_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
     STRING(REGEX REPLACE ".* ([0-9]+)\\.[0-9]+\\.[0-9]+.*" "\\1" CLANG_TIDY_MAJOR_VERSION ${CTIDY_VERSION})
     MESSAGE(STATUS "Found ${CLANG_TIDY} version ${CLANG_TIDY_MAJOR_VERSION}")
 

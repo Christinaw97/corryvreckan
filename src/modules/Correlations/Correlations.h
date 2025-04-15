@@ -57,6 +57,10 @@ namespace corryvreckan {
         TH2F* correlationY2D;
         TH2F* correlationYX2D;
         TH2F* correlationXY2D;
+        TH2F* correlationXVsTrigger;
+        TH2F* correlationYVsTrigger;
+        TH2F* correlationYXVsTrigger;
+        TH2F* correlationXYVsTrigger;
         TH1F* correlationTime;
         TH2F* correlationTimeOverTime;
         TH2F* correlationTimeOverSeedPixelRawValue;

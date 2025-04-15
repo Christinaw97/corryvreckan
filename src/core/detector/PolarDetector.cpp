@@ -396,6 +396,15 @@ bool PolarDetector::isWithinROI(Cluster* cluster) const {
     return true;
 }
 
+// Check if column and row number is within ROI:
+bool PolarDetector::isWithinROI(const int col, const int row) const {
+    if(m_roi.empty()) {
+        return true;
+    }
+
+    return (winding_number(std::make_pair(col, row), m_roi) != 0);
+}
+
 XYVector PolarDetector::getSize() const {
     /* The size of a polar detector is approximated as:
      * - X direction: Length of the arc defining the final (longest)

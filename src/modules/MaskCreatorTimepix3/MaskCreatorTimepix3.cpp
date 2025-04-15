@@ -80,9 +80,7 @@ void MaskCreatorTimepix3::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
             int channelID = row + 256 * col;
             if(pixelhits[channelID] > 10 * meanHits) {
                 trimdacs >> t_col >> t_row >> t_trim >> t_mask >> t_tpen;
-                newtrimdacs << t_col << "\t" << t_row << "\t" << t_trim << "\t"
-                            << "1"
-                            << "\t" << t_tpen << std::endl;
+                newtrimdacs << t_col << "\t" << t_row << "\t" << t_trim << "\t" << "1" << "\t" << t_tpen << std::endl;
                 LOG(INFO) << "Masking pixel " << col << "," << row << " on detector " << m_detector->getName();
                 LOG(INFO) << "Number of counts: " << pixelhits[channelID];
             } else {

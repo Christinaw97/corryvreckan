@@ -8,14 +8,13 @@
 **Status**: Work in progress
 
 ### Description
-This module loads data from hdf5 files and adds it to the clipboard. The input file must have extension `.h5` without any compression filters and follow the structure below:
+This module loads data from hdf5 files and adds it to the clipboard. The input file must have extension `.h5` and follow the structure below:
 
-| column |  row  | charge |   timestamp \[ns\]   | trigger_number |
-|:------:|:-----:|:------:|:--------------------:|:--------------:|
-| `int`  | `int` | `int`  | `unsigned long long` | `unsigned int` |
+| column |  row  |  raw  |  charge  |   timestamp \[ns\]   | trigger_number |
+|:------:|:-----:|:-----:|:--------:|:--------------------:|:--------------:|
+| `int`  | `int` | `int` | `double` |       `double`       | `unsigned int` |
 
-Decimal values for the charge are not supported yet and both raw and charge of the `Pixel` object are populated with the same value.
-
+Compressed hdf5 files (filters) are supported via [hdf5_plugins]( https://github.com/HDFGroup/hdf5_plugins) and must be found by the library at runtime (e.g., by setting the environment variable `HDF5_PLUGIN_PATH`).
 The module is capable of defining an event as well as adding records based on timestamp or trigger. In case of the latter, trigger information must be present in the events.
 
 ### Parameters
@@ -31,12 +30,14 @@ The module is capable of defining an event as well as adding records based on ti
 
 The following plots are produced:
 
-* 2D map of pixel positions
+* Histogram with pixel raw value
 * Histogram with pixel charge
+* 2D map of hit positions
+* 2D map of raw values per pixel
 
 ### Usage
 ```toml
 [EventLoaderHDF5]
-filename = "path/to/file"
+filename = "path/to/file.h5"
 dataset_name = "Hits"
 ```

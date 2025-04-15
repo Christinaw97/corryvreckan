@@ -90,7 +90,7 @@ namespace corryvreckan {
          */
         TMatrixD getGlobalStateUncertainty(const std::string& detectorID) const override;
 
-        void setVolumeScatter(double) override{};
+        void setVolumeScatter(double) override {};
 
     private:
         /**

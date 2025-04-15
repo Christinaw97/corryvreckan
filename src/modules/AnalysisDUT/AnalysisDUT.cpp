@@ -544,7 +544,7 @@ void AnalysisDUT::initialize() {
 
     residualsTimeVsSignal =
         new TH2F("residualsTimeVsSignal",
-                 "Cluster charge vs. time residual;time_{track}-time_{hit} [mm];cluster charge [a.u.];# entries",
+                 "Cluster charge vs. time residual;time_{track}-time_{hit} [ns];cluster charge [a.u.];# entries",
                  n_timebins_,
                  -(n_timebins_ + 1) / 2. * time_binning_,
                  (n_timebins_ - 1) / 2. * time_binning_,

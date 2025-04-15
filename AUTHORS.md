@@ -16,6 +16,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * David Bacher, ETH Zürich, [dabacher](https://gitlab.cern.ch/dabacher)
 * Mélanie Marthe Bay, CERN, [mebay](https://gitlab.cern.ch/mebay)
 * Pascal Becht, University of Heidelberg, [pbecht](https://gitlab.cern.ch/pbecht)
+* Christian Bespin, University of Bonn, [cbespinv](https://gitlab.cern.ch/cbespinv)
 * Bogdan-Mihail Blidaru, University of Heidelberg, [mblidaru](https://gitlab.cern.ch/mblidaru)
 * Matthew Daniel Buckland, University of Liverpool, [mbucklan](https://gitlab.cern.ch/mbucklan)
 * Carsten Daniel Burgard, DESY, [cburgard](https://gitlab.cern.ch/cburgard)
@@ -43,6 +44,7 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Simon Koch, University of Oxford, [sfkoch](https://gitlab.cern.ch/sfkoch)
 * Fabian Lex, University of Freiburg, [lex](https://gitlab.cern.ch/lex)
 * Magnus Mager, CERN, [mmager](https://gitlab.cern.ch/mmager)
+* Pranav Manoj, LBL, [pmanoj](https://gitlab.cern.ch/pmanoj)
 * Keerthi Nakkalil, University Bonn/DESY, [nakkalil](https://gitlab.cern.ch/nakkalil)
 * Andreas Matthias Nürnberg, KIT, [nurnberg](https://gitlab.cern.ch/nurnberg)
 * Ryunosuke O'Neil, University of Edinburgh, [roneil](https://gitlab.cern.ch/roneil)
@@ -66,4 +68,3 @@ The following authors, in alphabetical order, have developed or contributed to C
 * Bong-Hwi Lim, University of Turin, [blim](https://gitlab.cern.ch/blim)
 
 This project strongly profits from the developments done for the [Allpix Squared project](https://cern.ch/allpix-squared) which is released under the MIT license. Especially the configuration class, the module instantiation logic and the file reader and writer modules have profited heavily by their corresponding framework components in Allpix Squared.
-

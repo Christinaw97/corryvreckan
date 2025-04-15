@@ -15,6 +15,8 @@
 #include <H5Cpp.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TProfile2D.h>
+
 #include <queue>
 #include "core/module/Module.hpp"
 #include "objects/Pixel.hpp"
@@ -36,8 +38,9 @@ namespace corryvreckan {
         struct Hit {
             int column;
             int row;
-            int charge;
-            unsigned long long timestamp;
+            int raw;
+            double charge;
+            double timestamp;
             uint32_t trigger_number;
         };
 
@@ -62,7 +65,9 @@ namespace corryvreckan {
 
         // Plots
         TH2F* hHitMap;
+        TProfile2D* hTotMap;
         TH1F* hPixelToT;
+        TH1F* hPixelCharge;
         TH1D* hClipboardEventStart;
         TH1D* hClipboardEventStart_long;
         TH1D* hClipboardEventEnd;
@@ -74,18 +79,8 @@ namespace corryvreckan {
         void fillBuffer();
         Event::Position getPosition(const std::shared_ptr<Event>& event, const std::shared_ptr<Hit>& hit) const;
 
-        // Sort buffer by timestamp to make sure to read them in chronological order.
-        // If timestamps are not available, sort by trigger number. If that fails, good luck
-        template <typename T> struct CompareTimeGreater {
-            bool operator()(const std::shared_ptr<T> a, const std::shared_ptr<T> b) {
-                if((a->timestamp > 0) && (b->timestamp > 0)) {
-                    return a->timestamp > b->timestamp;
-                } else {
-                    return a->trigger_number > b->trigger_number;
-                }
-            }
-        };
-        std::priority_queue<std::shared_ptr<Hit>, HitVector, CompareTimeGreater<Hit>> m_buffer;
+        std::priority_queue<std::shared_ptr<Hit>, HitVector, std::function<bool(std::shared_ptr<Hit>, std::shared_ptr<Hit>)>>
+            m_buffer;
     };
 
 } // namespace corryvreckan

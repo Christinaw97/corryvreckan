@@ -53,8 +53,8 @@ namespace corryvreckan {
         ROOT::Math::XYZPoint getLocalStart() const { return m_local_start_point; }
         ROOT::Math::XYZPoint getLocalEnd() const { return m_local_end_point; }
 
-        void loadHistory() override{};
-        void petrifyHistory() override{};
+        void loadHistory() override {};
+        void petrifyHistory() override {};
 
         // ROOT I/O class definition - update version number when you change this class!
         ClassDefOverride(MCParticle, 4);
