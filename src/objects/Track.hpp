@@ -72,7 +72,7 @@ namespace corryvreckan {
 
         /**
          * * @brief Add a timersignal to the track, will be ignored in the fit but can be used for timestamp calculations
-         * * @param TimerSignal Pointer to timersignal to be added */
+         * * @param timer_signal Pointer to timersignal to be added */
         void addTimerSignal(const TimerSignal* timer_signal);
 
         /**
@@ -334,7 +334,7 @@ namespace corryvreckan {
             double z_, x_x0_;
             std::string name_;
             PointerWrapper<Cluster> cluster_;
-            // PointerWrapper<TimerSignal> timer_signal_;
+            PointerWrapper<TimerSignal> timer_signal_;
             Transform3D to_local_;
         };
 
@@ -346,7 +346,6 @@ namespace corryvreckan {
         std::vector<PointerWrapper<Cluster>> track_clusters_;
         std::vector<PointerWrapper<TimerSignal>> track_timer_signals_;
         std::map<std::string, std::vector<PointerWrapper<Cluster>>> associated_clusters_;
-        // std::map<std::string, std::vector<PointerWrapper<TimerSignal>>> associated_timer_signals_;
         std::map<std::string, ROOT::Math::XYPoint> residual_local_;
         std::map<std::string, ROOT::Math::XYZPoint> residual_global_;
 
