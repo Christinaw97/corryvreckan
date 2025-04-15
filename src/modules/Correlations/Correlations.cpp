@@ -26,7 +26,7 @@ Correlations::Correlations(Configuration& config, std::shared_ptr<Detector> dete
     config_.setDefault<bool>("correlation_vs_time", false);
     config_.setDefault<double>("time_binning", Units::get<double>(1, "ns"));
 
-    // Auxilliary devices are no longer ignored but maybe people don't care about them. Hence this new flag.
+    // Auxiliary devices are no longer ignored but maybe people don't care about them. Hence this new flag.
     config_.setDefault<bool>("correlate_timer_signals", false);
 
     if(config_.count({"time_cut_rel", "time_cut_abs"}) == 0) {
