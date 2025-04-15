@@ -60,6 +60,7 @@ namespace corryvreckan {
         double damping_factor;
         double timeCut;
         double range_abs;
+        int nbins_global;
         PrealignMethod method;
         int fit_range_rel;
         std::vector<std::string> fixed_planes_;
