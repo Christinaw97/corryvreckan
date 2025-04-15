@@ -58,8 +58,14 @@ void Prealignment::initialize() {
     title = m_detector->getName() + ": correlation Y;y_{ref}-y [mm];events";
     correlationY = new TH1F("correlationY", title.c_str(), nbins_global, -1.0 * range_abs, 1.0 * range_abs);
     title = m_detector->getName() + ": correlation XY;x_{ref}-x [mm];y_{ref}-y [mm];events";
-    correlationXY = new TH2F(
-        "correlationXY", title.c_str(), nbins_global, -1.0 * range_abs, 1.0 * range_abs, nbins_global, -1.0 * range_abs, 1.0 * range_abs);
+    correlationXY = new TH2F("correlationXY",
+                             title.c_str(),
+                             nbins_global,
+                             -1.0 * range_abs,
+                             1.0 * range_abs,
+                             nbins_global,
+                             -1.0 * range_abs,
+                             1.0 * range_abs);
     // 2D correlation plots (pixel-by-pixel, local coordinates):
     title = m_detector->getName() + ": 2D correlation X (local);x [px];x_{ref} [px];events";
     correlationX2Dlocal = new TH2F("correlationX_2Dlocal",
@@ -80,11 +86,23 @@ void Prealignment::initialize() {
                                    -0.5,
                                    reference->nPixels().Y() - 0.5);
     title = m_detector->getName() + ": 2D correlation X (global);x [mm];x_{ref} [mm];events";
-    correlationX2D = new TH2F(
-        "correlationX_2D", title.c_str(), nbins_global/10, -1.0 * range_abs, 1.0 * range_abs, nbins_global/10, -1.0 * range_abs, 1.0 * range_abs);
+    correlationX2D = new TH2F("correlationX_2D",
+                              title.c_str(),
+                              nbins_global / 10,
+                              -1.0 * range_abs,
+                              1.0 * range_abs,
+                              nbins_global / 10,
+                              -1.0 * range_abs,
+                              1.0 * range_abs);
     title = m_detector->getName() + ": 2D correlation Y (global);y [mm];y_{ref} [mm];events";
-    correlationY2D = new TH2F(
-        "correlationY_2D", title.c_str(), nbins_global/10, -1.0 * range_abs, 1.0 * range_abs, nbins_global/10, -1.0 * range_abs, 1.0 * range_abs);
+    correlationY2D = new TH2F("correlationY_2D",
+                              title.c_str(),
+                              nbins_global / 10,
+                              -1.0 * range_abs,
+                              1.0 * range_abs,
+                              nbins_global / 10,
+                              -1.0 * range_abs,
+                              1.0 * range_abs);
 }
 
 StatusCode Prealignment::run(const std::shared_ptr<Clipboard>& clipboard) {
