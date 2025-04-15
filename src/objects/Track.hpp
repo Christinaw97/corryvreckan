@@ -72,7 +72,7 @@ namespace corryvreckan {
 
         /**
          * * @brief Add a timersignal to the track, will be ignored in the fit but can be used for timestamp calculations
-         * * @param TimerSignal Pointer to timersignal to be added */
+         * * @param timer_signal Pointer to timersignal to be added */
         void addTimerSignal(const TimerSignal* timer_signal);
 
         /**
