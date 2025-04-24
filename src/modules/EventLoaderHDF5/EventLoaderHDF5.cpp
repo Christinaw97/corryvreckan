@@ -70,6 +70,9 @@ namespace corryvreckan {
                                      m_detector->nPixels().Y() - 0.5);
             hPixelToT = new TH1F("pixelToT", "Pixel ToT; ToT [LSB];# entries", 200, -0.5, 199.5);
             hPixelCharge = new TH1F("pixelCharge", "pixel charge [a.u.];# entries", 1000, 0, 5000);
+
+            std::string title = "Pixel Multiplicity;# pixels;# events";
+            hPixelMultiplicity = new TH1F("pixelMultiplicity", title.c_str(), 500, -0.5, 499.5);
         }
 
         // TODO: only define those if event is not defined yet. How to find out here?
@@ -102,6 +105,11 @@ namespace corryvreckan {
         if(data) {
             LOG(DEBUG) << "Loaded " << deviceData.size() << " pixels for device " << m_detector->getName();
             clipboard->putData(deviceData, m_detector->getName());
+        }
+
+        if(!m_detector->isAuxiliary()) {
+            // histogram only exists for non-auxiliary detectors:
+            hPixelMultiplicity->Fill(static_cast<int>(deviceData.size()));
         }
 
         LOG(DEBUG) << clipboard->countObjects<Pixel>() << " objects on the clipboard";
