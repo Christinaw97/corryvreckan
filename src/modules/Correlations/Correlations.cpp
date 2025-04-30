@@ -38,12 +38,16 @@ Correlations::Correlations(Configuration& config, std::shared_ptr<Detector> dete
     time_binning_ = config_.get<double>("time_binning");
 
     // Plotting
+    config_.setDefault<double>("range_abs", Units::get<double>(10, "mm"));
+    config_.setDefault<int>("nbins_global", 1000);
     config_.setDefault<int>("output_plots_trigger_max", 100000);
 }
 
 void Correlations::initialize() {
 
     auto trigger_max = config_.get<int>("output_plots_trigger_max");
+    auto range_abs = config_.get<double>("range_abs");
+    auto nbins_global = config_.get<int>("nbins_global");
 
     LOG_ONCE(WARNING) << "Correlations module is enabled and will significantly increase the runtime";
     LOG(DEBUG) << "Booking histograms for detector " << m_detector->getName();
@@ -71,15 +75,31 @@ void Correlations::initialize() {
                                -0.5,
                                m_detector->nPixels().Y() - 0.5);
 
-    // Correlation plots
+    // Correlation plots (with central bin centered around 0)
     title = m_detector->getName() + ": correlation X;x_{ref}-x [mm];events";
-    correlationX = new TH1F("correlationX", title.c_str(), 1000, -10.01, 9.99);
+    correlationX = new TH1F("correlationX",
+                            title.c_str(),
+                            nbins_global,
+                            -1.0 * range_abs - (range_abs / nbins_global),
+                            range_abs - (range_abs / nbins_global));
     title = m_detector->getName() + ": correlation Y;y_{ref}-y [mm];events";
-    correlationY = new TH1F("correlationY", title.c_str(), 1000, -10.01, 9.99);
+    correlationY = new TH1F("correlationY",
+                            title.c_str(),
+                            nbins_global,
+                            -1.0 * range_abs - (range_abs / nbins_global),
+                            range_abs - (range_abs / nbins_global));
     title = m_detector->getName() + ": correlation XY;y_{ref}-x [mm];events";
-    correlationXY = new TH1F("correlationXY", title.c_str(), 1000, -10.01, 9.99);
+    correlationXY = new TH1F("correlationXY",
+                             title.c_str(),
+                             nbins_global,
+                             -1.0 * range_abs - (range_abs / nbins_global),
+                             range_abs - (range_abs / nbins_global));
     title = m_detector->getName() + ": correlation YX;x_{ref}-y [mm];events";
-    correlationYX = new TH1F("correlationYX", title.c_str(), 1000, -10.01, 9.99);
+    correlationYX = new TH1F("correlationYX",
+                             title.c_str(),
+                             nbins_global,
+                             -1.0 * range_abs - (range_abs / nbins_global),
+                             range_abs - (range_abs / nbins_global));
 
     // time correlation plot range should cover length of events. nanosecond binning.
     title = m_detector->getName() + "Reference cluster time stamp - cluster time stamp;t_{ref}-t [ns];events";
@@ -89,6 +109,8 @@ void Correlations::initialize() {
                                -1 * time_cut_ - time_binning_ / 2.,
                                time_cut_ - time_binning_ / 2.);
 
+    // less bins for 2D histogramms
+    int nbins_global_2D = nbins_global / 5;
     if(corr_vs_time_) {
         if((time_cut_ / time_binning_) > 1e3)
             LOG(WARNING) << "Very large 2D histograms are created with ((2 * time_cut_ / time_binning_ * 3e3) ="
@@ -96,11 +118,25 @@ void Correlations::initialize() {
                          << ") bins. This might lead to crashes if limited memory is available.";
         title = m_detector->getName() + " Correlation X versus time;t [s];x_{ref}-x [mm];events";
         std::string name = "correlationXVsTime";
-        correlationXVsTime = new TH2F(name.c_str(), title.c_str(), 600, -2.5, 3e3 - 2.5, 200, -10.05, 9.95);
+        correlationXVsTime = new TH2F(name.c_str(),
+                                      title.c_str(),
+                                      600,
+                                      -2.5,
+                                      3e3 - 2.5,
+                                      nbins_global_2D,
+                                      -1.0 * range_abs - (range_abs / nbins_global_2D),
+                                      range_abs - (range_abs / nbins_global_2D));
 
         title = m_detector->getName() + " Correlation Y versus time;t [s];y_{ref}-y [mm];events";
         name = "correlationYVsTime";
-        correlationYVsTime = new TH2F(name.c_str(), title.c_str(), 600, -2.5, 3e3 - 2.5, 200, -10.05, 9.95);
+        correlationYVsTime = new TH2F(name.c_str(),
+                                      title.c_str(),
+                                      600,
+                                      -2.5,
+                                      3e3 - 2.5,
+                                      nbins_global_2D,
+                                      -1.0 * range_abs - (range_abs / nbins_global_2D),
+                                      range_abs - (range_abs / nbins_global_2D));
 
         title = m_detector->getName() + "Reference pixel time stamp - pixel timestamp over time;t [s];t_{ref}-t [ns];events";
         correlationTimeOverTime_px = new TH2F("correlationTimeOverTime_px",
@@ -114,11 +150,25 @@ void Correlations::initialize() {
 
         title = m_detector->getName() + " Cross-Correlation XY versus time;t [s];x_{ref}-y [mm];events";
         name = "correlationXYVsTime";
-        correlationXYVsTime = new TH2F(name.c_str(), title.c_str(), 600, -2.5, 3e3 - 2.5, 200, -10.05, 9.95);
+        correlationXYVsTime = new TH2F(name.c_str(),
+                                       title.c_str(),
+                                       600,
+                                       -2.5,
+                                       3e3 - 2.5,
+                                       nbins_global_2D,
+                                       -1.0 * range_abs - (range_abs / nbins_global_2D),
+                                       range_abs - (range_abs / nbins_global_2D));
 
         title = m_detector->getName() + " Cross-Correlation YX versus time;t [s];y_{ref}-x [mm];events";
         name = "correlationYXVsTime";
-        correlationYXVsTime = new TH2F(name.c_str(), title.c_str(), 600, -2.5, 3e3 - 2.5, 200, -10.05, 9.95);
+        correlationYXVsTime = new TH2F(name.c_str(),
+                                       title.c_str(),
+                                       600,
+                                       -2.5,
+                                       3e3 - 2.5,
+                                       nbins_global_2D,
+                                       -1.0 * range_abs - (range_abs / nbins_global_2D),
+                                       range_abs - (range_abs / nbins_global_2D));
 
         title = m_detector->getName() +
                 "Reference cluster time stamp - cluster time stamp over time;t [s];t_{ref}-t [ns];events";
@@ -218,25 +268,84 @@ void Correlations::initialize() {
                                     -0.5,
                                     reference->nPixels().Y() - 0.5);
 
+    // the following 2D histogramms have more coarse binning
+    nbins_global_2D = nbins_global / 10;
+
     title = m_detector->getName() + ": 2D correlation X (global);x [mm];x_{ref} [mm];events";
-    correlationX2D = new TH2F("correlationX_2D", title.c_str(), 100, -10.1, 9.9, 100, -10.1, 9.9);
+    correlationX2D = new TH2F("correlationX_2D",
+                              title.c_str(),
+                              nbins_global_2D,
+                              -1.0 * range_abs - (range_abs / nbins_global_2D),
+                              range_abs - (range_abs / nbins_global_2D),
+                              nbins_global_2D,
+                              -1.0 * range_abs - (range_abs / nbins_global_2D),
+                              range_abs - (range_abs / nbins_global_2D));
     title = m_detector->getName() + ": 2D correlation Y (global);y [mm];y_{ref} [mm];events";
-    correlationY2D = new TH2F("correlationY_2D", title.c_str(), 100, -10.1, 9.9, 100, -10.1, 9.9);
+    correlationY2D = new TH2F("correlationY_2D",
+                              title.c_str(),
+                              nbins_global_2D,
+                              -1.0 * range_abs - (range_abs / nbins_global_2D),
+                              range_abs - (range_abs / nbins_global_2D),
+                              nbins_global_2D,
+                              -1.0 * range_abs - (range_abs / nbins_global_2D),
+                              range_abs - (range_abs / nbins_global_2D));
 
     title = m_detector->getName() + ": 2D cross-correlation X/Y (global);x [mm];y_{ref} [mm];events";
-    correlationXY2D = new TH2F("correlationXY_2D", title.c_str(), 100, -10.1, 9.9, 100, -10.1, 9.9);
+    correlationXY2D = new TH2F("correlationXY_2D",
+                               title.c_str(),
+                               nbins_global_2D,
+                               -1.0 * range_abs - (range_abs / nbins_global_2D),
+                               range_abs - (range_abs / nbins_global_2D),
+                               nbins_global_2D,
+                               -1.0 * range_abs - (range_abs / nbins_global_2D),
+                               range_abs - (range_abs / nbins_global_2D));
     title = m_detector->getName() + ": 2D cross-correlation Y/X (global);y [mm];x_{ref} [mm];events";
-    correlationYX2D = new TH2F("correlationYX_2D", title.c_str(), 100, -10.1, 9.9, 100, -10.1, 9.9);
+    correlationYX2D = new TH2F("correlationYX_2D",
+                               title.c_str(),
+                               nbins_global_2D,
+                               -1.0 * range_abs - (range_abs / nbins_global_2D),
+                               range_abs - (range_abs / nbins_global_2D),
+                               nbins_global_2D,
+                               -1.0 * range_abs - (range_abs / nbins_global_2D),
+                               range_abs - (range_abs / nbins_global_2D));
 
     // vs trigger number to check for correlation loss during the run
     title = m_detector->getName() + ": correlation X vs corry event trigger ID;corry event trigger ID;x_{ref}-x[mm]";
-    correlationXVsTrigger = new TH2F("correlationXVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
+    correlationXVsTrigger = new TH2F("correlationXVsTrigger",
+                                     title.c_str(),
+                                     trigger_max / 100,
+                                     0,
+                                     trigger_max,
+                                     nbins_global_2D,
+                                     -1.0 * range_abs - (range_abs / nbins_global_2D),
+                                     range_abs - (range_abs / nbins_global_2D));
     title = m_detector->getName() + ": correlation Y vs corry event trigger ID;corry event trigger ID;y_{ref}-y[mm]";
-    correlationYVsTrigger = new TH2F("correlationYVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
+    correlationYVsTrigger = new TH2F("correlationYVsTrigger",
+                                     title.c_str(),
+                                     trigger_max / 100,
+                                     0,
+                                     trigger_max,
+                                     nbins_global_2D,
+                                     -1.0 * range_abs - (range_abs / nbins_global_2D),
+                                     range_abs - (range_abs / nbins_global_2D));
     title = m_detector->getName() + ": correlation XY vs corry event trigger ID;corry event trigger ID;y_{ref}-x[mm]";
-    correlationXYVsTrigger = new TH2F("correlationXYVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
+    correlationXYVsTrigger = new TH2F("correlationXYVsTrigger",
+                                      title.c_str(),
+                                      trigger_max / 100,
+                                      0,
+                                      trigger_max,
+                                      nbins_global_2D,
+                                      -1.0 * range_abs - (range_abs / nbins_global_2D),
+                                      range_abs - (range_abs / nbins_global_2D));
     title = m_detector->getName() + ": correlation YX vs corry event trigger ID;corry event trigger ID;x_{ref}-y[mm]";
-    correlationYXVsTrigger = new TH2F("correlationYXVsTrigger", title.c_str(), 1000, 0, trigger_max, 200, -10.01, 9.99);
+    correlationYXVsTrigger = new TH2F("correlationYXVsTrigger",
+                                      title.c_str(),
+                                      trigger_max / 100,
+                                      0,
+                                      trigger_max,
+                                      nbins_global_2D,
+                                      -1.0 * range_abs - (range_abs / nbins_global_2D),
+                                      range_abs - (range_abs / nbins_global_2D));
 
     // Timing plots
     title = m_detector->getName() + ": event time;t [s];events";
