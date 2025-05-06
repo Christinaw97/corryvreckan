@@ -29,6 +29,7 @@ No masks are applied in this module as this is done by the respective event load
 * `sigma_above_avg_max`: Cut for noisy pixels, number of standard deviations above average, defaults to `5`. Only used in `localdensity` mode.
 * `rate_max`: Maximum rate, defaults to `1`. Only used in `localdensity` mode.
 * `mask_dead_pixels`: If `true`, the module will search for pixels without any recorded hits and add them to the mask file. Default is `false`.
+* `mask_only_dead_pixels`: If `true`, the module will search exclusively for pixels without any recorded hits and add them to the mask file, ignoring all other methods specified. Default is `false`.
 * `write_new_config`: If `true` and the detector config did not previously hold a mask file, then the new mask file is added to the outgoing config. Default is `false`.
 * `new_config_suffix`: If `write_new_config=true` and the detector config did not previously hold a mask file, add a suffix to the new mask file. Default is `""` (no suffix).
 * `square_big_pixel_weight`: The occupancy for masking is adjusted for pixel area - however, in some detectors, cross-talk between neighbours can also scale linearly with pixel size, giving localised occupancies that increase by the square of the pixel area. Setting this option to `true` divides the bare occupancy by the area squared (rather than just the area) to account for this. Defaults to `false`.

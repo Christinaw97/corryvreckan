@@ -75,7 +75,7 @@ namespace corryvreckan {
         int m_bandwidthCol, m_bandwidthRow;
         double m_sigmaMax, m_rateMax;
         int m_numEvents, binsOccupancy;
-        bool m_maskDeadPixels, m_writeNewConfig;
+        bool m_maskDeadPixels, m_writeNewConfig, mask_only_dead_;
         std::string m_newConfigSuffix;
         bool m_squareBigPixelWeight;
 
