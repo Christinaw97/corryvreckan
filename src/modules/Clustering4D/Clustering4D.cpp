@@ -318,7 +318,7 @@ void Clustering4D::calculateClusterCentre(Cluster* cluster) {
             // apply arithmetic mean if a pixel has zero charge
             found_charge_zero = true;
         }
-        // If charge == 0. Can happen with some faulty calibration in ToT systems
+        // If charge == inf. Can happen with some faulty calibration in ToT systems
         if(std::isinf(pixel->charge())) {
             // ignore pixel if pixel has infinite charge
             found_charge_inf = true;
