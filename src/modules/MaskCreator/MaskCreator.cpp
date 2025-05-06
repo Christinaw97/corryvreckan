@@ -139,8 +139,7 @@ StatusCode MaskCreator::run(const std::shared_ptr<Clipboard>& clipboard) {
 }
 
 void MaskCreator::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
-
-    if (!mask_only_dead_){
+    if(!mask_only_dead_) {
         if(m_method == MaskingMethod::LOCALDENSITY) {
             LOG(INFO) << "Using local density estimator";
             // Reject noisy pixels based on local density estimator:
