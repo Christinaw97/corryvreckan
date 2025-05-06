@@ -26,6 +26,7 @@ Prealignment::Prealignment(Configuration& config, std::shared_ptr<Detector> dete
     config_.setDefault<PrealignMethod>("method", PrealignMethod::MEAN);
     config_.setDefault<int>("fit_range_rel", 500);
     config_.setDefault<double>("range_abs", Units::get<double>(10, "mm"));
+    config_.setDefault<int>("nbins_global", 1000);
 
     if(config_.count({"time_cut_rel", "time_cut_abs"}) == 0) {
         config_.setDefault("time_cut_rel", 3.0);
@@ -37,6 +38,7 @@ Prealignment::Prealignment(Configuration& config, std::shared_ptr<Detector> dete
     max_correlation_rms = config_.get<double>("max_correlation_rms");
     damping_factor = config_.get<double>("damping_factor");
     range_abs = config_.get<double>("range_abs");
+    nbins_global = config_.get<int>("nbins_global");
     method = config_.get<PrealignMethod>("method");
     fit_range_rel = config_.get<int>("fit_range_rel");
     fixed_planes_ = config_.getArray<std::string>("fixed_planes", {});
@@ -52,12 +54,18 @@ void Prealignment::initialize() {
 
     // Correlation plots
     std::string title = m_detector->getName() + ": correlation X;x_{ref}-x [mm];events";
-    correlationX = new TH1F("correlationX", title.c_str(), 1000, -1.0 * range_abs, 1.0 * range_abs);
+    correlationX = new TH1F("correlationX", title.c_str(), nbins_global, -1.0 * range_abs, 1.0 * range_abs);
     title = m_detector->getName() + ": correlation Y;y_{ref}-y [mm];events";
-    correlationY = new TH1F("correlationY", title.c_str(), 1000, -1.0 * range_abs, 1.0 * range_abs);
+    correlationY = new TH1F("correlationY", title.c_str(), nbins_global, -1.0 * range_abs, 1.0 * range_abs);
     title = m_detector->getName() + ": correlation XY;x_{ref}-x [mm];y_{ref}-y [mm];events";
-    correlationXY = new TH2F(
-        "correlationXY", title.c_str(), 1000, -1.0 * range_abs, 1.0 * range_abs, 1000, -1.0 * range_abs, 1.0 * range_abs);
+    correlationXY = new TH2F("correlationXY",
+                             title.c_str(),
+                             nbins_global,
+                             -1.0 * range_abs,
+                             1.0 * range_abs,
+                             nbins_global,
+                             -1.0 * range_abs,
+                             1.0 * range_abs);
     // 2D correlation plots (pixel-by-pixel, local coordinates):
     title = m_detector->getName() + ": 2D correlation X (local);x [px];x_{ref} [px];events";
     correlationX2Dlocal = new TH2F("correlationX_2Dlocal",
@@ -78,11 +86,23 @@ void Prealignment::initialize() {
                                    -0.5,
                                    reference->nPixels().Y() - 0.5);
     title = m_detector->getName() + ": 2D correlation X (global);x [mm];x_{ref} [mm];events";
-    correlationX2D = new TH2F(
-        "correlationX_2D", title.c_str(), 100, -1.0 * range_abs, 1.0 * range_abs, 100, -1.0 * range_abs, 1.0 * range_abs);
+    correlationX2D = new TH2F("correlationX_2D",
+                              title.c_str(),
+                              nbins_global / 10,
+                              -1.0 * range_abs,
+                              1.0 * range_abs,
+                              nbins_global / 10,
+                              -1.0 * range_abs,
+                              1.0 * range_abs);
     title = m_detector->getName() + ": 2D correlation Y (global);y [mm];y_{ref} [mm];events";
-    correlationY2D = new TH2F(
-        "correlationY_2D", title.c_str(), 100, -1.0 * range_abs, 1.0 * range_abs, 100, -1.0 * range_abs, 1.0 * range_abs);
+    correlationY2D = new TH2F("correlationY_2D",
+                              title.c_str(),
+                              nbins_global / 10,
+                              -1.0 * range_abs,
+                              1.0 * range_abs,
+                              nbins_global / 10,
+                              -1.0 * range_abs,
+                              1.0 * range_abs);
 }
 
 StatusCode Prealignment::run(const std::shared_ptr<Clipboard>& clipboard) {
