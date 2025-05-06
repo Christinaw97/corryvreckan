@@ -29,9 +29,9 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     config_.setDefault<double>("spatial_cut_sensoredge", 1.);
     config_.setDefault<FakeRateMethod>("fake_rate_method", FakeRateMethod::RADIUS);
     config_.setDefault<double>("fake_rate_distance", 2.);
+    config_.setDefault<int>("fake_rate_histo_range", 25);
     config_.setDefault<int>("n_charge_bins", 1000);
     config_.setDefault<double>("charge_histo_range", 1000.0);
-    config_.setDefault<int>("fakerate_histo_range", 25);
 
     m_timeCutFrameEdge = config_.get<double>("time_cut_frameedge");
     m_chi2ndofCut = config_.get<double>("chi2ndof_cut");
@@ -40,9 +40,9 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     spatial_cut_sensoredge = config_.get<double>("spatial_cut_sensoredge");
     m_fake_rate_method = config_.get<FakeRateMethod>("fake_rate_method");
     m_fake_rate_distance = config_.get<double>("fake_rate_distance");
+    m_fakerate_histo_range_ = config_.get<int>("fake_rate_histo_range");
     m_n_charge_bins = config_.get<int>("n_charge_bins");
     m_charge_histo_range = config_.get<double>("charge_histo_range");
-    m_fakerate_histo_range_ = config_.get<int>("fakerate_histo_range");
 
     if(config_.getArray<double>("inpixel_bin_size").size() == 2) {
         m_inpixelBinSize = config_.get<ROOT::Math::XYPoint>("inpixel_bin_size");
