@@ -29,6 +29,7 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     config_.setDefault<double>("spatial_cut_sensoredge", 1.);
     config_.setDefault<FakeRateMethod>("fake_rate_method", FakeRateMethod::RADIUS);
     config_.setDefault<double>("fake_rate_distance", 2.);
+    config_.setDefault<int>("fake_rate_histo_range", 25);
     config_.setDefault<int>("n_charge_bins", 1000);
     config_.setDefault<double>("charge_histo_range", 1000.0);
 
@@ -39,6 +40,7 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     spatial_cut_sensoredge = config_.get<double>("spatial_cut_sensoredge");
     m_fake_rate_method = config_.get<FakeRateMethod>("fake_rate_method");
     m_fake_rate_distance = config_.get<double>("fake_rate_distance");
+    m_fake_rate_histo_range = config_.get<int>("fake_rate_histo_range");
     m_n_charge_bins = config_.get<int>("n_charge_bins");
     m_charge_histo_range = config_.get<double>("charge_histo_range");
 
@@ -323,7 +325,8 @@ void AnalysisEfficiency::createFakeRatePlots() {
     }
 
     std::string title = m_detector->getName() + " number of fake hits per event; hits; events";
-    hFakePixelPerEvent = new TH1D("hFakePixelPerEvent", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
+    hFakePixelPerEvent =
+        new TH1D("hFakePixelPerEvent", title.c_str(), m_fake_rate_histo_range, 0 - 0.5, m_fake_rate_histo_range - 0.5);
 
     title = m_detector->getName() + " pixel fake hits per event;x [px];y [px]; hits";
     fakePixelPerEventMap = new TH2D("fakePixelPerEventMap",
@@ -348,10 +351,12 @@ void AnalysisEfficiency::createFakeRatePlots() {
     hFakeClusterCharge = new TH1D("hFakeClusterCharge", title.c_str(), m_n_charge_bins, 0.0, m_charge_histo_range);
 
     title = m_detector->getName() + " number of fake clusters per event; clusters; events";
-    hFakeClusterPerEvent = new TH1D("hFakeClusterPerEvent", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
+    hFakeClusterPerEvent =
+        new TH1D("hFakeClusterPerEvent", title.c_str(), m_fake_rate_histo_range, 0 - 0.5, m_fake_rate_histo_range - 0.5);
 
     title = m_detector->getName() + " cluster size of fake clusters; cluster size; events";
-    hFakeClusterSize = new TH1D("hFakeClusterSize", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
+    hFakeClusterSize =
+        new TH1D("hFakeClusterSize", title.c_str(), m_fake_rate_histo_range, 0 - 0.5, m_fake_rate_histo_range - 0.5);
 }
 
 StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) {
