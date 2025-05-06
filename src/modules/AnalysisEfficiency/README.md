@@ -29,6 +29,7 @@ More information can be found in the ROOT `TEfficiency` class reference, section
 * `spatial_cut_sensoredge`: Parameter to discard telescope tracks at the sensor edges in fractions of pixel pitch. Defaults to `1`.
 * `fake_rate_distance`: Distance cut used in the fake rate estimate. Given in units of the pixel pitch. Defaults to `2`.
 * `fake_rate_method`: Method used in the fake rate estimate. The main idea is to look for clusters and hits that are far away from reconstructed tracks. Those are defined as fake, which neglects effects of tracking in-efficiency. There are two slightly different methods. The `RADIUS` method considers DUT clusters without reconstructed track in a radius of `fake_rate_distance` pixel pitches around them as fake. The `EDGE` method looks for events without tracks intercepting the DUT within its active area plus `fake_rate_distance` pixel pitches in each direction, and considers all DUT activity in these events as fake. The former method is intended for large DUTs, the latter for small ones. Defaults to `RADIUS`.
+* `fake_rate_histo_range`: Specifies the maximum x-axis value for fake rate histograms. Defaults to `25`.
 * `n_charge_bins`: Number of bins for pixel and cluster charge distributions. Defaults to `1000`.
 * `charge_histo_range`: Maximum value for pixel and cluster charge distributions. Defaults to `1000`.
 
