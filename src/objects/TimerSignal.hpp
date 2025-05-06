@@ -50,7 +50,7 @@ namespace corryvreckan {
          * @param timestamp Absolute timestamp of the timer signal
          */
 
-        TimerSignal(std::string detectorID, double timestamp) : Object(std::move(detectorID), timestamp){};
+        TimerSignal(std::string detectorID, double timestamp) : Object(std::move(detectorID), timestamp) {};
 
         /**
          * @brief Construct timer signal with type
@@ -60,7 +60,7 @@ namespace corryvreckan {
          * @param type Type of the timer signal
          */
         TimerSignal(std::string detectorID, double timestamp, TimerType type)
-            : Object(std::move(detectorID), timestamp), type_(type){};
+            : Object(std::move(detectorID), timestamp), type_(type) {};
 
         /**
          * @brief Static member function to obtain base class for storage on the clipboard.
@@ -107,8 +107,8 @@ namespace corryvreckan {
         // ROOT I/O class definition - update version number when you change this class!
         ClassDefOverride(TimerSignal, 6);
 
-        void loadHistory() override{};
-        void petrifyHistory() override{};
+        void loadHistory() override {};
+        void petrifyHistory() override {};
 
         /**
          * @brief Print an ASCII representation of TimerSignal to the given stream
