@@ -42,6 +42,7 @@ namespace corryvreckan {
         TH2F* hitmap;
         TH2F* hitmap_clusters;
         TH1F* eventTimes;
+        TH1F* eventTimesTimerSignal;
 
         // Correlation plots
         TH1F* correlationX;
@@ -64,8 +65,10 @@ namespace corryvreckan {
         TH2F* correlationXYVsTrigger;
         TH1F* correlationTime;
         TH2F* correlationTimeOverTime;
+        TH2F* correlationTimerSignalTimeOverTime_px;
         TH2F* correlationTimeOverSeedPixelRawValue;
         TH1F* correlationTime_px;
+        TH1F* correlationTimerSignalTime_px;
         TH2F* correlationTimeOverTime_px;
         TH2F* correlationTimeOverPixelRawValue_px;
         TH1F* correlationTimeInt;
