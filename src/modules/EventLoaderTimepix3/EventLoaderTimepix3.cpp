@@ -453,7 +453,7 @@ bool EventLoaderTimepix3::decodeNextWord() {
             LOG(TRACE) << "Shutter closed: " << hex << shutterClosed << dec;
 
             auto shutterSignal = std::make_shared<TimerSignal>(
-                timestamp, (shutterClosed ? TimerType::SHUTTER_OPEN : TimerType::SHUTTER_CLOSED));
+                timestamp, (shutterClosed ? TimerType::SHUTTER_CLOSED : TimerType::SHUTTER_OPEN));
 
             if(!shutterClosed) {
                 sorted_signals_.push(shutterSignal);
