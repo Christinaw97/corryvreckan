@@ -403,7 +403,10 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 // they are handled differently than clusters as they have no spatial information
                 auto timer_signals = clipboard->getData<TimerSignal>(detector->getName());
                 TimerSignal* closest_timer_signal = nullptr;
+                TimerSignal* closest_timer_signal2 = nullptr;
                 double timeCut = std::max(time_cut_ref_track, time_cuts_[detector]);
+                LOG(DEBUG) << "Using timing cut of " << Units::display(timeCut, {"ns", "us", "s"});
+
                 double closest_timer_signal_distance = timeCut;
                 for(size_t ts = 0; ts < timer_signals.size(); ts++) {
                     auto timer_signal = timer_signals[ts].get();
@@ -415,6 +418,12 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                         closest_timer_signal_distance = time_distance;
                     }
                 }
+                auto closest_signal_it = *std::min_element(
+                    timer_signals.begin(), timer_signals.end(), CompareSmallestTimeDiff<TimerSignal>(refTrack.timestamp()));
+                closest_timer_signal2 = closest_signal_it.get();
+                LOG(WARNING) << "Min element comparison check "
+                             << closest_timer_signal->timestamp() - closest_timer_signal2->timestamp();
+
                 if(closest_timer_signal == nullptr) {
                     LOG(DEBUG) << "No timersignals within time cut";
                 } else {
@@ -457,8 +466,6 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 // Use spatial cut only as initial value (check if cluster is ellipse defined by cuts is done below):
                 double closestClusterDistance = sqrt(spatial_cuts_[detector].x() * spatial_cuts_[detector].x() +
                                                      spatial_cuts_[detector].y() * spatial_cuts_[detector].y());
-
-                LOG(DEBUG) << "Using timing cut of " << Units::display(timeCut, {"ns", "us", "s"});
 
                 auto neighbors = trees[detector].getAllElementsInTimeWindow(refTrack.timestamp(), timeCut);
 
