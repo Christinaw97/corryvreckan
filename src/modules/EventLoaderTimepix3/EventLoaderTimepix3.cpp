@@ -446,14 +446,14 @@ bool EventLoaderTimepix3::decodeNextWord() {
             const uint64_t shutterClosed = ((controlbits & 0x1));
 
             auto powerSignal =
-                std::make_shared<TimerSignal>(timestamp, (powerOn ? TimerType::POWER_ON : TimerType::POWER_OFF));
+                std::make_shared<TimerSignal>(detectorID, timestamp, (powerOn ? TimerType::POWER_ON : TimerType::POWER_OFF));
             sorted_signals_.push(powerSignal);
             LOG(DEBUG) << "Power is " << (powerOn ? "on" : "off") << " power! Time: " << Units::display(timestamp, "ns");
 
             LOG(TRACE) << "Shutter closed: " << hex << shutterClosed << dec;
 
             auto shutterSignal = std::make_shared<TimerSignal>(
-                timestamp, (shutterClosed ? TimerType::SHUTTER_CLOSED : TimerType::SHUTTER_OPEN));
+                detectorID, timestamp, (shutterClosed ? TimerType::SHUTTER_CLOSED : TimerType::SHUTTER_OPEN));
 
             if(!shutterClosed) {
                 sorted_signals_.push(shutterSignal);
@@ -508,7 +508,7 @@ bool EventLoaderTimepix3::decodeNextWord() {
             auto triggerID = static_cast<uint32_t>(triggerNumber + (m_triggerOverflowCounter << 12));
             m_prevTriggerNumber = triggerNumber;
 
-            auto triggerSignal = std::make_shared<TimerSignal>(triggerTime, TimerType::TRIGGER);
+            auto triggerSignal = std::make_shared<TimerSignal>(detectorID, triggerTime, TimerType::TRIGGER);
             triggerSignal->setTriggerID(triggerID);
 
             sorted_signals_.push(triggerSignal);
