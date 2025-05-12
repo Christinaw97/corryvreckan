@@ -45,7 +45,7 @@ namespace corryvreckan {
          *
          * @param timestamp Absolute timestamp of the timer signal
          */
-        TimerSignal(double timestamp) : Object(timestamp) {};
+        TimerSignal(double timestamp) : Object(timestamp){};
 
         /**
          * @brief Construct timer signal with type
@@ -53,7 +53,7 @@ namespace corryvreckan {
          * @param timestamp Absolute timestamp of the timer signal
          * @param type Type of the timer signal
          */
-        TimerSignal(double timestamp, TimerType type) : Object(timestamp), type_(type) {};
+        TimerSignal(double timestamp, TimerType type) : Object(timestamp), type_(type){};
 
         /**
          * @brief Static member function to obtain base class for storage on the clipboard.

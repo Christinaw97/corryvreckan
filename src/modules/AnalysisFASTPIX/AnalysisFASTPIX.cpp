@@ -656,7 +656,7 @@ StatusCode AnalysisFASTPIX::run(const std::shared_ptr<Clipboard>& clipboard) {
 void AnalysisFASTPIX::printEfficiency(int total_tracks, int matched_tracks) {
     double totalEff = 100 * static_cast<double>(matched_tracks) / (total_tracks > 0 ? total_tracks : 1);
     double lowerEffError = totalEff - 100 * (TEfficiency::ClopperPearson(total_tracks, matched_tracks, 0.683, false));
-    double upperEffError = 100 * (TEfficiency::ClopperPearson(total_tracks, matched_tracks, 0.683, true))-totalEff;
+    double upperEffError = 100 * (TEfficiency::ClopperPearson(total_tracks, matched_tracks, 0.683, true)) - totalEff;
     LOG(STATUS) << "Efficiency: " << totalEff << "(+" << upperEffError << " -" << lowerEffError << ")%, measured with "
                 << matched_tracks << "/" << total_tracks << " matched/total tracks";
 }
