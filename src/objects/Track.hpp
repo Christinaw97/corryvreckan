@@ -161,8 +161,6 @@ namespace corryvreckan {
          */
         std::vector<Cluster*> getAssociatedClusters(const std::string& detectorID) const;
 
-
-
         /**
          * @brief Check if cluster is associated
          * @param cluster Pointer to the clusterto be checked
@@ -176,6 +174,13 @@ namespace corryvreckan {
          * @return True if detector has a cluster on this Track, false if not.
          */
         bool hasDetector(const std::string& detectorID) const;
+
+        /**
+         * @brief Check if this Track has a TimerSignal from a given detector
+         * @param  detectorID DetectorID of the detector to check
+         * @return True if detector has a TimerSignal on this Track, false if not.
+         */
+        bool hasDetectorTimerSignal(const std::string& detectorID) const;
 
         /**
          * @brief Get a Track cluster from a given detector

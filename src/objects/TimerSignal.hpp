@@ -105,7 +105,7 @@ namespace corryvreckan {
         size_t getTriggerID() const { return trigger_id_; }
 
         // ROOT I/O class definition - update version number when you change this class!
-        ClassDefOverride(TimerSignal, 6);
+        ClassDefOverride(TimerSignal, 5);
 
         void loadHistory() override {};
         void petrifyHistory() override {};
