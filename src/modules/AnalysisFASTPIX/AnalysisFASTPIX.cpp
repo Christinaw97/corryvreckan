@@ -11,7 +11,6 @@
 
 #include "AnalysisFASTPIX.h"
 #include <TEfficiency.h>
-#include "objects/SpidrSignal.hpp"
 
 using namespace corryvreckan;
 
@@ -440,7 +439,6 @@ StatusCode AnalysisFASTPIX::run(const std::shared_ptr<Clipboard>& clipboard) {
 
     // get the TDC trigger
     auto triggers = event->triggerList();
-    // std::vector<std::pair<uint32_t, double>> referenceSpidrSignals(t.begin(), t.end());
 
     // Get the telescope tracks from the clipboard
     auto tracks = clipboard->getData<Track>();

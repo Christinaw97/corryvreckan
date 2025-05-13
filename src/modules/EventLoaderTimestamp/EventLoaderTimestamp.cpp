@@ -257,10 +257,11 @@ bool EventLoaderTimestamp::decodeNextWord() {
 
             m_syncTimeTDC = timestamp_raw;
 
-            int triggerID = triggerNumber + (m_triggerOverflowCounter << 12);
+            uint32_t triggerID = static_cast<uint32_t>(triggerNumber + (m_triggerOverflowCounter << 12));
             m_prevTriggerNumber = triggerNumber;
 
-            auto triggerSignal = std::make_shared<SpidrSignal>("trigger", triggerTime + m_time_offset, triggerID);
+            auto triggerSignal = std::make_shared<TimerSignal>(triggerTime + m_time_offset, TimerType::TRIGGER);
+            triggerSignal->setTriggerID(triggerID);
             sorted_signals_.push(triggerSignal);
             LOG(DEBUG) << triggerID << ' ' << Units::display(triggerTime, {"s", "us", "ns"});
         }
@@ -320,7 +321,7 @@ StatusCode EventLoaderTimestamp::run(const std::shared_ptr<Clipboard>& clipboard
 
                 sorted_signals_.pop();
             } else {
-                event->addTrigger(static_cast<uint32_t>(signal->trigger()), signal->timestamp());
+                event->addTrigger(static_cast<uint32_t>(signal->getTriggerID()), signal->timestamp());
                 sorted_signals_.pop();
             }
         }
