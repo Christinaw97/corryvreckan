@@ -58,7 +58,7 @@ void Track::Plane::print(std::ostream& os) const {
 void Track::Plane::loadHistory() { cluster_.get(); }
 void Track::Plane::petrifyHistory() { cluster_.store(); }
 
-void Track::addCluster(const Cluster* cluster) { track_clusters_.emplace_back(const_cast<Cluster*>(cluster)); }
+void Track::addCluster(const Cluster* cluster) { track_clusters_.emplace_back(std::move(cluster)); }
 void Track::addTimerSignal(const TimerSignal* timer_signal) { track_timer_signals_.emplace_back(std::move(timer_signal)); }
 void Track::addAssociatedCluster(const Cluster* cluster) {
     associated_clusters_[cluster->getDetectorID()].emplace_back(const_cast<Cluster*>(cluster));
