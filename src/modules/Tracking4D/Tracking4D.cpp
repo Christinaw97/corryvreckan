@@ -403,26 +403,22 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 // they are handled differently than clusters as they have no spatial information
                 auto timer_signals = clipboard->getData<TimerSignal>(detector->getName());
                 TimerSignal* closest_timer_signal = nullptr;
-                TimerSignal* closest_timer_signal2 = nullptr;
                 double timeCut = std::max(time_cut_ref_track, time_cuts_[detector]);
                 LOG(DEBUG) << "Using timing cut of " << Units::display(timeCut, {"ns", "us", "s"});
 
-                double closest_timer_signal_distance = timeCut;
-                for(size_t ts = 0; ts < timer_signals.size(); ts++) {
-                    auto timer_signal = timer_signals[ts].get();
-                    double time_distance = abs((timer_signal->timestamp() - refTrack.timestamp()));
-                    if(time_distance > timeCut)
-                        continue;
-                    if(time_distance < closest_timer_signal_distance) {
-                        closest_timer_signal = timer_signal;
-                        closest_timer_signal_distance = time_distance;
-                    }
+                std::vector<std::shared_ptr<TimerSignal>> timer_signals_temp;
+                std::copy_if(timer_signals.begin(),
+                             timer_signals.end(),
+                             std::back_inserter(timer_signals_temp),
+                             [refTrack, timeCut](const std::shared_ptr<TimerSignal>& ts) {
+                                 return std::abs((ts->timestamp() - refTrack.timestamp())) <= timeCut;
+                             });
+                if(!timer_signals_temp.empty()) {
+                    closest_timer_signal = std::min_element(timer_signals.begin(),
+                                                            timer_signals.end(),
+                                                            CompareSmallestTimeDiff<TimerSignal>(refTrack.timestamp()))
+                                               ->get();
                 }
-                auto closest_signal_it = *std::min_element(
-                    timer_signals.begin(), timer_signals.end(), CompareSmallestTimeDiff<TimerSignal>(refTrack.timestamp()));
-                closest_timer_signal2 = closest_signal_it.get();
-                LOG(WARNING) << "Min element comparison check "
-                             << closest_timer_signal->timestamp() - closest_timer_signal2->timestamp();
 
                 if(closest_timer_signal == nullptr) {
                     LOG(DEBUG) << "No timersignals within time cut";
