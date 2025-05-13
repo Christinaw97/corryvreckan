@@ -38,6 +38,7 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     config_.setDefault<bool>("reject_by_roi", false);
     config_.setDefault<bool>("unique_cluster_usage", false);
     config_.setDefault<bool>("exclude_auxiliary", true);
+    config_.setDefault<std::string>("timestamp_type_", "cluster");
 
     if(config_.count({"time_cut_rel", "time_cut_abs"}) == 0) {
         config_.setDefault("time_cut_rel", 3.0);
@@ -57,6 +58,7 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     require_detectors_ = config_.getArray<std::string>("require_detectors", {});
     exclude_from_seed_ = config_.getArray<std::string>("exclude_from_seed", {});
     timestamp_from_ = config_.get<std::string>("timestamp_from", {});
+    timestamp_type_ = config_.get<std::string>("timestamp_type");
     if(!timestamp_from_.empty() &&
        std::find(require_detectors_.begin(), require_detectors_.end(), timestamp_from_) == require_detectors_.end()) {
         LOG(WARNING) << "Adding detector " << timestamp_from_
@@ -523,9 +525,16 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             // check if track has required detector(s):
             auto foundRequiredDetector = [this](Track* t) {
                 for(auto& requireDet : require_detectors_) {
-                    if(!requireDet.empty() && !t->hasDetector(requireDet)) {
-                        LOG(DEBUG) << "No cluster or timersignal from required detector " << requireDet << " on the track.";
-                        return false;
+                    if(timestamp_type_ != "timersignal") {
+                        if(!requireDet.empty() && !(t->hasDetector(requireDet))) {
+                            LOG(DEBUG) << "No cluster from required detector " << requireDet << " on the track.";
+                            return false;
+                        }
+                    } else {
+                        if(!requireDet.empty() && !(t->hasDetectorTimerSignal((requireDet)))) {
+                            LOG(DEBUG) << "No timersignals from required detector " << requireDet << " on the track.";
+                            return false;
+                        }
                     }
                 }
                 return true;
@@ -571,7 +580,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             } else {
                 // use timestamp of required detector:
                 double track_timestamp;
-                if(get_detector(timestamp_from_)->isAuxiliary()) {
+                if(get_detector(timestamp_from_)->isAuxiliary() || timestamp_type_ == "timersignal") {
                     track_timestamp = track->getTimerSignalFromDetector(timestamp_from_)->timestamp();
                 } else {
                     track_timestamp = track->getClusterFromDetector(timestamp_from_)->timestamp();
