@@ -82,6 +82,12 @@ namespace corryvreckan {
         bool do_time_cut_;
         bool corr_vs_time_;
         double time_binning_;
+
+        // Functions for booking of histogram
+        // Booking of histograms for normal detectors
+        void bookStandardHistograms(int, double, int, std::shared_ptr<Detector>);
+        // Booking of histograms for auxiliary detectors
+        void bookAuxiliaryHistograms();
     };
 } // namespace corryvreckan
 #endif // CORRELATIONS_H
