@@ -82,6 +82,12 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
                                 "Auxiliary devices are excluded in tracking via 'exclude_auxiliary' but an auxiliary device "
                                 "is required via 'timestamp_from'");
     }
+    if(!timestamp_from_.empty() && get_detector(timestamp_from_)->isAuxiliary() && timestamp_type_ != "timersignal") {
+        throw InvalidValueError(
+            config_,
+            "timestamp_type",
+            "Auxiliary devices only provide TimerSignal data however the timestamp_type is not set to timersignal");
+    }
 
     // print a warning if volumeScatterer are used as this causes fit failures
     // that are still not understood
