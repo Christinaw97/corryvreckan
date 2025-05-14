@@ -521,7 +521,6 @@ void Correlations::bookAuxiliaryHistograms() {
                                              static_cast<int>(2. * time_cut_ / time_binning_),
                                              -1 * time_cut_ - time_binning_ / 2.,
                                              time_cut_ - time_binning_ / 2.);
-
     title = m_detector->getName() + ": event time;t [s];events";
     eventTimesTimerSignal = new TH1F("eventTimesTimerSignal", title.c_str(), 3000000, -1e-5, 300 - 1e-5);
 
