@@ -114,10 +114,10 @@ StatusCode Correlations::run(const std::shared_ptr<Clipboard>& clipboard) {
         }
         for(auto& timer_signal : timer_signals) {
             double timeDiff = refPixel->timestamp() - timer_signal->timestamp();
-            correlationTime_px->Fill(static_cast<double>(Units::convert(timeDiff, "ns")));
+            correlationTimerSignalTime_px->Fill(static_cast<double>(Units::convert(timeDiff, "ns")));
             if(corr_vs_time_) {
-                correlationTimeOverTime_px->Fill(static_cast<double>(Units::convert(timer_signal->timestamp(), "s")),
-                                                 timeDiff);
+                correlationTimerSignalTimeOverTime_px->Fill(
+                    static_cast<double>(Units::convert(timer_signal->timestamp(), "s")), timeDiff);
             }
         }
     }
@@ -503,25 +503,25 @@ void Correlations::bookStandardHistograms(int trigger_max,
 
     // TimerSignal plots
     title = m_detector->getName() + "Reference pixel time stamp - TimerSignal time stamp;t_{ref}-t [ns];events";
-    correlationTimerSignalTime_px = new TH1F("correlationTime_px",
+    correlationTimerSignalTime_px = new TH1F("correlationTimerSignalTime_px",
                                              title.c_str(),
                                              static_cast<int>(2. * time_cut_ / time_binning_),
                                              -1 * time_cut_ - time_binning_ / 2.,
                                              time_cut_ - time_binning_ / 2.);
 
-    title = m_detector->getName() + ": event time;t [s];events";
+    title = m_detector->getName() + ": TimerSignal event time;t [s];events";
     eventTimesTimerSignal = new TH1F("eventTimesTimerSignal", title.c_str(), 3000000, -1e-5, 300 - 1e-5);
 }
 
 void Correlations::bookAuxiliaryHistograms() {
     // TimerSignal plots
     std::string title = m_detector->getName() + "Reference pixel time stamp - TimerSignal time stamp;t_{ref}-t [ns];events";
-    correlationTimerSignalTime_px = new TH1F("correlationTime_px",
+    correlationTimerSignalTime_px = new TH1F("correlationTimerSignalTime_px",
                                              title.c_str(),
                                              static_cast<int>(2. * time_cut_ / time_binning_),
                                              -1 * time_cut_ - time_binning_ / 2.,
                                              time_cut_ - time_binning_ / 2.);
-    title = m_detector->getName() + ": event time;t [s];events";
+    title = m_detector->getName() + ": TimerSignal event time;t [s];events";
     eventTimesTimerSignal = new TH1F("eventTimesTimerSignal", title.c_str(), 3000000, -1e-5, 300 - 1e-5);
 
     if(corr_vs_time_) {

@@ -58,7 +58,7 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     require_detectors_ = config_.getArray<std::string>("require_detectors", {});
     exclude_from_seed_ = config_.getArray<std::string>("exclude_from_seed", {});
     timestamp_from_ = config_.get<std::string>("timestamp_from", {});
-    timestamp_type_ = config_.get<std::string>("timestamp_type");
+    timestamp_type_ = config_.get<std::string>("timestamp_type", {});
     if(!timestamp_from_.empty() &&
        std::find(require_detectors_.begin(), require_detectors_.end(), timestamp_from_) == require_detectors_.end()) {
         LOG(WARNING) << "Adding detector " << timestamp_from_
@@ -76,7 +76,7 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     reject_by_ROI_ = config_.get<bool>("reject_by_roi");
     unique_cluster_usage_ = config_.get<bool>("unique_cluster_usage");
     exclude_auxiliary_ = config_.get<bool>("exclude_auxiliary");
-    if(!timestamp_from_.empty() && get_detector(timestamp_from_)->isAuxiliary()) {
+    if(!timestamp_from_.empty() && get_detector(timestamp_from_)->isAuxiliary() && exclude_auxiliary_) {
         throw InvalidValueError(config_,
                                 "timestamp_from",
                                 "Auxiliary devices are excluded in tracking via 'exclude_auxiliary' but an auxiliary device "
