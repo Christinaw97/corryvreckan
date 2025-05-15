@@ -25,7 +25,6 @@ MaskCreator::MaskCreator(Configuration& config, std::shared_ptr<Detector> detect
     config_.setDefault<double>("sigma_above_avg_max", 5.);
     config_.setDefault<double>("rate_max", 1.);
     config_.setDefault<bool>("mask_dead_pixels", false);
-    config_.setDefault<bool>("mask_only_dead_pixels", false);
     config_.setDefault<bool>("write_new_config", false);
     config_.setDefault<std::string>("new_config_suffix", "");
     config_.setDefault<bool>("square_big_pixel_weight", false);
@@ -37,7 +36,6 @@ MaskCreator::MaskCreator(Configuration& config, std::shared_ptr<Detector> detect
     m_sigmaMax = config_.get<double>("sigma_above_avg_max");
     m_rateMax = config_.get<double>("rate_max");
     m_maskDeadPixels = config_.get<bool>("mask_dead_pixels");
-    mask_only_dead_ = config_.get<bool>("mask_only_dead_pixels");
     m_writeNewConfig = config_.get<bool>("write_new_config");
     m_newConfigSuffix = config_.get<std::string>("new_config_suffix");
     m_squareBigPixelWeight = config_.get<bool>("square_big_pixel_weight");
@@ -139,18 +137,17 @@ StatusCode MaskCreator::run(const std::shared_ptr<Clipboard>& clipboard) {
 }
 
 void MaskCreator::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
-    if(!mask_only_dead_) {
-        if(m_method == MaskingMethod::LOCALDENSITY) {
-            LOG(INFO) << "Using local density estimator";
-            // Reject noisy pixels based on local density estimator:
-            localDensityEstimator();
-        } else if(m_method == MaskingMethod::FREQUENCY) {
-            LOG(INFO) << "Using global frequency filter";
-            // Use global frequency filter to detect noisy pixels:
-            globalFrequencyFilter();
-        }
+
+    if(m_method == MaskingMethod::LOCALDENSITY) {
+        LOG(INFO) << "Using local density estimator";
+        // Reject noisy pixels based on local density estimator:
+        localDensityEstimator();
+    } else if(m_method == MaskingMethod::FREQUENCY) {
+        LOG(INFO) << "Using global frequency filter";
+        // Use global frequency filter to detect noisy pixels:
+        globalFrequencyFilter();
     }
-    if(m_maskDeadPixels || mask_only_dead_) {
+    if(m_maskDeadPixels || m_method == MaskingMethod::DEAD) {
         LOG(INFO) << "Masking dead pixels";
         // Mask dead pixels:
         deadPixelFinder();

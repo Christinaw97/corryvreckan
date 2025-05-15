@@ -23,6 +23,7 @@ namespace corryvreckan {
     enum class MaskingMethod {
         LOCALDENSITY = 0,
         FREQUENCY,
+        DEAD,
     };
 
     /** @ingroup Modules
