@@ -26,7 +26,7 @@ No masks are applied in this module as this is done by the respective event load
 
 ### Parameters
 
-* `method`: Select the method to evaluate noisy pixels. Can be either 'dead', `localdensity` or `frequency`, where the latter is chosen by default.
+* `method`: Select the method to evaluate dead or noisy pixels. Can be either 'dead', `localdensity` or `frequency`, where the latter is chosen by default.
 * `frequency_cut`: Frequency threshold to declare a pixel as noisy, defaults to 50. This means, if a pixel exhibits 50 times more hits than the average pixel on the sensor, it is considered noisy and is masked. Only used in `frequency` mode.
 * `bins_occupancy`: Number of bins for occupancy distribution histograms, defaults to 128.
 * `density_bandwidth`: Bandwidth for local density estimator, defaults to `2` and is only used in `localdensity` mode.
