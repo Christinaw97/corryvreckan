@@ -454,7 +454,7 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         auto ymod_um = ymod * 1000.; // mm->um (for plotting)
 
         bool isWithinInPixelROI =
-            (pitch_x - fabs(xmod * 2.) > m_inpixelEdgeCut.x()) && (pitch_y - fabs(ymod * 2.) > m_inpixelEdgeCut.y());
+            ((pitch_x / 2.) - fabs(xmod) > m_inpixelEdgeCut.x()) && ((pitch_y / 2.) - fabs(ymod) > m_inpixelEdgeCut.y());
 
         // Get the DUT clusters from the clipboard, that are assigned to the track
         auto associated_clusters = track->getAssociatedClusters(m_detector->getName());
