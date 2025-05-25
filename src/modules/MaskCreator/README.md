@@ -17,7 +17,7 @@ Currently, three methods are available. The `localdensity` noise estimation meth
 It uses a local estimate of the expected hit rate to find pixels that are a certain number of standard deviations away from this estimate.
 The second method, `frequency`, is a simple cut on a global pixel firing frequency which masks pixels with a hit rate larger than `frequency_cut` times the mean global hit rate.
 The bare occupancy is adjusted to account for pixel area in detectors with non-identical pixels (e.g. `PixelModuleDetector` and `RadialStripDetector`).
-The third method, 'dead', simply masks all pixels without any recorded hits and adds them to the mask file similar to the 'mask_dead_pixels' flag. Unlike this flag it however ignores any sort of noise masking method. This can be useful when pixels in the chip were masked before data acquisition and appear as unresponsive in the data set.
+The third method, `dead`, simply masks all pixels without any recorded hits and adds them to the mask file similar to the `mask_dead_pixels` flag. Unlike this flag it however ignores any sort of noise masking method. This can be useful when pixels in the chip were masked before data acquisition and appear as unresponsive in the data set.
 
 The module appends the pixels to be masked to the mask files provided in the geometry file for each device.
 If no mask file is specified there, a new file `mask_<detector_name>.txt` is created in the globally configured output directory.
@@ -26,7 +26,7 @@ No masks are applied in this module as this is done by the respective event load
 
 ### Parameters
 
-* `method`: Select the method to evaluate dead or noisy pixels. Can be either 'dead', `localdensity` or `frequency`, where the latter is chosen by default.
+* `method`: Select the method to evaluate dead or noisy pixels. Can be either `dead`, `localdensity` or `frequency`, where the latter is chosen by default.
 * `frequency_cut`: Frequency threshold to declare a pixel as noisy, defaults to 50. This means, if a pixel exhibits 50 times more hits than the average pixel on the sensor, it is considered noisy and is masked. Only used in `frequency` mode.
 * `bins_occupancy`: Number of bins for occupancy distribution histograms, defaults to 128.
 * `density_bandwidth`: Bandwidth for local density estimator, defaults to `2` and is only used in `localdensity` mode.
