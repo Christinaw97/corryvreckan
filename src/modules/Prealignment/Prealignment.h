@@ -67,6 +67,7 @@ namespace corryvreckan {
         int fit_range_rel;
         std::vector<std::string> fixed_planes_;
         bool align_time_;
+        double time_binning_;
     };
 } // namespace corryvreckan
 #endif // PREALIGNMENT_H

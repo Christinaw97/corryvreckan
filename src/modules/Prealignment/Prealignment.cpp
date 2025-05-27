@@ -27,6 +27,7 @@ Prealignment::Prealignment(Configuration& config, std::shared_ptr<Detector> dete
     config_.setDefault<int>("fit_range_rel", 500);
     config_.setDefault<double>("range_abs", Units::get<double>(10, "mm"));
     config_.setDefault<double>("time_range_abs", Units::get<double>(100, "ns"));
+    config_.setDefault<double>("time_binning", Units::get<double>(1, "ns"));
     config_.setDefault<int>("nbins_global", 1000);
     config_.setDefault<bool>("align_time", false);
 
@@ -46,12 +47,18 @@ Prealignment::Prealignment(Configuration& config, std::shared_ptr<Detector> dete
     fit_range_rel = config_.get<int>("fit_range_rel");
     fixed_planes_ = config_.getArray<std::string>("fixed_planes", {});
     align_time_ = config_.get<bool>("align_time");
+    time_binning_ = config_.get<double>("time_binning");
 
     LOG(DEBUG) << "Setting max_correlation_rms to : " << max_correlation_rms;
     LOG(DEBUG) << "Setting damping_factor to : " << damping_factor;
 }
 
 void Prealignment::initialize() {
+
+    LOG(INFO) << "Spatial histograms have a range of " << Units::display(range_abs, {"um", "mm"}) << " and " << nbins_global
+              << " bins";
+    LOG(INFO) << "Time histogram has a range of " << Units::display(time_range_abs_, {"ps", "ns", "us"}) << " and binning "
+              << Units::display(time_binning_, {"ps", "ns", "us"});
 
     // get the reference detector:
     std::shared_ptr<Detector> reference = get_reference();
@@ -71,8 +78,9 @@ void Prealignment::initialize() {
                              -1.0 * range_abs,
                              1.0 * range_abs);
     title = m_detector->getName() + ": correlation time;t_{ref}-t [ns];events";
-    correlationTime_ =
-        new TH1F("correlationTime", title.c_str(), nbins_global, -1.0 * time_range_abs_, 1.0 * time_range_abs_);
+
+    const auto time_bins = static_cast<int>(time_range_abs_ / time_binning_);
+    correlationTime_ = new TH1F("correlationTime", title.c_str(), time_bins, -1.0 * time_range_abs_, 1.0 * time_range_abs_);
     // 2D correlation plots (pixel-by-pixel, local coordinates):
     title = m_detector->getName() + ": 2D correlation X (local);x [px];x_{ref} [px];events";
     correlationX2Dlocal = new TH2F("correlationX_2Dlocal",
