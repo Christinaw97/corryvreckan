@@ -12,7 +12,7 @@
 
 ### Description
 
-This module performs translational telescope plane alignment. The rotational alignment is not changed.
+This module performs translational telescope plane alignment and time alignment. The rotational alignment is not changed.
 
 This initial alignment along the X and Y axes is designed to be performed before the `Alignment` module, which carries out translational and rotational alignment of the planes. To not include the DUT in this translational alignment, it will need to be masked in the configuration file.
 
@@ -33,12 +33,13 @@ However, for the prealignment this is a an acceptable estimation which works wit
 * `range_abs`: Parameter to allow setting up the range in global coordinates in which residuals get plotted (mm, +- around 0). Default is `10mm`. This needs to be increased for large sensors, where the alignment might be out by well more than 10mm and thus residual plots might be empty in the range +- 10.
 * `nbins_global`: Parameter to allow setting how many bins are used for those correlation histograms. Default is 1000. This might need to be increased or decreased when you set the parameter `range_abs` to something very different from the default.
 * `fixed_planes`: Optional user-defined fixed planes in addition to reference plane. When `fixed_planes = detector_name`, the geometry of the selected detector will not be modified.
+* `time_range_abs`: Parameter to allow setting up the range in global coordinates in which residuals get plotted (ns, +- around 0). Default is `100ns`. This needs to be increased for large time offsets, where the time alignment might be out by more than 100ns and thus residual plots might be empty in the range +- 100.
 
 ### Plots Created
 
 For each detector the following plots are produced:
 
-* 1D histograms of the correlations in X/Y (comparing to the reference plane)
+* 1D histograms of the correlations in X/Y/T (comparing to the reference plane)
 * 2D residual distribution, i.e. `Xref-X` VS `Yref-Y`
 * 2D histograms of the correlation plot for X/Y in local/global coordinates (comparing to the reference
 
