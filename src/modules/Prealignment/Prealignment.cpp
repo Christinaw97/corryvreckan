@@ -28,6 +28,7 @@ Prealignment::Prealignment(Configuration& config, std::shared_ptr<Detector> dete
     config_.setDefault<double>("range_abs", Units::get<double>(10, "mm"));
     config_.setDefault<double>("time_range_abs", Units::get<double>(100, "ns"));
     config_.setDefault<int>("nbins_global", 1000);
+    config_.setDefault<bool>("align_time", false);
 
     if(config_.count({"time_cut_rel", "time_cut_abs"}) == 0) {
         config_.setDefault("time_cut_rel", 3.0);
@@ -44,6 +45,7 @@ Prealignment::Prealignment(Configuration& config, std::shared_ptr<Detector> dete
     method = config_.get<PrealignMethod>("method");
     fit_range_rel = config_.get<int>("fit_range_rel");
     fixed_planes_ = config_.getArray<std::string>("fixed_planes", {});
+    align_time_ = config_.get<bool>("align_time");
 
     LOG(DEBUG) << "Setting max_correlation_rms to : " << max_correlation_rms;
     LOG(DEBUG) << "Setting damping_factor to : " << damping_factor;
@@ -184,6 +186,12 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
             double fit_high_y =
                 correlationY->GetXaxis()->GetBinCenter(binMaxY) + m_detector->getSpatialResolution().y() * fit_range_rel;
 
+            int binMaxTime = correlationTime_->GetMaximumBin();
+            double fit_low_t =
+                correlationY->GetXaxis()->GetBinCenter(binMaxTime) - m_detector->getTimeResolution() * fit_range_rel;
+            double fit_high_t =
+                correlationY->GetXaxis()->GetBinCenter(binMaxTime) + m_detector->getTimeResolution() * fit_range_rel;
+
             LOG(DEBUG) << "Fit range in x direction from: " << Units::display(fit_low_x, {"mm", "um"}) << " to "
                        << Units::display(fit_high_x, {"mm", "um"});
             LOG(DEBUG) << "Fit range in y direction from: " << Units::display(fit_low_y, {"mm", "um"}) << " to "
@@ -191,19 +199,25 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
             correlationX->Fit("gaus", "Q", "", fit_low_x, fit_high_x);
             correlationY->Fit("gaus", "Q", "", fit_low_y, fit_high_y);
+            correlationTime_->Fit("gaus", "Q", "", fit_low_t, fit_high_t);
             shift_X = correlationX->GetFunction("gaus")->GetParameter(1);
             shift_Y = correlationY->GetFunction("gaus")->GetParameter(1);
+            if(align_time_)
+                shift_T = correlationTime_->GetFunction("gaus")->GetParameter(1);
         } else if(method == PrealignMethod::MEAN) {
             shift_X = correlationX->GetMean();
             shift_Y = correlationY->GetMean();
-            shift_T = correlationTime_->GetMean();
+            if(align_time_)
+                shift_T = correlationTime_->GetMean();
         } else if(method == PrealignMethod::MAXIMUM) {
             int binMaxX = correlationX->GetMaximumBin();
             shift_X = correlationX->GetXaxis()->GetBinCenter(binMaxX);
             int binMaxY = correlationY->GetMaximumBin();
             shift_Y = correlationY->GetXaxis()->GetBinCenter(binMaxY);
-            int binMaxTime = correlationTime_->GetMaximumBin();
-            shift_T = correlationTime_->GetXaxis()->GetBinCenter(binMaxTime);
+            if(align_time_) {
+                int binMaxTime = correlationTime_->GetMaximumBin();
+                shift_T = correlationTime_->GetXaxis()->GetBinCenter(binMaxTime);
+            }
         } else if(method == PrealignMethod::MAXIMUM2D) {
             int binMaxX1 = correlationX->GetMaximumBin();
             TH1D* ProjY = correlationXY->ProjectionY("_py", binMaxX1 - 1, binMaxX1 + 1);

@@ -12,12 +12,13 @@
 
 ### Description
 
-This module performs translational telescope plane alignment and time alignment. The rotational alignment is not changed.
+This module performs translational telescope plane alignment and time alignment (if parameter is set to true). The rotational alignment is not changed.
 
 This initial alignment along the X and Y axes is designed to be performed before the `Alignment` module, which carries out translational and rotational alignment of the planes. To not include the DUT in this translational alignment, it will need to be masked in the configuration file.
 
 The way in which the required translational shifts in X and Y are calculated is specified by the parameter `method`.
 Either the mean of the 1D correlation histogram, its maximum or the mean of a Gaussian fit can be used to determine the translational shifts. As an extension, a 2D residual distribution of of `Xref-X` and `Yref-Y` is also created. The maximum of the 2D distribution can also be used to determine the shifts especially when the 1D correlation histograms are not able to resolve spatial ambiguity in some cases.
+The time alignment method only works for `maximum`, `mean` or `gaussian`. However before timewalk corrections the `gaussian` `method` can have fitting issues due to double peak structures and should be checked by hand.
 
 As described in the alignment chapter of the user manual, the spatial correlations in X and Y should not be forced to be centered around zero for the final alignment as they correspond to the *physical displacement* of the detector plane in X and Y with respect to the reference plane.
 However, for the prealignment this is a an acceptable estimation which works without any tracking.
@@ -34,6 +35,7 @@ However, for the prealignment this is a an acceptable estimation which works wit
 * `nbins_global`: Parameter to allow setting how many bins are used for those correlation histograms. Default is 1000. This might need to be increased or decreased when you set the parameter `range_abs` to something very different from the default.
 * `fixed_planes`: Optional user-defined fixed planes in addition to reference plane. When `fixed_planes = detector_name`, the geometry of the selected detector will not be modified.
 * `time_range_abs`: Parameter to allow setting up the range in global coordinates in which residuals get plotted (ns, +- around 0). Default is `100ns`. This needs to be increased for large time offsets, where the time alignment might be out by more than 100ns and thus residual plots might be empty in the range +- 100.
+* `align_time`: Boolean determining whether the detectors should also be shifted in time for time pre-alignment. Defaults to `false`.
 
 ### Plots Created
 
