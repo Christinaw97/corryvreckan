@@ -49,6 +49,7 @@ namespace corryvreckan {
         // Correlation plots
         TH1F* correlationX;
         TH1F* correlationY;
+        TH1F* correlationTime_;
         TH2F* correlationXY;
         TH2F* correlationX2Dlocal;
         TH2F* correlationY2Dlocal;
@@ -60,6 +61,7 @@ namespace corryvreckan {
         double damping_factor;
         double timeCut;
         double range_abs;
+        double time_range_abs_;
         int nbins_global;
         PrealignMethod method;
         int fit_range_rel;
