@@ -18,7 +18,7 @@ This initial alignment along the X and Y axes is designed to be performed before
 
 The way in which the required translational shifts in X and Y are calculated is specified by the parameter `method`.
 Either the mean of the 1D correlation histogram, its maximum or the mean of a Gaussian fit can be used to determine the translational shifts. As an extension, a 2D residual distribution of of `Xref-X` and `Yref-Y` is also created. The maximum of the 2D distribution can also be used to determine the shifts especially when the 1D correlation histograms are not able to resolve spatial ambiguity in some cases.
-The time alignment method only works for `maximum`, `mean` or `gaussian`. However before timewalk corrections the `gaussian` `method` can have fitting issues due to double peak structures and should be checked by hand.
+The time alignment method only works for `maximum`, `mean` or `gauss_fit`. However before timewalk corrections the `gauss_fit` `method` can have fitting issues due to double peak structures and should be checked by hand.
 
 As described in the alignment chapter of the user manual, the spatial correlations in X and Y should not be forced to be centered around zero for the final alignment as they correspond to the *physical displacement* of the detector plane in X and Y with respect to the reference plane.
 However, for the prealignment this is a an acceptable estimation which works without any tracking.
