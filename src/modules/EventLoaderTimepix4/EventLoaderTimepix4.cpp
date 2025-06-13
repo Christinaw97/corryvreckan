@@ -378,7 +378,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket) {
             // in addition the corresponding chip half will be considered synchronized from then on
             if(m_unsynced[m_fIndex] == 0)
                 LOG(ERROR) << "Found multiple t0 for the same chip half! This should NOT happen";
-            m_unsynced[m_fIndex] = 0;
+            m_unsynced[m_fIndex] = false;
             m_packetTime[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
             break;
         default:
