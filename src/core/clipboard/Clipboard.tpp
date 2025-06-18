@@ -137,7 +137,8 @@ namespace corryvreckan {
     std::vector<std::shared_ptr<T>>& ReadonlyClipboard::get_data(const ClipboardData& storage_element,
                                                                  const std::string& key) const {
         if(storage_element.count(typeid(T)) == 0 || storage_element.at(typeid(T)).count(key) == 0) {
-            return *std::make_shared<std::vector<std::shared_ptr<T>>>();
+            static const auto empty = std::make_shared<std::vector<std::shared_ptr<T>>>();
+            return *empty;
         }
         return *std::static_pointer_cast<std::vector<std::shared_ptr<T>>>(storage_element.at(typeid(T)).at(key));
     }
