@@ -196,12 +196,6 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
             double fit_high_y =
                 correlationY->GetXaxis()->GetBinCenter(binMaxY) + m_detector->getSpatialResolution().y() * fit_range_rel;
 
-            int binMaxTime = correlationTime_->GetMaximumBin();
-            double fit_low_t =
-                correlationY->GetXaxis()->GetBinCenter(binMaxTime) - m_detector->getTimeResolution() * fit_range_rel;
-            double fit_high_t =
-                correlationY->GetXaxis()->GetBinCenter(binMaxTime) + m_detector->getTimeResolution() * fit_range_rel;
-
             LOG(DEBUG) << "Fit range in x direction from: " << Units::display(fit_low_x, {"mm", "um"}) << " to "
                        << Units::display(fit_high_x, {"mm", "um"});
             LOG(DEBUG) << "Fit range in y direction from: " << Units::display(fit_low_y, {"mm", "um"}) << " to "
@@ -213,6 +207,11 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
             shift_X = correlationX->GetFunction("gaus")->GetParameter(1);
             shift_Y = correlationY->GetFunction("gaus")->GetParameter(1);
             if(align_time_) {
+                int binMaxTime = correlationTime_->GetMaximumBin();
+                double fit_low_t =
+                    correlationY->GetXaxis()->GetBinCenter(binMaxTime) - m_detector->getTimeResolution() * fit_range_rel;
+                double fit_high_t =
+                    correlationY->GetXaxis()->GetBinCenter(binMaxTime) + m_detector->getTimeResolution() * fit_range_rel;
                 correlationTime_->Fit("gaus", "Q", "", fit_low_t, fit_high_t);
                 shift_T = correlationTime_->GetFunction("gaus")->GetParameter(1);
             }
