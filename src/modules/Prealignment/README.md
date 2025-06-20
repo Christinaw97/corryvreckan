@@ -12,7 +12,7 @@
 
 ### Description
 
-This module performs translational telescope plane alignment and time alignment (if parameter is set to true). The rotational alignment is not changed.
+This module performs translational telescope plane alignment, and time alignment if enabled. The rotational alignment is not changed.
 
 This initial alignment along the X and Y axes is designed to be performed before the `Alignment` module, which carries out translational and rotational alignment of the planes. To not include the DUT in this translational alignment, it will need to be masked in the configuration file.
 
