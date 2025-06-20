@@ -155,7 +155,9 @@ StatusCode Prealignment::run(const std::shared_ptr<Clipboard>& clipboard) {
                 correlationY2Dlocal->Fill(cluster->row(), refCluster->row());
                 correlationXY->Fill(refCluster->global().x() - cluster->global().x(),
                                     refCluster->global().y() - cluster->global().y());
-                correlationTime_->Fill(refCluster->timestamp() - cluster->timestamp());
+                if(align_time_) {
+                    correlationTime_->Fill(refCluster->timestamp() - cluster->timestamp());
+                }
             }
         }
     }
