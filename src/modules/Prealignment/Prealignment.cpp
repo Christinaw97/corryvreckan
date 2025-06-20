@@ -220,8 +220,9 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         } else if(method == PrealignMethod::MEAN) {
             shift_X = correlationX->GetMean();
             shift_Y = correlationY->GetMean();
-            if(align_time_)
+            if(align_time_) {
                 shift_T = correlationTime_->GetMean();
+            }
         } else if(method == PrealignMethod::MAXIMUM) {
             int binMaxX = correlationX->GetMaximumBin();
             shift_X = correlationX->GetXaxis()->GetBinCenter(binMaxX);
