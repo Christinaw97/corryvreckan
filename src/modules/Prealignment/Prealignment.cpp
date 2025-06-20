@@ -77,10 +77,12 @@ void Prealignment::initialize() {
                              nbins_global,
                              -1.0 * range_abs,
                              1.0 * range_abs);
-    title = m_detector->getName() + ": correlation time;t_{ref}-t [ns];events";
-
-    const auto time_bins = static_cast<int>(time_range_abs_ / time_binning_);
-    correlationTime_ = new TH1F("correlationTime", title.c_str(), time_bins, -1.0 * time_range_abs_, 1.0 * time_range_abs_);
+    if(align_time_) {
+        title = m_detector->getName() + ": correlation time;t_{ref}-t [ns];events";
+        const auto time_bins = static_cast<int>(time_range_abs_ / time_binning_);
+        correlationTime_ =
+            new TH1F("correlationTime", title.c_str(), time_bins, -1.0 * time_range_abs_, 1.0 * time_range_abs_);
+    }
     // 2D correlation plots (pixel-by-pixel, local coordinates):
     title = m_detector->getName() + ": 2D correlation X (local);x [px];x_{ref} [px];events";
     correlationX2Dlocal = new TH2F("correlationX_2Dlocal",
@@ -207,11 +209,13 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
             correlationX->Fit("gaus", "Q", "", fit_low_x, fit_high_x);
             correlationY->Fit("gaus", "Q", "", fit_low_y, fit_high_y);
-            correlationTime_->Fit("gaus", "Q", "", fit_low_t, fit_high_t);
+
             shift_X = correlationX->GetFunction("gaus")->GetParameter(1);
             shift_Y = correlationY->GetFunction("gaus")->GetParameter(1);
-            if(align_time_)
+            if(align_time_) {
+                correlationTime_->Fit("gaus", "Q", "", fit_low_t, fit_high_t);
                 shift_T = correlationTime_->GetFunction("gaus")->GetParameter(1);
+            }
         } else if(method == PrealignMethod::MEAN) {
             shift_X = correlationX->GetMean();
             shift_Y = correlationY->GetMean();
