@@ -342,8 +342,8 @@ void Clustering4D::calculateClusterCentre(Cluster* cluster) {
             timestamp = pixel->timestamp();
             maxcharge = pixel->charge();
 
-            // else: use earliest pixel
-        } else if(pixel->timestamp() < timestamp) {
+            // else: use earliest pixel if this is requested by config option
+        } else if(pixel->timestamp() < timestamp && use_earliest_pixel_) {
             timestamp = pixel->timestamp();
         }
     }
