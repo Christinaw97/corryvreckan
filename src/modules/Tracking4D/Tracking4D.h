@@ -105,15 +105,6 @@ namespace corryvreckan {
 
         // Function to calculate the weighted average timestamp from the clusters of a track
         double calculate_average_timestamp(const Track* track);
-
-        // Time comparator for finding the smallest time difference element
-        template <typename T> struct CompareSmallestTimeDiff {
-            double ref;
-            explicit CompareSmallestTimeDiff(double reference) : ref{reference} {};
-            bool operator()(const std::shared_ptr<T> a, const std::shared_ptr<T> b) {
-                return std::abs(a.get()->timestamp() - ref) < std::abs(b.get()->timestamp() - ref);
-            }
-        };
     };
 } // namespace corryvreckan
 #endif // TRACKING4D_H

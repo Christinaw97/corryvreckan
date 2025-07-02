@@ -406,30 +406,21 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
                 // Add timersignal to track this happens before the check for auxiliary as they can also provide timersignals
                 // they are handled differently than clusters as they have no spatial information
                 auto timer_signals = clipboard->getData<TimerSignal>(detector->getName());
-                TimerSignal* closest_timer_signal = nullptr;
                 double timeCut = std::max(time_cut_ref_track, time_cuts_[detector]);
                 LOG(DEBUG) << "Using timing cut of " << Units::display(timeCut, {"ns", "us", "s"});
 
-                std::vector<std::shared_ptr<TimerSignal>> timer_signals_temp;
-                std::copy_if(timer_signals.begin(),
-                             timer_signals.end(),
-                             std::back_inserter(timer_signals_temp),
-                             [refTrack, timeCut](const std::shared_ptr<TimerSignal>& ts) {
-                                 return std::abs((ts->timestamp() - refTrack.timestamp())) <= timeCut;
-                             });
-                if(!timer_signals_temp.empty()) {
-                    closest_timer_signal = std::min_element(timer_signals.begin(),
-                                                            timer_signals.end(),
-                                                            CompareSmallestTimeDiff<TimerSignal>(refTrack.timestamp()))
-                                               ->get();
-                }
+                // Find smallest delta-t between timersignals and reference:
+                auto it = std::min_element(timer_signals.begin(), timer_signals.end(), [&](const auto& a, const auto& b) {
+                    return std::abs(a->timestamp() - refTrack.timestamp()) < std::abs(b->timestamp() - refTrack.timestamp());
+                });
 
-                if(closest_timer_signal == nullptr) {
-                    LOG(DEBUG) << "No timersignals within time cut";
-                } else {
+                // Check that found delta-t is below the cut:
+                if(it != timer_signals.end() && std::abs((*it)->timestamp() - refTrack.timestamp()) <= timeCut) {
                     LOG(DEBUG) << "Adding timersignals from " << detector->getName() << " to track object";
-                    refTrack.addTimerSignal(closest_timer_signal);
-                    track->addTimerSignal(closest_timer_signal);
+                    refTrack.addTimerSignal(it->get());
+                    track->addTimerSignal(it->get());
+                } else {
+                    LOG(DEBUG) << "No timersignals within time cut";
                 }
 
                 if(detector->isAuxiliary()) {
