@@ -368,7 +368,7 @@ namespace corryvreckan {
         int charge_{1};
 
         // ROOT I/O class definition - update version number when you change this class!
-        ClassDefOverride(Track, 12)
+        ClassDefOverride(Track, 13)
     };
     // Vector type declaration
     using TrackVector = std::vector<std::shared_ptr<Track>>;
