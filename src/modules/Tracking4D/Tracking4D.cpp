@@ -38,7 +38,6 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     config_.setDefault<bool>("reject_by_roi", false);
     config_.setDefault<bool>("unique_cluster_usage", false);
     config_.setDefault<bool>("exclude_auxiliary", true);
-    config_.setDefault<std::string>("timestamp_type", "cluster");
 
     if(config_.count({"time_cut_rel", "time_cut_abs"}) == 0) {
         config_.setDefault("time_cut_rel", 3.0);
@@ -58,7 +57,6 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     require_detectors_ = config_.getArray<std::string>("require_detectors", {});
     exclude_from_seed_ = config_.getArray<std::string>("exclude_from_seed", {});
     timestamp_from_ = config_.get<std::string>("timestamp_from", {});
-    timestamp_type_ = config_.get<std::string>("timestamp_type");
     if(!timestamp_from_.empty() &&
        std::find(require_detectors_.begin(), require_detectors_.end(), timestamp_from_) == require_detectors_.end()) {
         LOG(WARNING) << "Adding detector " << timestamp_from_
@@ -76,17 +74,13 @@ Tracking4D::Tracking4D(Configuration& config, std::vector<std::shared_ptr<Detect
     reject_by_ROI_ = config_.get<bool>("reject_by_roi");
     unique_cluster_usage_ = config_.get<bool>("unique_cluster_usage");
     exclude_auxiliary_ = config_.get<bool>("exclude_auxiliary");
-    if(!timestamp_from_.empty() && get_detector(timestamp_from_)->isAuxiliary() && exclude_auxiliary_) {
+
+    use_timersignal_timestamp_ = !timestamp_from_.empty() && get_detector(timestamp_from_)->isAuxiliary();
+    if(use_timersignal_timestamp_ && exclude_auxiliary_) {
         throw InvalidValueError(config_,
                                 "timestamp_from",
                                 "Auxiliary devices are excluded in tracking via 'exclude_auxiliary' but an auxiliary device "
                                 "is required via 'timestamp_from'");
-    }
-    if(!timestamp_from_.empty() && get_detector(timestamp_from_)->isAuxiliary() && timestamp_type_ != "timersignal") {
-        throw InvalidValueError(
-            config_,
-            "timestamp_type",
-            "Auxiliary devices only provide TimerSignal data however the timestamp_type is not set to timersignal");
     }
 
     // print a warning if volumeScatterer are used as this causes fit failures
@@ -533,7 +527,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             // check if track has required detector(s):
             auto foundRequiredDetector = [this](Track* t) {
                 for(auto& requireDet : require_detectors_) {
-                    if(timestamp_type_ != "timersignal") {
+                    if(!use_timersignal_timestamp_) {
                         if(!requireDet.empty() && !(t->hasDetector(requireDet))) {
                             LOG(DEBUG) << "No cluster from required detector " << requireDet << " on the track.";
                             return false;
@@ -588,7 +582,7 @@ StatusCode Tracking4D::run(const std::shared_ptr<Clipboard>& clipboard) {
             } else {
                 // use timestamp of required detector:
                 double track_timestamp;
-                if(get_detector(timestamp_from_)->isAuxiliary() || timestamp_type_ == "timersignal") {
+                if(get_detector(timestamp_from_)->isAuxiliary() || use_timersignal_timestamp_) {
                     track_timestamp = track->getTimerSignalFromDetector(timestamp_from_)->timestamp();
                 } else {
                     track_timestamp = track->getClusterFromDetector(timestamp_from_)->timestamp();

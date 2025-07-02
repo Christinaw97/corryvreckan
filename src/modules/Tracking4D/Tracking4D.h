@@ -95,12 +95,12 @@ namespace corryvreckan {
         bool reject_by_ROI_;
         bool unique_cluster_usage_;
         bool exclude_auxiliary_;
+        bool use_timersignal_timestamp_;
         std::vector<std::string> require_detectors_;
         std::vector<std::string> exclude_from_seed_;
         std::map<std::shared_ptr<Detector>, double> time_cuts_;
         std::map<std::shared_ptr<Detector>, XYVector> spatial_cuts_;
         std::string timestamp_from_;
-        std::string timestamp_type_;
         std::string track_model_;
 
         // Function to calculate the weighted average timestamp from the clusters of a track
