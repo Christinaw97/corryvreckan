@@ -211,9 +211,9 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
             if(align_time_) {
                 int binMaxTime = correlationTime_->GetMaximumBin();
                 double fit_low_t =
-                    correlationY->GetXaxis()->GetBinCenter(binMaxTime) - m_detector->getTimeResolution() * fit_range_rel;
+                    correlationTime_->GetXaxis()->GetBinCenter(binMaxTime) - m_detector->getTimeResolution() * fit_range_rel;
                 double fit_high_t =
-                    correlationY->GetXaxis()->GetBinCenter(binMaxTime) + m_detector->getTimeResolution() * fit_range_rel;
+                    correlationTime_->GetXaxis()->GetBinCenter(binMaxTime) + m_detector->getTimeResolution() * fit_range_rel;
                 correlationTime_->Fit("gaus", "Q", "", fit_low_t, fit_high_t);
                 shift_T = correlationTime_->GetFunction("gaus")->GetParameter(1);
             }
