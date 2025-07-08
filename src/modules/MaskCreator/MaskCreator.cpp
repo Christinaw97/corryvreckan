@@ -147,7 +147,7 @@ void MaskCreator::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         // Use global frequency filter to detect noisy pixels:
         globalFrequencyFilter();
     }
-    if(m_maskDeadPixels) {
+    if(m_maskDeadPixels || m_method == MaskingMethod::DEAD) {
         LOG(INFO) << "Masking dead pixels";
         // Mask dead pixels:
         deadPixelFinder();

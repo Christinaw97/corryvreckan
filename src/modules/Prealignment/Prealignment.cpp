@@ -26,7 +26,10 @@ Prealignment::Prealignment(Configuration& config, std::shared_ptr<Detector> dete
     config_.setDefault<PrealignMethod>("method", PrealignMethod::MEAN);
     config_.setDefault<int>("fit_range_rel", 500);
     config_.setDefault<double>("range_abs", Units::get<double>(10, "mm"));
+    config_.setDefault<double>("time_range_abs", Units::get<double>(100, "ns"));
+    config_.setDefault<double>("time_binning", Units::get<double>(1, "ns"));
     config_.setDefault<int>("nbins_global", 1000);
+    config_.setDefault<bool>("align_time", false);
 
     if(config_.count({"time_cut_rel", "time_cut_abs"}) == 0) {
         config_.setDefault("time_cut_rel", 3.0);
@@ -38,16 +41,24 @@ Prealignment::Prealignment(Configuration& config, std::shared_ptr<Detector> dete
     max_correlation_rms = config_.get<double>("max_correlation_rms");
     damping_factor = config_.get<double>("damping_factor");
     range_abs = config_.get<double>("range_abs");
+    time_range_abs_ = config_.get<double>("time_range_abs");
     nbins_global = config_.get<int>("nbins_global");
     method = config_.get<PrealignMethod>("method");
     fit_range_rel = config_.get<int>("fit_range_rel");
     fixed_planes_ = config_.getArray<std::string>("fixed_planes", {});
+    align_time_ = config_.get<bool>("align_time");
+    time_binning_ = config_.get<double>("time_binning");
 
     LOG(DEBUG) << "Setting max_correlation_rms to : " << max_correlation_rms;
     LOG(DEBUG) << "Setting damping_factor to : " << damping_factor;
 }
 
 void Prealignment::initialize() {
+
+    LOG(INFO) << "Spatial histograms have a range of " << Units::display(range_abs, {"um", "mm"}) << " and " << nbins_global
+              << " bins";
+    LOG(INFO) << "Time histogram has a range of " << Units::display(time_range_abs_, {"ps", "ns", "us"}) << " and binning "
+              << Units::display(time_binning_, {"ps", "ns", "us"});
 
     // get the reference detector:
     std::shared_ptr<Detector> reference = get_reference();
@@ -66,6 +77,12 @@ void Prealignment::initialize() {
                              nbins_global,
                              -1.0 * range_abs,
                              1.0 * range_abs);
+    if(align_time_) {
+        title = m_detector->getName() + ": correlation time;t_{ref}-t [ns];events";
+        const auto time_bins = static_cast<int>(time_range_abs_ / time_binning_);
+        correlationTime_ =
+            new TH1F("correlationTime", title.c_str(), time_bins, -1.0 * time_range_abs_, 1.0 * time_range_abs_);
+    }
     // 2D correlation plots (pixel-by-pixel, local coordinates):
     title = m_detector->getName() + ": 2D correlation X (local);x [px];x_{ref} [px];events";
     correlationX2Dlocal = new TH2F("correlationX_2Dlocal",
@@ -138,6 +155,9 @@ StatusCode Prealignment::run(const std::shared_ptr<Clipboard>& clipboard) {
                 correlationY2Dlocal->Fill(cluster->row(), refCluster->row());
                 correlationXY->Fill(refCluster->global().x() - cluster->global().x(),
                                     refCluster->global().y() - cluster->global().y());
+                if(align_time_) {
+                    correlationTime_->Fill(refCluster->timestamp() - cluster->timestamp());
+                }
             }
         }
     }
@@ -162,6 +182,7 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
         double shift_X = 0.;
         double shift_Y = 0.;
+        double shift_T = 0.;
 
         LOG(INFO) << "Using prealignment method: " << corryvreckan::to_string(method);
         if(method == PrealignMethod::GAUSS_FIT) {
@@ -184,16 +205,33 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
             correlationX->Fit("gaus", "Q", "", fit_low_x, fit_high_x);
             correlationY->Fit("gaus", "Q", "", fit_low_y, fit_high_y);
+
             shift_X = correlationX->GetFunction("gaus")->GetParameter(1);
             shift_Y = correlationY->GetFunction("gaus")->GetParameter(1);
+            if(align_time_) {
+                int binMaxTime = correlationTime_->GetMaximumBin();
+                double fit_low_t =
+                    correlationY->GetXaxis()->GetBinCenter(binMaxTime) - m_detector->getTimeResolution() * fit_range_rel;
+                double fit_high_t =
+                    correlationY->GetXaxis()->GetBinCenter(binMaxTime) + m_detector->getTimeResolution() * fit_range_rel;
+                correlationTime_->Fit("gaus", "Q", "", fit_low_t, fit_high_t);
+                shift_T = correlationTime_->GetFunction("gaus")->GetParameter(1);
+            }
         } else if(method == PrealignMethod::MEAN) {
             shift_X = correlationX->GetMean();
             shift_Y = correlationY->GetMean();
+            if(align_time_) {
+                shift_T = correlationTime_->GetMean();
+            }
         } else if(method == PrealignMethod::MAXIMUM) {
             int binMaxX = correlationX->GetMaximumBin();
             shift_X = correlationX->GetXaxis()->GetBinCenter(binMaxX);
             int binMaxY = correlationY->GetMaximumBin();
             shift_Y = correlationY->GetXaxis()->GetBinCenter(binMaxY);
+            if(align_time_) {
+                int binMaxTime = correlationTime_->GetMaximumBin();
+                shift_T = correlationTime_->GetXaxis()->GetBinCenter(binMaxTime);
+            }
         } else if(method == PrealignMethod::MAXIMUM2D) {
             int binMaxX1 = correlationX->GetMaximumBin();
             TH1D* ProjY = correlationXY->ProjectionY("_py", binMaxX1 - 1, binMaxX1 + 1);
@@ -215,17 +253,20 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
         }
 
         LOG(DEBUG) << "Shift (without damping factor)" << m_detector->getName()
-                   << ": x = " << Units::display(shift_X, {"mm", "um"})
-                   << " , y = " << Units::display(shift_Y, {"mm", "um"});
+                   << ": x = " << Units::display(shift_X, {"mm", "um"}) << " , y = " << Units::display(shift_Y, {"mm", "um"})
+                   << " , t = " << Units::display(shift_T, {"ns"});
         LOG(INFO) << "Move in x by = " << Units::display(shift_X * damping_factor, {"mm", "um"})
-                  << " , and in y by = " << Units::display(shift_Y * damping_factor, {"mm", "um"});
+                  << " , and in y by = " << Units::display(shift_Y * damping_factor, {"mm", "um"})
+                  << " , and in t by = " << Units::display(shift_T * damping_factor, {"ns"});
         LOG(INFO) << "Detector position after shift in x = "
                   << Units::display(m_detector->displacement().X() + damping_factor * shift_X, {"mm", "um"})
                   << " , and in y = "
-                  << Units::display(m_detector->displacement().Y() + damping_factor * shift_Y, {"mm", "um"});
+                  << Units::display(m_detector->displacement().Y() + damping_factor * shift_Y, {"mm", "um"})
+                  << " , and in t = " << Units::display(m_detector->timeOffset() + damping_factor * shift_T, {"ns"});
         m_detector->update(XYZPoint(m_detector->displacement().X() + damping_factor * shift_X,
                                     m_detector->displacement().Y() + damping_factor * shift_Y,
                                     m_detector->displacement().Z()),
                            m_detector->rotation());
+        m_detector->setTimeOffset(m_detector->timeOffset() + damping_factor * shift_T);
     }
 }
