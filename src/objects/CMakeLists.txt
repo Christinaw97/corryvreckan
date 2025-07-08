@@ -42,6 +42,7 @@ ADD_LIBRARY(CorryvreckanObjects SHARED
     Object.cpp
     Pixel.cpp
     Cluster.cpp
+    TimerSignal.cpp
     Track.cpp
     StraightLineTrack.cpp
     GblTrack.cpp

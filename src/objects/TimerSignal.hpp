@@ -12,8 +12,11 @@
 #ifndef CORRYVRECKAN_TIMERSIGNAL_H
 #define CORRYVRECKAN_TIMERSIGNAL_H 1
 
+#include <TRef.h>
 #include <string>
 #include <typeindex>
+
+#include <iostream>
 
 #include "Object.hpp"
 
@@ -43,17 +46,21 @@ namespace corryvreckan {
         /**
          * @brief Construct a timer signal without type
          *
+         * @param detectorID Name of the detector providing the timer signal
          * @param timestamp Absolute timestamp of the timer signal
          */
-        TimerSignal(double timestamp) : Object(timestamp) {};
+
+        TimerSignal(std::string detectorID, double timestamp) : Object(std::move(detectorID), timestamp) {};
 
         /**
          * @brief Construct timer signal with type
          *
+         * @param detectorID Name of the detector providing the timer signal
          * @param timestamp Absolute timestamp of the timer signal
          * @param type Type of the timer signal
          */
-        TimerSignal(double timestamp, TimerType type) : Object(timestamp), type_(type) {};
+        TimerSignal(std::string detectorID, double timestamp, TimerType type)
+            : Object(std::move(detectorID), timestamp), type_(type) {};
 
         /**
          * @brief Static member function to obtain base class for storage on the clipboard.
@@ -102,6 +109,12 @@ namespace corryvreckan {
 
         void loadHistory() override {};
         void petrifyHistory() override {};
+
+        /**
+         * @brief Print an ASCII representation of TimerSignal to the given stream
+         * @param out Stream to print to
+         */
+        void print(std::ostream& out) const override;
 
     protected:
         TimerType type_{TimerType::NONE};

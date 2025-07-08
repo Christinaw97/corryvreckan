@@ -260,7 +260,7 @@ bool EventLoaderTimestamp::decodeNextWord() {
             uint32_t triggerID = static_cast<uint32_t>(triggerNumber + (m_triggerOverflowCounter << 12));
             m_prevTriggerNumber = triggerNumber;
 
-            auto triggerSignal = std::make_shared<TimerSignal>(triggerTime + m_time_offset, TimerType::TRIGGER);
+            auto triggerSignal = std::make_shared<TimerSignal>(detectorID, triggerTime + m_time_offset, TimerType::TRIGGER);
             triggerSignal->setTriggerID(triggerID);
             sorted_signals_.push(triggerSignal);
             LOG(DEBUG) << triggerID << ' ' << Units::display(triggerTime, {"s", "us", "ns"});

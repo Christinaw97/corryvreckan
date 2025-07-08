@@ -45,16 +45,156 @@ Correlations::Correlations(Configuration& config, std::shared_ptr<Detector> dete
 
 void Correlations::initialize() {
 
-    auto trigger_max = config_.get<int>("output_plots_trigger_max");
-    auto range_abs = config_.get<double>("range_abs");
-    auto nbins_global = config_.get<int>("nbins_global");
-
     LOG_ONCE(WARNING) << "Correlations module is enabled and will significantly increase the runtime";
     LOG(DEBUG) << "Booking histograms for detector " << m_detector->getName();
 
     // get the reference detector:
     std::shared_ptr<Detector> reference = get_reference();
 
+    auto trigger_max = config_.get<int>("output_plots_trigger_max");
+    auto range_abs = config_.get<double>("range_abs");
+    auto nbins_global = config_.get<int>("nbins_global");
+
+    if(m_detector->isAuxiliary()) {
+        bookAuxiliaryHistograms();
+    } else {
+        bookStandardHistograms(trigger_max, range_abs, nbins_global, reference);
+    }
+}
+
+StatusCode Correlations::run(const std::shared_ptr<Clipboard>& clipboard) {
+
+    // Get the pixels
+    auto pixels = clipboard->getData<Pixel>(m_detector->getName());
+    auto timer_signals = clipboard->getData<TimerSignal>(m_detector->getName());
+    for(auto& pixel : pixels) {
+        // Hitmap
+        hitmap->Fill(pixel->column(), pixel->row());
+        // Timing plots
+        eventTimes->Fill(static_cast<double>(Units::convert(pixel->timestamp(), "s")));
+    }
+    for(auto& timer_signal : timer_signals) {
+        // Timing plots
+        eventTimesTimerSignal->Fill(static_cast<double>(Units::convert(timer_signal->timestamp(), "s")));
+    }
+
+    // Get the clusters
+    auto clusters = clipboard->getData<Cluster>(m_detector->getName());
+    for(auto& cluster : clusters) {
+        hitmap_clusters->Fill(cluster->column(), cluster->row());
+    }
+
+    // Get the first trigger ID contained in the event (note: this does no sorting, just gets the first map element)
+    auto event = clipboard->getEvent();
+    auto triggerlist = event->triggerList();
+    uint32_t firsttrigger = 0;
+    if(!triggerlist.empty()) {
+        firsttrigger = triggerlist.begin()->first;
+    }
+
+    // Get pixels/clusters from reference detector
+    auto reference = get_reference();
+    auto referencePixels = clipboard->getData<Pixel>(reference->getName());
+    auto referenceClusters = clipboard->getData<Cluster>(reference->getName());
+    // Loop over reference plane pixels:
+    for(auto& refPixel : referencePixels) {
+        for(auto& pixel : pixels) {
+
+            correlationColCol_px->Fill(pixel->column(), refPixel->column());
+            correlationColRow_px->Fill(pixel->column(), refPixel->row());
+            correlationRowCol_px->Fill(pixel->row(), refPixel->column());
+            correlationRowRow_px->Fill(pixel->row(), refPixel->row());
+
+            double timeDiff = refPixel->timestamp() - pixel->timestamp();
+            correlationTime_px->Fill(static_cast<double>(Units::convert(timeDiff, "ns")));
+            if(corr_vs_time_) {
+                correlationTimeOverTime_px->Fill(static_cast<double>(Units::convert(pixel->timestamp(), "s")), timeDiff);
+                correlationTimeOverPixelRawValue_px->Fill(pixel->raw(), timeDiff);
+            }
+        }
+        for(auto& timer_signal : timer_signals) {
+            double timeDiff = refPixel->timestamp() - timer_signal->timestamp();
+            correlationTimerSignalTime_px->Fill(static_cast<double>(Units::convert(timeDiff, "ns")));
+            if(corr_vs_time_) {
+                correlationTimerSignalTimeOverTime_px->Fill(
+                    static_cast<double>(Units::convert(timer_signal->timestamp(), "s")), timeDiff);
+            }
+        }
+    }
+
+    for(auto& cluster : clusters) {
+
+        // Check that track is within region of interest using winding number algorithm
+        if(!m_detector->isWithinROI(cluster.get())) {
+            LOG(DEBUG) << " - cluster outside ROI";
+            continue;
+        }
+
+        // Loop over reference plane clusters to make correlation plots
+        for(auto& refCluster : referenceClusters) {
+
+            double timeDifference = refCluster->timestamp() - cluster->timestamp();
+            // in 40 MHz:
+            long long int timeDifferenceInt = static_cast<long long int>(timeDifference / 25);
+
+            // Correlation plots
+            if(abs(timeDifference) < time_cut_ || !do_time_cut_) {
+                auto globalXref = refCluster->global().x();
+                auto globalXcluster = cluster->global().x();
+                auto globalYref = refCluster->global().y();
+                auto globalYcluster = cluster->global().y();
+                correlationX->Fill(globalXref - globalXcluster);
+                correlationX2D->Fill(globalXcluster, globalXref);
+                correlationX2Dlocal->Fill(cluster->column(), refCluster->column());
+
+                correlationY->Fill(globalYref - globalYcluster);
+                correlationY2D->Fill(globalYcluster, globalYref);
+                correlationY2Dlocal->Fill(cluster->row(), refCluster->row());
+
+                correlationXY->Fill(globalYref - globalXcluster);
+                correlationXY2D->Fill(globalYref, globalXcluster);
+                correlationYX->Fill(globalXref - globalYcluster);
+                correlationYX2D->Fill(globalXref, globalYcluster);
+
+                correlationXVsTrigger->Fill(firsttrigger, globalXref - globalXcluster);
+                correlationYVsTrigger->Fill(firsttrigger, globalYref - globalYcluster);
+                correlationXYVsTrigger->Fill(firsttrigger, globalYref - globalXcluster);
+                correlationYXVsTrigger->Fill(firsttrigger, globalXref - globalYcluster);
+            }
+
+            correlationTime->Fill(timeDifference); // time difference in ns
+            LOG(DEBUG) << "Time difference: " << Units::display(timeDifference, {"ns", "us"})
+                       << ", Time ref. cluster: " << Units::display(refCluster->timestamp(), {"ns", "us"})
+                       << ", Time cluster: " << Units::display(cluster->timestamp(), {"ns", "us"});
+
+            if(corr_vs_time_) {
+                if(abs(timeDifference) < time_cut_ || !do_time_cut_) {
+                    correlationXVsTime->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "s")),
+                                             refCluster->global().x() - cluster->global().x());
+                    correlationYVsTime->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "s")),
+                                             refCluster->global().y() - cluster->global().y());
+                    correlationXYVsTime->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "s")),
+                                              refCluster->global().x() - cluster->global().y());
+                    correlationYXVsTime->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "s")),
+                                              refCluster->global().y() - cluster->global().x());
+                }
+                // Time difference in ns
+                correlationTimeOverTime->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "s")),
+                                              timeDifference);
+                correlationTimeOverSeedPixelRawValue->Fill(cluster->getSeedPixel()->raw(), timeDifference);
+            }
+            correlationTimeInt->Fill(static_cast<double>(timeDifferenceInt));
+        }
+    }
+
+    return StatusCode::Success;
+}
+
+// Booking of histograms
+void Correlations::bookStandardHistograms(int trigger_max,
+                                          double range_abs,
+                                          int nbins_global,
+                                          std::shared_ptr<Detector> reference) {
     // Simple hit map
     std::string title = m_detector->getName() + ": hitmap;x [px];y [px];events";
     hitmap = new TH2F("hitmap",
@@ -201,6 +341,16 @@ void Correlations::initialize() {
                                                        static_cast<int>(2. * time_cut_ / time_binning_),
                                                        -1 * time_cut_ - time_binning_ / 2.,
                                                        time_cut_ - time_binning_ / 2.);
+        title = m_detector->getName() +
+                "Reference pixel time stamp - timer signal timestamp over time;t [s];t_{ref}-t [ns];events";
+        correlationTimerSignalTimeOverTime_px = new TH2F("correlationTimerSignalTimeOverTime_px",
+                                                         title.c_str(),
+                                                         3e3,
+                                                         -0.5,
+                                                         3e3 - 0.5,
+                                                         static_cast<int>(2. * time_cut_ / time_binning_),
+                                                         -1 * time_cut_ - time_binning_ / 2.,
+                                                         time_cut_ - time_binning_ / 2.);
     }
 
     title = m_detector->getName() + "Reference pixel time stamp - pixel time stamp;t_{ref}-t [ns];events";
@@ -350,118 +500,44 @@ void Correlations::initialize() {
     // Timing plots
     title = m_detector->getName() + ": event time;t [s];events";
     eventTimes = new TH1F("eventTimes", title.c_str(), 3000000, -1e-5, 300 - 1e-5);
+
+    // TimerSignal plots
+    title = m_detector->getName() + "Reference pixel time stamp - TimerSignal time stamp;t_{ref}-t [ns];events";
+    correlationTimerSignalTime_px = new TH1F("correlationTimerSignalTime_px",
+                                             title.c_str(),
+                                             static_cast<int>(2. * time_cut_ / time_binning_),
+                                             -1 * time_cut_ - time_binning_ / 2.,
+                                             time_cut_ - time_binning_ / 2.);
+
+    title = m_detector->getName() + ": TimerSignal event time;t [s];events";
+    eventTimesTimerSignal = new TH1F("eventTimesTimerSignal", title.c_str(), 3000000, -1e-5, 300 - 1e-5);
 }
 
-StatusCode Correlations::run(const std::shared_ptr<Clipboard>& clipboard) {
+void Correlations::bookAuxiliaryHistograms() {
+    // TimerSignal plots
+    std::string title = m_detector->getName() + "Reference pixel time stamp - TimerSignal time stamp;t_{ref}-t [ns];events";
+    correlationTimerSignalTime_px = new TH1F("correlationTimerSignalTime_px",
+                                             title.c_str(),
+                                             static_cast<int>(2. * time_cut_ / time_binning_),
+                                             -1 * time_cut_ - time_binning_ / 2.,
+                                             time_cut_ - time_binning_ / 2.);
+    title = m_detector->getName() + ": TimerSignal event time;t [s];events";
+    eventTimesTimerSignal = new TH1F("eventTimesTimerSignal", title.c_str(), 3000000, -1e-5, 300 - 1e-5);
 
-    // Get the pixels
-    auto pixels = clipboard->getData<Pixel>(m_detector->getName());
-    for(auto& pixel : pixels) {
-        // Hitmap
-        hitmap->Fill(pixel->column(), pixel->row());
-        // Timing plots
-        eventTimes->Fill(static_cast<double>(Units::convert(pixel->timestamp(), "s")));
+    if(corr_vs_time_) {
+        if((time_cut_ / time_binning_) > 1e3)
+            LOG(WARNING) << "Very large 2D histograms are created with ((2 * time_cut_ / time_binning_ * 3e3) ="
+                         << (2 * time_cut_ / time_binning_ * 3e3)
+                         << ") bins. This might lead to crashes if limited memory is available.";
+        title = m_detector->getName() +
+                "Reference pixel time stamp - timer signal timestamp over time;t [s];t_{ref}-t [ns];events";
+        correlationTimerSignalTimeOverTime_px = new TH2F("correlationTimerSignalTimeOverTime_px",
+                                                         title.c_str(),
+                                                         3e3,
+                                                         -0.5,
+                                                         3e3 - 0.5,
+                                                         static_cast<int>(2. * time_cut_ / time_binning_),
+                                                         -1 * time_cut_ - time_binning_ / 2.,
+                                                         time_cut_ - time_binning_ / 2.);
     }
-
-    // Get the clusters
-    auto clusters = clipboard->getData<Cluster>(m_detector->getName());
-    for(auto& cluster : clusters) {
-        hitmap_clusters->Fill(cluster->column(), cluster->row());
-    }
-
-    // Get the first trigger ID contained in the event (note: this does no sorting, just gets the first map element)
-    auto event = clipboard->getEvent();
-    auto triggerlist = event->triggerList();
-    uint32_t firsttrigger = 0;
-    if(!triggerlist.empty()) {
-        firsttrigger = triggerlist.begin()->first;
-    }
-
-    // Get pixels/clusters from reference detector
-    auto reference = get_reference();
-    auto referencePixels = clipboard->getData<Pixel>(reference->getName());
-    auto referenceClusters = clipboard->getData<Cluster>(reference->getName());
-    for(auto& pixel : pixels) {
-        // Loop over reference plane pixels:
-        for(auto& refPixel : referencePixels) {
-            correlationColCol_px->Fill(pixel->column(), refPixel->column());
-            correlationColRow_px->Fill(pixel->column(), refPixel->row());
-            correlationRowCol_px->Fill(pixel->row(), refPixel->column());
-            correlationRowRow_px->Fill(pixel->row(), refPixel->row());
-
-            double timeDiff = refPixel->timestamp() - pixel->timestamp();
-            correlationTime_px->Fill(static_cast<double>(Units::convert(timeDiff, "ns")));
-            if(corr_vs_time_) {
-                correlationTimeOverTime_px->Fill(static_cast<double>(Units::convert(pixel->timestamp(), "s")), timeDiff);
-                correlationTimeOverPixelRawValue_px->Fill(pixel->raw(), timeDiff);
-            }
-        }
-    }
-
-    for(auto& cluster : clusters) {
-
-        // Check that track is within region of interest using winding number algorithm
-        if(!m_detector->isWithinROI(cluster.get())) {
-            LOG(DEBUG) << " - cluster outside ROI";
-            continue;
-        }
-
-        // Loop over reference plane clusters to make correlation plots
-        for(auto& refCluster : referenceClusters) {
-
-            double timeDifference = refCluster->timestamp() - cluster->timestamp();
-            // in 40 MHz:
-            long long int timeDifferenceInt = static_cast<long long int>(timeDifference / 25);
-
-            // Correlation plots
-            if(abs(timeDifference) < time_cut_ || !do_time_cut_) {
-                auto globalXref = refCluster->global().x();
-                auto globalXcluster = cluster->global().x();
-                auto globalYref = refCluster->global().y();
-                auto globalYcluster = cluster->global().y();
-                correlationX->Fill(globalXref - globalXcluster);
-                correlationX2D->Fill(globalXcluster, globalXref);
-                correlationX2Dlocal->Fill(cluster->column(), refCluster->column());
-
-                correlationY->Fill(globalYref - globalYcluster);
-                correlationY2D->Fill(globalYcluster, globalYref);
-                correlationY2Dlocal->Fill(cluster->row(), refCluster->row());
-
-                correlationXY->Fill(globalYref - globalXcluster);
-                correlationXY2D->Fill(globalYref, globalXcluster);
-                correlationYX->Fill(globalXref - globalYcluster);
-                correlationYX2D->Fill(globalXref, globalYcluster);
-
-                correlationXVsTrigger->Fill(firsttrigger, globalXref - globalXcluster);
-                correlationYVsTrigger->Fill(firsttrigger, globalYref - globalYcluster);
-                correlationXYVsTrigger->Fill(firsttrigger, globalYref - globalXcluster);
-                correlationYXVsTrigger->Fill(firsttrigger, globalXref - globalYcluster);
-            }
-
-            correlationTime->Fill(timeDifference); // time difference in ns
-            LOG(DEBUG) << "Time difference: " << Units::display(timeDifference, {"ns", "us"})
-                       << ", Time ref. cluster: " << Units::display(refCluster->timestamp(), {"ns", "us"})
-                       << ", Time cluster: " << Units::display(cluster->timestamp(), {"ns", "us"});
-
-            if(corr_vs_time_) {
-                if(abs(timeDifference) < time_cut_ || !do_time_cut_) {
-                    correlationXVsTime->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "s")),
-                                             refCluster->global().x() - cluster->global().x());
-                    correlationYVsTime->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "s")),
-                                             refCluster->global().y() - cluster->global().y());
-                    correlationXYVsTime->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "s")),
-                                              refCluster->global().x() - cluster->global().y());
-                    correlationYXVsTime->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "s")),
-                                              refCluster->global().y() - cluster->global().x());
-                }
-                // Time difference in ns
-                correlationTimeOverTime->Fill(static_cast<double>(Units::convert(cluster->timestamp(), "s")),
-                                              timeDifference);
-                correlationTimeOverSeedPixelRawValue->Fill(cluster->getSeedPixel()->raw(), timeDifference);
-            }
-            correlationTimeInt->Fill(static_cast<double>(timeDifferenceInt));
-        }
-    }
-
-    return StatusCode::Success;
 }
