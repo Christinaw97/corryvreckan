@@ -73,7 +73,7 @@ function(pandocology_add_input_file source_path dest_dir dest_filelist_var)
             get_filename_component(absolute_dest_path ${dest_dir}/${filename} ABSOLUTE)
             file(RELATIVE_PATH relative_dest_path ${CMAKE_CURRENT_BINARY_DIR} ${absolute_dest_path})
             list(APPEND dest_filelist ${absolute_dest_path})
-        
+
             add_custom_command(
                 OUTPUT ${relative_dest_path}
                 COMMAND ${CMAKE_COMMAND} -E copy ${globbed_source_path} ${dest_dir}/${filename}
@@ -215,7 +215,7 @@ function(add_document target_name)
     endif()
     get_filename_component(product_directory ${CMAKE_BINARY_DIR}/${ADD_DOCUMENT_PRODUCT_DIRECTORY} ABSOLUTE)
     # get_filename_component(absolute_product_path ${product_directory}/${target_name} ABSOLUTE)
-    
+
     ## get primary source
     set(build_sources)
     foreach(input_file ${ADD_DOCUMENT_SOURCES} )
@@ -245,7 +245,7 @@ function(add_document target_name)
             pandocology_add_input_dir(${resource_dir} ${product_directory} exported_resources)
         endif()
     endforeach()
-    
+
     ## primary command
     if (${ADD_DOCUMENT_DIRECT_TEX_TO_PDF})
         if (${ADD_DOCUMENT_VERBOSE})
@@ -279,7 +279,7 @@ function(add_document target_name)
             )
         add_to_make_clean(${target_name})
     endif()
-    
+
     ## figure out what all is going to be produced by this build set, and set
     ## those as dependencies of the primary target
     set(primary_target_dependencies)
@@ -294,7 +294,7 @@ function(add_document target_name)
     if (${ADD_DOCUMENT_EXPORT_ARCHIVE})
         set(primary_target_dependencies ${primary_target_dependencies} ${product_directory}/${target_stemname}.tbz)
     endif()
-    
+
     # run post-pdf
     if (${ADD_DOCUMENT_EXPORT_PDF})
         # get_filename_component(target_stemname ${target_name} NAME_WE)
@@ -329,7 +329,7 @@ function(add_document target_name)
         add_to_make_clean(${CMAKE_CURRENT_BINARY_DIR}/${target_stemname}.pdf)
         add_to_make_clean(${product_directory}/${target_stemname}.pdf)
     endif()
-    
+
     ## copy products
     if (NOT ${ADD_DOCUMENT_NO_EXPORT_PRODUCT})
         add_custom_command(
@@ -339,7 +339,7 @@ function(add_document target_name)
             )
         add_to_make_clean(${product_directory}/${target_name})
     endif()
-    
+
     ## copy resources
     if (${ADD_DOCUMENT_EXPORT_ARCHIVE})
         # get_filename_component(target_stemname ${target_name} NAME_WE)
