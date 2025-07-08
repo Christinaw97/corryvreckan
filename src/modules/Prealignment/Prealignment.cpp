@@ -208,6 +208,7 @@ void Prealignment::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
             shift_X = correlationX->GetFunction("gaus")->GetParameter(1);
             shift_Y = correlationY->GetFunction("gaus")->GetParameter(1);
+
             if(align_time_) {
                 int binMaxTime = correlationTime_->GetMaximumBin();
                 double fit_low_t =
