@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include "core/module/Module.hpp"
 #include "objects/Pixel.hpp"
-#include "objects/SpidrSignal.hpp"
+#include "objects/TimerSignal.hpp"
 
 namespace corryvreckan {
     /** @ingroup Modules
@@ -54,7 +54,7 @@ namespace corryvreckan {
 
         bool decodeNextWord();
         void fillBuffer();
-        bool loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector&, SpidrSignalVector&);
+        bool loadData(const std::shared_ptr<Clipboard>& clipboard, PixelVector&, TimerSignalVector&);
         void loadCalibration(std::string path, char delim, std::vector<std::vector<float>>& dat);
         void maskPixels(std::string);
 
@@ -93,7 +93,7 @@ namespace corryvreckan {
         };
 
         std::priority_queue<std::shared_ptr<Pixel>, PixelVector, CompareTimeGreater<Pixel>> sorted_pixels_;
-        std::priority_queue<std::shared_ptr<SpidrSignal>, SpidrSignalVector, CompareTimeGreater<SpidrSignal>>
+        std::priority_queue<std::shared_ptr<TimerSignal>, TimerSignalVector, CompareTimeGreater<TimerSignal>>
             sorted_signals_;
     };
 } // namespace corryvreckan

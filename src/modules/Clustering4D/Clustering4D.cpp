@@ -303,6 +303,7 @@ void Clustering4D::calculateClusterCentre(Cluster* cluster) {
     double column_sum(0), column_sum_chargeweighted(0);
     double row_sum(0), row_sum_chargeweighted(0);
     bool found_charge_zero = false;
+    bool found_charge_inf = false;
 
     // Get the pixels on this cluster
     auto pixels = cluster->pixels();
@@ -316,6 +317,11 @@ void Clustering4D::calculateClusterCentre(Cluster* cluster) {
         if(pixel->charge() < std::numeric_limits<double>::epsilon()) {
             // apply arithmetic mean if a pixel has zero charge
             found_charge_zero = true;
+        }
+        // If charge == inf. Can happen with some faulty calibration in ToT systems
+        if(std::isinf(pixel->charge())) {
+            // ignore pixel if pixel has infinite charge
+            found_charge_inf = true;
         }
         charge += pixel->charge();
 
@@ -332,19 +338,19 @@ void Clustering4D::calculateClusterCentre(Cluster* cluster) {
         //    1) found_charge_zero = false, i.e. no zero charge was detected
         //    2) use_earliest_pixel was NOT chosen by the user
         //    3) the current pixel charge is larger than the previous maximum
-        if(!found_charge_zero && !use_earliest_pixel_ && pixel->charge() > maxcharge) {
+        if(!found_charge_zero && !use_earliest_pixel_ && pixel->charge() > maxcharge && !found_charge_inf) {
             timestamp = pixel->timestamp();
             maxcharge = pixel->charge();
 
-            // else: use earliest pixel
-        } else if(pixel->timestamp() < timestamp) {
+            // else: use earliest pixel if this is requested by config option
+        } else if(pixel->timestamp() < timestamp && use_earliest_pixel_) {
             timestamp = pixel->timestamp();
         }
     }
 
-    if(charge_weighting_ && !found_charge_zero) {
+    if(charge_weighting_ && !found_charge_zero && !found_charge_inf) {
         // Charge-weighted centre-of-gravity for cluster centre:
-        // (here it's safe to divide by the charge as it cannot be zero due to !found_charge_zero)
+        // (here it's safe to divide by the charge as it cannot be zero/inf due to !found_charge_zero/!found_charge_inf)
         column = column_sum_chargeweighted / charge;
         row = row_sum_chargeweighted / charge;
     } else {

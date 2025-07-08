@@ -1,13 +1,15 @@
 ---
-# SPDX-FileCopyrightText: 2023-2024 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2023-2025 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
 # EventLoaderHDF5
+
 **Maintainer**: Christian Bespin (<cbespin@uni-bonn.de>)
 **Module Type**: *DETECTOR*  
 **Status**: Work in progress
 
 ### Description
+
 This module loads data from hdf5 files and adds it to the clipboard. The input file must have extension `.h5` and follow the structure below:
 
 | column |  row  |  raw  |  charge  |   timestamp \[ns\]   | trigger_number |
@@ -18,6 +20,7 @@ Compressed hdf5 files (filters) are supported via [hdf5_plugins]( https://github
 The module is capable of defining an event as well as adding records based on timestamp or trigger. In case of the latter, trigger information must be present in the events.
 
 ### Parameters
+
 * `filename`: Input file name.
 * `dataset_name`: Name of the node in the hdf5 file.
 * `buffer_depth`: Buffer size (entries) for chunking. Default is 100,000.
@@ -32,10 +35,12 @@ The following plots are produced:
 
 * Histogram with pixel raw value
 * Histogram with pixel charge
+* Histogram with pixel multiplicity (hits per corryvreckan event)
 * 2D map of hit positions
 * 2D map of raw values per pixel
 
 ### Usage
+
 ```toml
 [EventLoaderHDF5]
 filename = "path/to/file.h5"

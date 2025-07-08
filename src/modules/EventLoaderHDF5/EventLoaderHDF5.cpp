@@ -70,6 +70,9 @@ namespace corryvreckan {
                                      m_detector->nPixels().Y() - 0.5);
             hPixelToT = new TH1F("pixelToT", "Pixel ToT; ToT [LSB];# entries", 200, -0.5, 199.5);
             hPixelCharge = new TH1F("pixelCharge", "pixel charge [a.u.];# entries", 1000, 0, 5000);
+
+            std::string title = "Pixel Multiplicity;# pixels;# events";
+            hPixelMultiplicity = new TH1F("pixelMultiplicity", title.c_str(), 500, -0.5, 499.5);
         }
 
         // TODO: only define those if event is not defined yet. How to find out here?
@@ -102,6 +105,11 @@ namespace corryvreckan {
         if(data) {
             LOG(DEBUG) << "Loaded " << deviceData.size() << " pixels for device " << m_detector->getName();
             clipboard->putData(deviceData, m_detector->getName());
+        }
+
+        if(!m_detector->isAuxiliary()) {
+            // histogram only exists for non-auxiliary detectors:
+            hPixelMultiplicity->Fill(static_cast<int>(deviceData.size()));
         }
 
         LOG(DEBUG) << clipboard->countObjects<Pixel>() << " objects on the clipboard";
@@ -170,6 +178,15 @@ namespace corryvreckan {
                             event->getTriggerTime(shiftedTriggerId) + m_timestampShift; // Use trigger time as pixel time
                     } else {
                         pixel_timestamp = shiftedTimestamp;
+                    }
+
+                    if(m_detector->masked(hit->column, hit->row)) {
+                        LOG(TRACE) << "Masking pixel (col, row) = (" << hit->column << ", " << hit->row << ")";
+                        m_buffer.pop();
+                        continue;
+                    } else {
+                        LOG(TRACE) << "Storing (col, row, timestamp) = (" << hit->column << ", " << hit->row << ", "
+                                   << Units::display(pixel_timestamp, {"ns", "us", "ms"}) << ") from HDF5 event data";
                     }
                     auto pixel = std::make_shared<Pixel>(
                         m_detector->getName(), hit->column, hit->row, hit->raw, hit->charge, pixel_timestamp);

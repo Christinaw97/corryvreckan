@@ -40,3 +40,7 @@ CMakeLists.txt.user
 
 # Ignore conflict files:
 *.orig
+
+# Ignore python virtual environment:
+.venv/
+venv/

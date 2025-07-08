@@ -10,7 +10,7 @@
  */
 
 #include "ImproveReferenceTimestamp.h"
-#include "objects/SpidrSignal.hpp"
+#include "objects/TimerSignal.hpp"
 
 using namespace corryvreckan;
 using namespace std;
@@ -49,10 +49,10 @@ StatusCode ImproveReferenceTimestamp::run(const std::shared_ptr<Clipboard>& clip
     std::vector<double> trigger_times;
 
     // Get trigger signals
-    auto spidrData = clipboard->getData<SpidrSignal>(m_source);
+    auto timerData = clipboard->getData<TimerSignal>(m_source);
     // Loop over all signals registered
-    for(auto& signal : spidrData) {
-        if(signal->type() == "trigger") {
+    for(auto& signal : timerData) {
+        if(signal->getType() == TimerType::TRIGGER) {
             trigger_times.push_back(signal->timestamp() - m_triggerLatency);
         }
     }

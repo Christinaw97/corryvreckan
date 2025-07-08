@@ -12,7 +12,6 @@
 #include "EventLoaderFASTPIX.h"
 #include <TMath.h>
 #include <TMultiGraph.h>
-#include "objects/SpidrSignal.hpp"
 
 using namespace corryvreckan;
 
