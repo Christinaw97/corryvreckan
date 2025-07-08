@@ -45,8 +45,8 @@ namespace caribou {
         bool operator!=(const clicpix2_pixel& rhs) const { return !(*this == rhs); }
 
     protected:
-        clicpix2_pixel(){};
-        clicpix2_pixel(uint16_t latches) : m_latches(latches){};
+        clicpix2_pixel() {};
+        clicpix2_pixel(uint16_t latches) : m_latches(latches) {};
         uint16_t m_latches;
     };
 
@@ -63,7 +63,7 @@ namespace caribou {
          *
          * Initializes the pixel in a masked state
          */
-        pixelConfig() : clicpix2_pixel(0x2000){};
+        pixelConfig() : clicpix2_pixel(0x2000) {};
         pixelConfig(bool mask, uint8_t threshold, bool cntmode, bool tpenable, bool longcnt) : pixelConfig() {
             SetMask(mask);
             SetThreshold(threshold);
@@ -137,7 +137,7 @@ namespace caribou {
     public:
         // Default constructor
         // Disables the pixel
-        pixelReadout() : clicpix2_pixel(0x0), longflag(false){};
+        pixelReadout() : clicpix2_pixel(0x0), longflag(false) {};
         pixelReadout(bool flag, uint8_t tot, uint8_t toa) : pixelReadout() {
             SetFlag(flag);
             SetTOT(tot);

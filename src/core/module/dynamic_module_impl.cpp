@@ -97,7 +97,7 @@ namespace corryvreckan {
     bool corryvreckan_module_is_dut() { return false; }
 #endif
 
-#if(!CORRYVRECKAN_MODULE_GLOBAL && !CORRYVRECKAN_MODULE_DUT) || defined(DOXYGEN)
+#if (!CORRYVRECKAN_MODULE_GLOBAL && !CORRYVRECKAN_MODULE_DUT) || defined(DOXYGEN)
     /**
      * @brief Instantiates a detector module
      * @param config Configuration for this module
@@ -119,7 +119,7 @@ namespace corryvreckan {
     bool corryvreckan_module_is_dut() { return false; }
 #endif
 
-#if(!CORRYVRECKAN_MODULE_GLOBAL && CORRYVRECKAN_MODULE_DUT) || defined(DOXYGEN)
+#if (!CORRYVRECKAN_MODULE_GLOBAL && CORRYVRECKAN_MODULE_DUT) || defined(DOXYGEN)
     /**
      * @brief Instantiates a DUT module
      * @param config Configuration for this module
@@ -141,7 +141,7 @@ namespace corryvreckan {
     bool corryvreckan_module_is_dut() { return true; }
 #endif
 
-#if(!CORRYVRECKAN_MODULE_GLOBAL && defined(CORRYVRECKAN_EXCLUDE_AUX)) || defined(DOXYGEN)
+#if (!CORRYVRECKAN_MODULE_GLOBAL && defined(CORRYVRECKAN_EXCLUDE_AUX)) || defined(DOXYGEN)
     // Return that this module should not be instantiated for aux detectors
     bool corryvreckan_module_exclude_aux() { return true; }
 #else
@@ -149,7 +149,7 @@ namespace corryvreckan {
     bool corryvreckan_module_exclude_aux() { return false; }
 #endif
 
-#if(!CORRYVRECKAN_MODULE_GLOBAL && defined(CORRYVRECKAN_INCLUDE_PASSIVE)) || defined(DOXYGEN)
+#if (!CORRYVRECKAN_MODULE_GLOBAL && defined(CORRYVRECKAN_INCLUDE_PASSIVE)) || defined(DOXYGEN)
     // Return that this module should be instantiated for passive detectors
     bool corryvreckan_module_include_passive() { return true; }
 #else
