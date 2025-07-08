@@ -30,6 +30,7 @@ The DUT plane can be excluded from the track finding.
 * `require_detectors`: Names of detectors which are required to have a cluster on the track. If a track does not have a cluster from all detectors listed here, it is rejected. If empty, no detector is required. Default is empty.
 * `timestamp_from`: Defines the detector which provides the track timestamp. This detector is by default added to `required_detector`. If empty, the average timestamp of all clusters on the track will be used. Empty by default.
 * `track_model`: Select the track model used for reconstruction. A simple line fit ignoring scattering (`straightline`) and a General-Broken-Lines (`gbl`) are currently supported. Defaults to  `straightline`.
+* `exclude_auxiliary`: Switch to select whether to include or exclude auxiliary devices
 * `momentum`: Set the beam momentum. Defaults to 5 GeV
 * `volume_scattering`: Select if volume scattering will be taken into account - defaults to false
 * `volume_radiation_length`: Define the radiation length of the volume around the telescope. Defaults to dry air with a radiation length of `304.2 m`

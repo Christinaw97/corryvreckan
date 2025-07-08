@@ -36,9 +36,11 @@
 
 #pragma link C++ class corryvreckan::Object::PointerWrapper < corryvreckan::Pixel> + ;
 #pragma link C++ class corryvreckan::Object::PointerWrapper < corryvreckan::Cluster> + ;
+#pragma link C++ class corryvreckan::Object::PointerWrapper < corryvreckan::TimerSignal> + ;
 
 #pragma link C++ class corryvreckan::Object::BaseWrapper < corryvreckan::Pixel> + ;
 #pragma link C++ class corryvreckan::Object::BaseWrapper < corryvreckan::Cluster> + ;
+#pragma link C++ class corryvreckan::Object::BaseWrapper < corryvreckan::TimerSignal> + ;
 
 // Vector of Object for internal storage
 #pragma link C++ class std::vector < corryvreckan::Object*> + ;

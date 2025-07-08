@@ -42,6 +42,7 @@ namespace corryvreckan {
         TH1F* trackChi2ndof;
         TH1F* trackTime;
         TH1F* trackTimeTrigger;
+        TH1F* trackTime_v_timer_signal;
         TH2F* trackTimeTriggerChi2;
         TH1F* tracksPerEvent;
         TH1F* trackAngleX;
@@ -93,6 +94,8 @@ namespace corryvreckan {
         bool use_volume_scatterer_;
         bool reject_by_ROI_;
         bool unique_cluster_usage_;
+        bool exclude_auxiliary_;
+        bool use_timersignal_timestamp_;
         std::vector<std::string> require_detectors_;
         std::vector<std::string> exclude_from_seed_;
         std::map<std::shared_ptr<Detector>, double> time_cuts_;

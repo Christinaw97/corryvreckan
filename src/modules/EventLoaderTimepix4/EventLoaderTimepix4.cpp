@@ -278,8 +278,6 @@ bool EventLoaderTimepix4::decodeNextWord() {
                         bool digCompare = false;
                         for(const auto& digColRow : m_digColRow) {
                             digCompare = compareTupleEq(digColRow, m_colrow);
-                            if(digCompare)
-                                break;
                         }
                         if(!digCompare) {
                             uint32_t col = std::get<0>(m_colrow);

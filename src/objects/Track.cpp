@@ -58,7 +58,8 @@ void Track::Plane::print(std::ostream& os) const {
 void Track::Plane::loadHistory() { cluster_.get(); }
 void Track::Plane::petrifyHistory() { cluster_.store(); }
 
-void Track::addCluster(const Cluster* cluster) { track_clusters_.emplace_back(const_cast<Cluster*>(cluster)); }
+void Track::addCluster(const Cluster* cluster) { track_clusters_.emplace_back(std::move(cluster)); }
+void Track::addTimerSignal(const TimerSignal* timer_signal) { track_timer_signals_.emplace_back(std::move(timer_signal)); }
 void Track::addAssociatedCluster(const Cluster* cluster) {
     associated_clusters_[cluster->getDetectorID()].emplace_back(const_cast<Cluster*>(cluster));
 }
@@ -75,6 +76,20 @@ std::vector<Cluster*> Track::getClusters() const {
 
     // Return as a vector of pixels
     return clustervec;
+}
+
+std::vector<TimerSignal*> Track::getTimerSignals() const {
+    std::vector<TimerSignal*> timer_signal_vec;
+    for(const auto& ts : track_timer_signals_) {
+        auto* timer_signal = ts.get();
+        if(timer_signal == nullptr) {
+            throw MissingReferenceException(typeid(*this), typeid(TimerSignal));
+        }
+        timer_signal_vec.emplace_back(timer_signal);
+    }
+
+    // Return as a vector of pixels
+    return timer_signal_vec;
 }
 
 std::vector<Cluster*> Track::getAssociatedClusters(const std::string& detectorID) const {
@@ -165,10 +180,20 @@ bool Track::isAssociated(Cluster* cluster) const {
 }
 
 bool Track::hasDetector(const std::string& detectorID) const {
-    auto it = find_if(track_clusters_.begin(), track_clusters_.end(), [&detectorID](auto& cl) {
+    auto it_cl = find_if(track_clusters_.begin(), track_clusters_.end(), [&detectorID](auto& cl) {
         return cl.get()->getDetectorID() == detectorID;
     });
-    if(it == track_clusters_.end()) {
+    if(it_cl == track_clusters_.end()) {
+        return false;
+    }
+    return true;
+}
+
+bool Track::hasDetectorTimerSignal(const std::string& detectorID) const {
+    auto it_ts = find_if(track_timer_signals_.begin(), track_timer_signals_.end(), [&detectorID](auto& ts) {
+        return ts.get()->getDetectorID() == detectorID;
+    });
+    if(it_ts == track_timer_signals_.end()) {
         return false;
     }
     return true;
@@ -179,6 +204,16 @@ Cluster* Track::getClusterFromDetector(std::string detectorID) const {
         return cl.get()->getDetectorID() == detectorID;
     });
     if(it == track_clusters_.end()) {
+        return nullptr;
+    }
+    return it->get();
+}
+
+TimerSignal* Track::getTimerSignalFromDetector(std::string detectorID) const {
+    auto it = find_if(track_timer_signals_.begin(), track_timer_signals_.end(), [&detectorID](auto& ts) {
+        return ts.get()->getDetectorID() == detectorID;
+    });
+    if(it == track_timer_signals_.end()) {
         return nullptr;
     }
     return it->get();
