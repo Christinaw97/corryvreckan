@@ -347,7 +347,8 @@ void EventLoaderMuPixTelescope::fillBuffer() {
                 // get the fpga time +1bit just for plots
                 raw_fpga_vs_chip.at(names_.at(tag))->Fill(raw_time, static_cast<double>(corrected_fpgaTime & 0x7FF));
                 chip_delay.at(names_.at(tag))->Fill(static_cast<double>((corrected_fpgaTime & 0x3FF) - raw_time));
-                raw_fpga_vs_chip_corrected.at(names_.at(tag))->Fill(raw_time, static_cast<double>(corrected_fpgaTime & 0x7FF));
+                raw_fpga_vs_chip_corrected.at(names_.at(tag))
+                    ->Fill(raw_time, static_cast<double>(corrected_fpgaTime & 0x7FF));
 
                 pixelbuffers_.at(tag).push(
                     read_hit(h, tag, tf_.timestamp(), tf_.chip_timestamp())); //(corrected_fpgaTime * 4)));
