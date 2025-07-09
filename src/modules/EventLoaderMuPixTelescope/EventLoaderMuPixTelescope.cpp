@@ -11,10 +11,9 @@
 
 #include "EventLoaderMuPixTelescope.h"
 #include <string>
+#include "AnalysisHit.hpp"
 #include "dirent.h"
-#include "objects/Cluster.hpp"
 #include "objects/Pixel.hpp"
-#include "objects/Track.hpp"
 
 #include "TDirectory.h"
 using namespace corryvreckan;
@@ -23,21 +22,14 @@ EventLoaderMuPixTelescope::EventLoaderMuPixTelescope(Configuration& config, std:
     : Module(config, std::move(detectors)), blockFile_(nullptr) {
 
     config_.setDefault<bool>("is_sorted", false);
-    config_.setDefault<bool>("ts2_is_gray", false);
     config_.setDefault<unsigned>("buffer_depth", 1000);
     config_.setDefault<double>("time_offset", 0.0);
     config_.setDefault<double>("reference_frequency", 125.);
     config_.setDefault<uint>("nbits_timestamp", 10);
     config_.setDefault<uint>("nbits_tot", 6);
-    config_.setDefault<uint>("ckdivend", 0);
-    config_.setDefault<uint>("ckdivend2", 7);
     config_.setDefault<bool>("use_both_timestamps", false);
 
     use_both_timestamps_ = config_.get<bool>("use_both_timestamps");
-    nbitsTS_ = config_.get<uint>("nbits_timestamp");
-    nbitsToT_ = config_.get<uint>("nbits_tot");
-    ckdivend_ = config_.get<uint>("ckdivend");
-    ckdivend2_ = config_.get<uint>("ckdivend2");
     refFrequency_ = config_.get<double>("reference_frequency");
     inputDirectory_ = config_.getPath("input_directory");
     buffer_depth_ = config.get<unsigned>("buffer_depth");
@@ -49,17 +41,6 @@ EventLoaderMuPixTelescope::EventLoaderMuPixTelescope(Configuration& config, std:
     } else {
         runNumber_ = config_.get<int>("run");
     }
-
-    // simplifying calculations:
-    multiplierToT_ = (1. + static_cast<double>(ckdivend2_)) / (1. + static_cast<double>(ckdivend_)) * 2.;
-    // timestamp is calculated with respect to a 4ns base, tot wrt 8ns
-    timestampMask_ = ((0x1) << nbitsTS_) - 1; // raw timestamp from data
-    // timestamp after shift and 4ns base change
-    timestampMaskExtended_ = ((0x1) << ((ckdivend_ + 1) * (nbitsTS_ + 1))) - 1;
-    totMask_ = ((0x1) << nbitsToT_) - 1;
-    clockToTime_ = 4. / refFrequency_ * 125.;
-    maxToT_ =
-        static_cast<double>(((totMask_ + 1) * static_cast<uint>(multiplierToT_)) & timestampMaskExtended_) * clockToTime_;
 }
 
 void EventLoaderMuPixTelescope::initialize() {
@@ -102,7 +83,7 @@ void EventLoaderMuPixTelescope::initialize() {
         input_file_ = "telescope_run_" + s + ".blck";
     }
 
-    // check the if folder and file do exist
+    // check  if the data folder and file do exist
     dirent* entry;
     bool foundFile = false;
     DIR* directory = opendir(inputDirectory_.c_str());
@@ -116,18 +97,19 @@ void EventLoaderMuPixTelescope::initialize() {
         }
     }
     if(!foundFile) {
-
         throw MissingDataError("Cannot open data file: " + input_file_);
     } else
         LOG(INFO) << "File " << input_file_ << " found";
+
     std::string file = (inputDirectory_ + "/" + entry->d_name);
     LOG(INFO) << "reading " << file;
+
     blockFile_ = new BlockFile(file);
     if(!blockFile_->open_read()) {
         throw MissingDataError("Cannot read data file: " + input_file_);
     }
-    TDirectory* dir = getROOTDirectory();
 
+    TDirectory* dir = getROOTDirectory();
     // create the histograms for all sensor
     for(auto& detector : detectors_) {
         auto name = detector->getName();
@@ -274,8 +256,6 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
                 pixels_.at(t).push_back(pixel);
                 hHitMap.at(names_.at(t))->Fill(pixel.get()->column(), pixel.get()->row());
                 hPixelToT.at(names_.at(t))->Fill(pixel.get()->raw());
-                // hPixelToT.at(names_.at(t))->Fill(pixel.get()->raw());
-                // display the 10 bit timestamp distribution
                 hTimeStamp.at(names_.at(t))->Fill(fmod((pixel.get()->timestamp() / 8.), pow(2, 10)));
                 pixelbuffers_.at(t).pop(); // remove top element
             } else {
@@ -305,48 +285,26 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
     return StatusCode::NoData;
 }
 
-std::shared_ptr<Pixel> EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint tag, long unsigned int corrected_fpgaTime) {
+std::shared_ptr<Pixel>
+EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint tag, long unsigned int corrected_fpgaTime, uint16_t chip_time) {
 
-    uint16_t time = 0x0;
-    // TS can be sampled on both edges - keep this optional
-    auto detector = detectors_.back();
-    if((h.get_ts2() == uint16_t(-1)) || (!use_both_timestamps_)) {
-        (detector->getType() == "telepix2" ? time = (timestampMask_ & h.timestamp_raw())
-                                           : time = ((timestampMask_ & h.timestamp_raw()) << 1));
+    auto anahit = mudaq::AnalysisHit::Factory(h, corrected_fpgaTime, chip_time);
 
-    } else if(h.timestamp_raw() > h.get_ts2()) {
-        time = ((timestampMask_ & h.timestamp_raw()) << 1);
-    } else {
-        time = ((timestampMask_ & h.timestamp_raw()) << 1) + 0x1;
-    }
-
-    // in case the ts clock is divided
-    time *= (ckdivend_ + 1);
-
-    double time_shifted = static_cast<double>(time) * static_cast<double>(ckdivend_ + 1);
-
-    auto name = detector->getName();
+    // Fill basic histograms based on raw hits
+    auto name = names_.at(tag);
 
     ts1_ts2[name]->Fill(h.get_ts2(), h.timestamp_raw());
-    double px_timestamp =
-        clockToTime_ * (static_cast<double>((corrected_fpgaTime >> 1) & (0xFFFFFFFFFFFFF - timestampMask_)) + time_shifted) -
-        static_cast<double>(timeOffset_.at(tag));
-
     hts_ToT[name]->Fill(static_cast<double>(h.tot_decoded()));
 
-    // store the ToT information if reasonable
-    double tot_timestamp = clockToTime_ * (static_cast<double>(h.tot_decoded()) * multiplierToT_);
-
-    ts_TS1_ToT[name]->Fill(static_cast<double>((static_cast<uint>(px_timestamp / 8)) & timestampMaskExtended_),
-                           (static_cast<double>(static_cast<uint>(tot_timestamp / 8) & timestampMaskExtended_)));
-
-    double tot = tot_timestamp - (time_shifted * clockToTime_);
-
-    // catch lapse of ToT time stamp
-    while(tot < 0)
-        tot += maxToT_;
-
-    return std::make_shared<Pixel>(names_.at(tag), h.column(), h.row(), tot, tot, px_timestamp);
+    ts_TS1_ToT[name]->Fill(static_cast<double>((static_cast<uint>(h.timestamp_raw() / 8)) & 0xFF),
+                           (static_cast<double>(static_cast<uint>(h.tot_decoded() / 8) & 0xFF)));
+    // ToDo: allow changes of ckdivends via configs
+    return std::make_shared<Pixel>(names_.at(tag),
+                                   h.column(),
+                                   h.row(),
+                                   anahit.get_ToT_ns(),
+                                   anahit.get_ToT_ns(),
+                                   anahit.get_ToA_ns() + timeOffset_.at(tag));
 }
 
 void EventLoaderMuPixTelescope::fillBuffer() {
@@ -365,7 +323,6 @@ void EventLoaderMuPixTelescope::fillBuffer() {
     }
     while(!buffers_full) {
         if(blockFile_->read_next(tf_)) {
-            //      std::cout << "Reading hit: "<< tf_.timestamp() <<std::endl;
             // no hits in data - can only happen if the zero suppression is switched off, skip the event
             if(tf_.num_hits() == 0) {
                 continue;
@@ -386,18 +343,15 @@ void EventLoaderMuPixTelescope::fillBuffer() {
                 // time from fpga is using a 500MHz clock (4 times the clock used for the hit timestamp
                 corrected_fpgaTime = (tf_.timestamp() >> 2);
                 // just take 10 bits from the hit timestamp
-                raw_time = h.timestamp_raw() & 0x3FF;
+                raw_time = h.timestamp_raw() & 0x7FF;
                 // get the fpga time +1bit just for plots
                 raw_fpga_vs_chip.at(names_.at(tag))->Fill(raw_time, static_cast<double>(corrected_fpgaTime & 0x7FF));
                 chip_delay.at(names_.at(tag))->Fill(static_cast<double>((corrected_fpgaTime & 0x3FF) - raw_time));
-                // if the chip timestamp is smaller than the fpga we have a bit flip on the 11th bit
-                if(((corrected_fpgaTime & 0x3FF) < raw_time)) { // && (corrected_fpgaTime>1024)) {
-                    corrected_fpgaTime -= 1024;
-                }
                 raw_fpga_vs_chip_corrected.at(names_.at(tag))
                     ->Fill(raw_time, static_cast<double>(corrected_fpgaTime & 0x7FF));
 
-                pixelbuffers_.at(tag).push(read_hit(h, tag, (corrected_fpgaTime * 4)));
+                pixelbuffers_.at(tag).push(
+                    read_hit(h, tag, tf_.timestamp(), tf_.chip_timestamp())); //(corrected_fpgaTime * 4)));
             }
             buffers_full = true;
             for(auto t : tags_) {

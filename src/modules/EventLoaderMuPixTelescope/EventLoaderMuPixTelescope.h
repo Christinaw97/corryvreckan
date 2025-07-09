@@ -53,7 +53,7 @@ namespace corryvreckan {
         StatusCode read_sorted(const std::shared_ptr<Clipboard>& clipboard);
         StatusCode read_unsorted(const std::shared_ptr<Clipboard>& clipboard);
 
-        std::shared_ptr<Pixel> read_hit(const RawHit& h, uint tag, unsigned long corrected_fpgaTime);
+        std::shared_ptr<Pixel> read_hit(const RawHit& h, uint tag, unsigned long corrected_fpgaTime, uint16_t chip_time = 0);
         void fillBuffer();
         std::vector<uint> tags_{};
         double prev_event_end_{};
@@ -61,7 +61,6 @@ namespace corryvreckan {
         int eventNo_{};
         std::map<uint, long unsigned> counterHits_{};
         std::map<uint, long unsigned> removed_{}, stored_{};
-        uint64_t ts_prev_{0};
         unsigned buffer_depth_{};
         bool eof_{false};
         std::map<uint, double> timeOffset_{};
@@ -83,14 +82,8 @@ namespace corryvreckan {
         bool use_both_timestamps_;
         uint nbitsTS_;
         uint nbitsToT_;
-        uint timestampMask_;
-        uint timestampMaskExtended_;
-        uint totMask_;
         uint ckdivend_;
         uint ckdivend2_;
-        double multiplierToT_;
-        double maxToT_;
-        double clockToTime_;
         BlockFile* blockFile_;
         TelescopeFrame tf_;
 
