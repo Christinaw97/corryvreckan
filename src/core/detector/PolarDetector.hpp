@@ -220,6 +220,13 @@ namespace corryvreckan {
         XYVector getPitch() const override;
 
         /**
+         * @brief Get pitch of a row in polar format
+         * @param row Strip row (y-index)
+         * @return angular pitch and strip length
+         */
+        XYVector getPolarPitch(double row = 0) const;
+
+        /**
          * @brief Get intrinsic spatial resolution of the detector
          * @param column Strip column (x-index) to calculate the resolution for
          * @param row Strip row (y-index) to calculate the resolution for
