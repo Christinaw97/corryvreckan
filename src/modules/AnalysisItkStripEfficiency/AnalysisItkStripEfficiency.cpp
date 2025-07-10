@@ -29,7 +29,7 @@ AnalysisItkStripEfficiency::AnalysisItkStripEfficiency(Configuration& config, st
     config_.setDefault<double>("profile_yrange", 1.5 * m_detector->getSize().Y());
     config_.setDefault<double>("perimeter_exclude", 1.);
     config_.setDefault<XYVector>("inpixel_cut_edge", {Units::get(5.0, "um"), Units::get(5.0, "um")});
-    config_.setDefault<std::string>("file_ttc", "");
+    config_.setDefault<std::string>("file_ttc", "data.raw");
     config_.setDefault<double>("masked_pixel_distance_cut", 1.);
     config_.setDefault<std::string>("ttc_tag", "PTDC_DUT.BIT");
     config_.setDefault<std::string>("eudaq_loglevel", "ERROR");
@@ -390,31 +390,6 @@ void AnalysisItkStripEfficiency::initialize() {
                                       20,
                                       50);
 
-    // hresi_x_event_Start = new TH2D("resi_x_event_Start",
-    //                                   "X residual vs event start timestamp;Event Time [s];X residual [mrad];# events",
-    //                                   1206,
-    //                                   -6,
-    //                                   600,
-    //                                   600,
-    //                                   -3.,
-    //                                   3.);
-
-    // hresi_x_event_end = new TH2D("resi_x_event_end",
-    //                                   "X residual vs event end timestamp;Event Time [s];X residual [mrad];# events",
-    //                                   1206,
-    //                                   -6,
-    //                                   600,
-    //                                   600,
-    //                                   -3,
-    //                                   3);
-
-    // hresi_x_track_time = new TH2D("resi_x_track_time",
-    //                                   "X residual vs track timestamp (unit bugged,);Event Time [ns];X residual [mrad];#
-    //                                   events", 2100, -100, 600, 600, -3, 3);
-
-    // if (m_detector->getCoordinateType() == "polar") {
-    // auto m_detector_polar = std::static_pointer_cast<ITkStripR0>(m_detector);
-    // ai to resolve at telescope resolution 3-5 micron. ITk EC strip pitch ~ 70microns, 72/3 = 24
     // for 2 strips plot 2*24 = 48
     title = "InColumnEfficiency;In-2-strip-column-position(mm);#epsilon";
     eInColumnEfficiency = new TEfficiency("eInColumnEfficiency", title.c_str(), 40, 0.0, 2.0);
