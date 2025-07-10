@@ -457,7 +457,6 @@ double PolarDetector::getPixelArea(int, int row) const {
 
     /* A = pi * (r_outer^2 - r_inner^2) * (strip_phi / (2 * pi)) */
     return (outer_r * outer_r - inner_r * inner_r) * strip_phi / 2;
-
 }
 
 XYVector PolarDetector::getSpatialResolution(double, double row) const {

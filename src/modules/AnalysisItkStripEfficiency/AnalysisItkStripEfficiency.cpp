@@ -33,9 +33,9 @@ AnalysisItkStripEfficiency::AnalysisItkStripEfficiency(Configuration& config, st
     config_.setDefault<double>("masked_pixel_distance_cut", 1.);
     config_.setDefault<std::string>("ttc_tag", "PTDC_DUT.BIT");
     config_.setDefault<std::string>("eudaq_loglevel", "ERROR");
-    // config_.setDefault<std::vector<double>>("delay_cut", {Units::get<double>(14, "ns"), Units::get<double>(19, "ns")});
     std::vector<int> defaultLimits = {0, 64};
     config_.setDefaultArray<int>("delay_cuts", defaultLimits);
+    config_.setDefault<int>("aida_tlu", 1);
 
     readerFile_ = config_.getPath("file_ttc");
     ttc_tag_ = config_.get<std::string>("ttc_tag");
@@ -45,8 +45,8 @@ AnalysisItkStripEfficiency::AnalysisItkStripEfficiency(Configuration& config, st
     require_associated_cluster_on_ = config_.getArray<std::string>("require_associated_cluster_on", {});
     m_inpixelEdgeCut = config_.get<XYVector>("inpixel_cut_edge");
     m_maskedPixelDistanceCut = config_.get<int>("masked_pixel_distance_cut");
-    // m_delay_cut = config_.get<std::vector<double>>("delay_cut");
     m_delay_cuts = config_.getArray<int>("delay_cuts");
+    m_aida_tlu = config_.get<int>("aida_tlu");
     m_profile_bins = config_.get<int>("profile_bins");
     m_profile_xrange = config_.get<double>("profile_xrange");
     m_profile_yrange = config_.get<double>("profile_yrange");
@@ -107,6 +107,12 @@ void AnalysisItkStripEfficiency::initialize() {
     eTimingEfficiency = new TEfficiency("eTimingEfficiency", "TimingEfficiency;Delay;#epsilon", 52, -0.5, 51.5);
     eTimingEfficiency->SetDirectory(this->getROOTDirectory());
     // LOG(DEBUG) << "eTimingEfficiency pointer print" << eTimingEfficiency;
+
+    eReferenceEfficiency = new TEfficiency("eRefEfficiency", "Reference Efficiency;Delay;#epsilon", 26, -0.5, 25.5);
+    eReferenceEfficiency->SetDirectory(this->getROOTDirectory());
+
+    eReferenceEfficiency2D = new TEfficiency("eRefEfficiency2D", "Efficiency;Trigger;Delay", 51, -0.5, 50.5, 26, -0.5, 25.5);
+    eReferenceEfficiency2D->SetDirectory(this->getROOTDirectory());
 
     eTotalEfficiency_inPixelROI = new TEfficiency(
         "eTotalEfficiency_inPixelROI", "eTotalEfficiency_inPixelROI;;#epsilon (within in-pixel ROI)", 1, 0, 1);
@@ -499,8 +505,6 @@ StatusCode AnalysisItkStripEfficiency::run(const std::shared_ptr<Clipboard>& cli
     // Get the telescope tracks from the clipboard
     auto tracks = clipboard->getData<Track>();
 
-    // auto pitch_x = m_detector->getPitch().X();
-    // auto pitch_y = m_detector->getPitch().Y();
     pitch_x = m_detector->getPitch().X();
     pitch_y = m_detector->getPitch().Y();
 
@@ -520,30 +524,6 @@ StatusCode AnalysisItkStripEfficiency::run(const std::shared_ptr<Clipboard>& cli
         bool is_in_delay_window = true;
         LOG(DEBUG) << "Looking at next track";
 
-        // Jonas making residual vs time plot before filtering events away
-        // Get the event:
-        // auto event = clipboard->getEvent();
-
-        // Get the DUT clusters from the clipboard, that are assigned to the track
-        // auto associated_clusters = track->getAssociatedClusters(m_detector->getName());
-
-        // for(auto& associated_cluster : associated_clusters) {
-        //     // Get the track intercept with the detector
-        //     auto trackIntercept = m_detector->getIntercept(track.get());
-
-        //     // Calculate the local residuals
-        //     auto residual2D = m_detector->Residual(trackIntercept, associated_cluster);
-
-        //      hresi_x_track_time->Fill(track->timestamp(),
-        //         static_cast<double>(Units::convert(residual2D.X(), "mrad")));
-
-        //      hresi_x_event_end->Fill(static_cast<double>(Units::convert(event->end(),"s")),
-        //         static_cast<double>(Units::convert(residual2D.X(), "mrad")));
-
-        //      hresi_x_event_Start->Fill(static_cast<double>(Units::convert(event->end(),"s")),
-        //         static_cast<double>(Units::convert(residual2D.X(), "mrad")));
-
-        //  }
         // // Cut on the chi2/ndof
         if(track->getChi2ndof() > m_chi2ndofCut) {
             LOG(DEBUG) << " - track discarded due to Chi2/ndof";
@@ -718,6 +698,12 @@ StatusCode AnalysisItkStripEfficiency::run(const std::shared_ptr<Clipboard>& cli
         if(is_within_roi) {
             LOG(DEBUG) << "is_within_roi True, filling eTimingEfficiency";
             eTimingEfficiency->Fill(has_associated_cluster, delay);
+            if(m_aida_tlu) {
+                eReferenceEfficiency->Fill(has_associated_cluster, std::fmod(track->timestamp(), 25.));
+            } else {
+                eReferenceEfficiency->Fill(has_associated_cluster, delay * 25. / 32 - std::fmod(track->timestamp(), 25.));
+                eReferenceEfficiency2D->Fill(has_associated_cluster, std::fmod(track->timestamp(), 50.), delay * 25. / 32);
+            }
             // unnecessary print outs
             // if(delay < 5 || delay > 28) {
             //     LOG(INFO) << "eTimingEfficiency was filled with " << has_associated_cluster << "  " << delay;
@@ -827,7 +813,7 @@ void AnalysisItkStripEfficiency::finalize(const std::shared_ptr<ReadonlyClipboar
 
     double totalEff = 100 * static_cast<double>(matched_tracks) / (total_tracks > 0 ? total_tracks : 1);
     double lowerEffError = totalEff - 100 * (TEfficiency::ClopperPearson(total_tracks, matched_tracks, 0.683, false));
-    double upperEffError = 100 * (TEfficiency::ClopperPearson(total_tracks, matched_tracks, 0.683, true)) - totalEff;
+    double upperEffError = 100 * (TEfficiency::ClopperPearson(total_tracks, matched_tracks, 0.683, true))-totalEff;
     LOG(STATUS) << "Total efficiency of detector " << m_detector->getName() << ": " << totalEff << "(+" << upperEffError
                 << " -" << lowerEffError << ")%, measured with " << matched_tracks << "/" << total_tracks
                 << " matched/total tracks";

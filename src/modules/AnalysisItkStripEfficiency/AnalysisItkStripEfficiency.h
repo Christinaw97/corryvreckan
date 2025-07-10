@@ -71,6 +71,8 @@ namespace corryvreckan {
         TEfficiency* hGlobalEfficiencyMap_clustPos;
 
         TEfficiency* eTimingEfficiency;
+        TEfficiency* eReferenceEfficiency;
+        TEfficiency* eReferenceEfficiency2D;
         TEfficiency* eInColumnEfficiency;
         TEfficiency* eInRowEfficiency;
 
@@ -96,9 +98,6 @@ namespace corryvreckan {
         TH2D* hDistanceCluster_track;
         TH2D* hPos_TrackLocal_Ass;
         TH2D* hPos_TrackLocal_No_Ass;
-        // TH2D* hresi_x_event_Start;
-        // TH2D* hresi_x_event_end;
-        // TH2D* hresi_x_track_time;
 
         double m_chi2ndofCut, m_timeCutFrameEdge, m_inpixelBinSize, m_perimeter_exclude;
         int m_profile_bins;
@@ -115,8 +114,8 @@ namespace corryvreckan {
         double n_track = 0, n_chi2 = 0, n_dut = 0, n_roi = 0, n_masked = 0, n_frameedge = 0, n_requirecluster = 0,
                n_timingWindow = 0;
         std::vector<std::string> require_associated_cluster_on_;
-        // std::vector<double> m_delay_cut;
         std::vector<int> m_delay_cuts;
+        int m_aida_tlu;
 
         double pitch_x;
         double pitch_y;
