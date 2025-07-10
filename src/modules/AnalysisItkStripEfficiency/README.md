@@ -1,5 +1,5 @@
 ---
-# SPDX-FileCopyrightText: 2017-2023 CERN and the Corryvreckan authors
+# SPDX-FileCopyrightText: 2017-2025 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
 # AnalysisItkStripEfficiency
@@ -9,12 +9,11 @@
 **Status**: Functional
 
 ### Description
-Updating.
 
 This module is dedicated to the efficiency measurement of the ITk strip modules, i.e. barrel and endcap modules. It has overlap with `AnalysisEfficiency`. Details are following: 
 
 The efficiency is calculated as the fraction of tracks with associated clusters on the DUT over the the total number of tracks intersecting the DUT (or region-of-interest, if defined).
-Compared to the standard `AnalysisEfficiency`, this particular version also produces a split based on Time-of-Arrival of the trigger signal within the detectors frame of time: `eTimingEfficiency`
+Compared to the standard `AnalysisEfficiency`, this particular version also produces a split based on Time-of-Arrival of the trigger signal within the detectors frame of time: `eTimingEfficiency` and `eReferenceEfficiency`. 
 It is stored in a ROOT `TEfficiency` object (see below).
 Its uncertainty is calculated using the default ROOT `TEfficiency` method which is applying a Clopper-Pearson confidence interval of one sigma.
 Analogue to a Gaussian sigma, this corresponds to the central 68.3% of a binomial distribution for the given efficiency but taking into account a lower limit of 0 and an upper limit of 1.
@@ -30,6 +29,7 @@ More information can be found in the ROOT `TEfficiency` class reference, section
 * `file_ttc`: eudaq raw file from which to read the ItkTtc stream and extract the time-of-arrival.
 * `ttc_tag`: Tag name of event to use for ItkTtc stream and extract the time-of-arrival. Defaults to `PTDC_DUT.BIT`.
 * `delay_cuts`: set of time of arrival cut values, comma separated, first one is max, second is min, further values get ignored. Defaults are 64 and 0.
+* `aida_tlu`: TLU mode used during DUT data-taking. Default is AIDA mode. If EUDET mode was used, `aida_tlu = 0`. 
 
 ### Plots produced
 
@@ -61,7 +61,8 @@ For the DUT, the following plots are produced:
 type = "its_abc"
 perimeter_exclude = 0
 chi2ndof_cut = 5
-delay_cuts = 64, 0
+delay_cuts = 32, 0
 file_ttc = evetfile.raw
+aida_tlu = 1
 ```
 [@root-tefficiency-class-ref]: https://root.cern.ch/doc/master/classTEfficiency.html#ae80c3189bac22b7ad15f57a1476ef75b
