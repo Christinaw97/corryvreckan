@@ -54,7 +54,7 @@ fi
 
 
 # Determine which LCG version to use
-DEFAULT_LCG="LCG_104"
+DEFAULT_LCG="LCG_105"
 
 if [ -z ${CORRY_LCG_VERSION} ]; then
     echo "No explicit LCG version set, using ${DEFAULT_LCG}."

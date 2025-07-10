@@ -136,7 +136,7 @@ namespace corryvreckan {
         std::vector<std::unique_ptr<std::ifstream>>::iterator m_file_iterator;
 
         // initialized variables for synchronization, header clearing etc.
-        uint64_t m_unsynced[2] = {1, 1};
+        bool m_unsynced[2] = {true, true};
         bool eof_reached{false};
 
         //===============================================================
@@ -191,11 +191,8 @@ namespace corryvreckan {
             return ((toa << 7) - (ftoa_rise << 3) + (uftoa_start - uftoa_stop));
         }
 
-        // Corrects latency delay due to DDLL clock distribution. Units are period of 40MHz (25ns)
-        uint64_t toa_clkdll_correction(uint64_t spgroup_addr = 0) {
-            uint64_t clk_dll_step = 1 >> 5;
-            return (15 - spgroup_addr) * clk_dll_step;
-        }
+        // Corrects latency delay due to DDLL clock distribution. Units are period of 8*640MHz (195 ps)
+        uint64_t toa_clkdll_correction(uint64_t spgroup_addr = 0) { return spgroup_addr << 2; }
 
         // address including pixel, super pixel and super pixel group values
         uint64_t getAddr(uint64_t packet) { return (packet >> 46) & 0x3ffff; }

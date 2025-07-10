@@ -80,7 +80,7 @@ namespace corryvreckan {
          */
         const Pixel* getSeedPixel() const;
         /**
-         * @brief Retrieve the earliest pixel of the cluster.  In case all pixels have the same timstamp return a random
+         * @brief Retrieve the earliest pixel of the cluster.  In case all pixels have the same timestamp return a random
          * pixel.
          *
          * @return Earliest pixel of the cluster

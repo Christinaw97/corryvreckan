@@ -640,8 +640,7 @@ void ModuleManager::run() {
             };
 
             LOG_PROGRESS(STATUS, "event_loop")
-                << "Ev: " << kilo_or_mega(m_events) << " "
-                << "Px: " << kilo_or_mega(m_pixels) << " "
+                << "Ev: " << kilo_or_mega(m_events) << " " << "Px: " << kilo_or_mega(m_pixels) << " "
                 << "Tr: " << kilo_or_mega(m_tracks) << " (" << std::setprecision(3)
                 << (static_cast<double>(m_tracks) / m_events) << "/ev)"
                 << (m_clipboard->isEventDefined()

@@ -2,12 +2,15 @@
 # SPDX-FileCopyrightText: 2017-2024 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
+
 # TrackingMultiplet
+
 **Maintainer**: Paul Schuetze (paul.schuetze@desy.de)
 **Module Type**: *GLOBAL*  
 **Status**: Functional
 
 ### Description
+
 This module performs particle tracking based on the _Multiplet_ track model.
 This track model is defined by two so-called tracklets (_upstream_ & _downstream_), which are track fits to hits in the corresponding subsets of detectors.
 These tracklets are connected at a certain position along `z`, where an arbitrary kink of the track is allowed, representing a scatterer.
@@ -21,6 +24,7 @@ For finding `Multiplet`s the upstream and downstream tracklets are matched as fo
 For each upstream tracklet, the downstream tracklet with the lowest matching distance is chosen, where the matching distance is determined via an extrapolation of both arms to the position of the scatterer.
 
 ### Parameters
+
 * `scatterer_position`: Position of the scatterer along `z`. Defaults to the position of the DUT, if exactly one DUT is present.
 * `upstream_detectors`: Names of detectors associated to the upstream tracklet. Defaults to all detectors in front of the scatterer, except for `DUT` and `Auxiliary` detectors.
 * `downstream_detectors`: Names of detectors associated to the downstream tracklet. Defaults to all detectors behind the scatterer, except for `DUT` and `Auxiliary` detectors.
@@ -32,7 +36,7 @@ For each upstream tracklet, the downstream tracklet with the lowest matching dis
 * `time_cut_abs`: Specifies an absolute value for the maximum time difference allowed between clusters and an upstream or downstream tracklet for association to the tracklet. Absolute and relative time cuts are mutually exclusive. No default value.
 * `spatial_cut_rel`: Factor by which the `spatial_resolution` in x and y of each detector plane will be multiplied. These calculated value are defining an ellipse which is then used as the maximum distance in the XY plane allowed between clusters and an upstream or downstream tracklet for association to the tracklet. This allows the spatial cuts between different planes to be detector appropriate. By default, a relative spatial cut is applied. Absolute and relative spatial cuts are mutually exclusive. Defaults to `3.0`.
 * `spatial_cut_abs`: Specifies a set of absolute value (x and y) which defines an ellipse for the maximum spatial distance in the XY plane between clusters and an upstream or downstream tracklet for association to the tracklet. Absolute and relative spatial cuts are mutually exclusive. No default value.
-* `exclude_from_seed`: Names of detectors which should not be used as the first detector for the creation of the straigh line track seed, even if they are used in the tracking. This can be useful to build better seed tracks e.g. if the first plane in z has a much worse spatial resolution than the following tracking planes. Default is empty.
+* `exclude_from_seed`: Names of detectors which should not be used as the first detector for the creation of the straight line track seed, even if they are used in the tracking. This can be useful to build better seed tracks e.g. if the first plane in z has a much worse spatial resolution than the following tracking planes. Default is empty.
 * `require_detectors`: Names of detectors which are required to have a cluster on the track. If a track does not have a cluster from all detectors listed here, it is rejected. If empty, no detector is required. Default is empty.
 * `timestamp_from`: Defines the detector which provides the track timestamp. This detector is by default added to `required_detector`. If empty, the average timestamp of upstream and downstream tracklet will be used. Empty by default.
 * `track_model`: Specifies the track model used for the up and downstream arms. Defaults to `straightline`
@@ -41,6 +45,22 @@ For each upstream tracklet, the downstream tracklet with the lowest matching dis
 * `particle_charge`: Particle charge number. Defaults to `1`.
 * `refit_gbl`: Refit the multiplet tracks with GBL. Defaults to false.
 * `unique_cluster_usage`: Only use a cluster for one track - in the case of multiple assignments, the track with the best chi2/ndof is kept. Defaults to `false`
+* Parameters of x-kinks and y-kinks histograms:
+  * `kink_x_low`, `kink_y_low`: Lower bound of the histogram, in mrad. Defaults to `-20` mrad.
+  * `kink_x_high`, `kink_y_high`: Upper bound of the histogram, in mrad. Defaults to `20` mrad.
+  * `kink_x_granularity`, `kink_y_granularity`: Number of bins which defaults to `200`.
+* Parameters of the tracklet angles histograms, where `stream` is chosen among `upstream_all`, `upstream_chosen`, `downstream_all`, and/or `downstream_chosen`:
+  * `tracklet_x_<stream>_low`, `tracklet_y_<stream>_low`: Lower bound of the histogram, in mrad. Defaults to `-25` mrad.
+  * `tracklet_x_<stream>_high`, `tracklet_y_<stream>_high`: Upper bound of the histogram, in mrad. Defaults to `25` mrad.
+  * `tracklet_x_<stream>_granularity`, `tracklet_y_<stream>_granularity`: Number of bins which defaults to `250`.
+* Parameters of the chi-squared histogram:
+  * `chi2_low`: Lower bound of the histogram. Defaults to `0`.
+  * `chi2_high`: Upper bound of the histogram. Defaults to `150`.
+  * `chi2_granularity`: Number of bins which defaults to `150`.
+* Parameters of the chi-squared divided by the degrees of freedom histogram:
+  * `chi2ndof_low`: Lower bound of the histogram. Defaults to `0`.
+  * `chi2ndof_high`: Upper bound of the histogram. Defaults to `50`.
+  * `chi2ndof_granularity`: Number of bins which defaults to `100`.
 
 ### Plots produced
 
@@ -64,6 +84,7 @@ For each detector the following plots are produced both for multiplet candidates
 * Histograms of the global and local track residual in X/Y.
 
 ### Usage
+
 ```toml
 [TrackingMultiplet]
 spatial_cut_abs = 100um 100um

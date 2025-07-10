@@ -278,8 +278,6 @@ bool EventLoaderTimepix4::decodeNextWord() {
                         bool digCompare = false;
                         for(const auto& digColRow : m_digColRow) {
                             digCompare = compareTupleEq(digColRow, m_colrow);
-                            if(digCompare)
-                                break;
                         }
                         if(!digCompare) {
                             uint32_t col = std::get<0>(m_colrow);
@@ -376,7 +374,9 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket) {
         case t0_sync:
             // in case the signal is the t0 sync signal the timestamp will be updated with the t0 which should be 0
             // in addition the corresponding chip half will be considered synchronized from then on
-            m_unsynced[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
+            if(m_unsynced[m_fIndex] == false)
+                LOG(ERROR) << "Found multiple t0 for the same chip half! This should NOT happen";
+            m_unsynced[m_fIndex] = false;
             m_packetTime[m_fIndex] = dataPacket & 0x7FFFFFFFFFFFFF;
             break;
         default:
@@ -391,7 +391,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket) {
 
         m_toa = getToA(dataPacket);
         m_toa = GrayToBin(m_toa); // gray to binary conversion
-        m_ftoa_rise = getFToARise(dataPacket >> 17);
+        m_ftoa_rise = getFToARise(dataPacket);
         m_ftoa_fall = getFToAFall(dataPacket);
         m_tot = getToT(dataPacket);
         m_pileup = getPileUp(dataPacket);
@@ -406,7 +406,7 @@ bool EventLoaderTimepix4::decodePacket(uint64_t dataPacket) {
                             m_uftoa_start,
                             m_uftoa_stop,
                             m_tot); // full corrected ToT | units of ~195 ps (1/(640*8 MHz))
-        m_fullToa = fullToa(m_ext_toa, m_uftoa_start, m_uftoa_stop, m_ftoa_rise) -
+        m_fullToa = fullToa(m_ext_toa, m_uftoa_start, m_uftoa_stop, m_ftoa_rise) +
                     toa_clkdll_correction(m_sPGroup); // rfull corrected ToA | units of ~195 ps (1/(640*8 MHz))
         m_colrow = decodeColRow(m_pixel, m_sPixel, m_sPGroup, header, top); // decodes the row and col value from the address
 

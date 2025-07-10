@@ -219,10 +219,23 @@ namespace corryvreckan {
 
         /**
          * @brief Get the total size of the active matrix, i.e. pitch * number of pixels in both dimensions
-         * @return 2D vector with the dimensions of the pixle matrix in X and Y
+         * @return 2D vector with the dimensions of the pixel matrix in X and Y
          * @todo: this is designed for PixelDetector, find a proper interface for other Detector type
          */
         virtual XYVector getSize() const = 0;
+
+        /**
+         * @brief Get the total global extent of the active matrix, i.e. pitch * number of pixels in both dimensions
+         * @return 2D vector with the dimensions of the pixel matrix in X and Y
+         * @todo: this is designed for PixelDetector, find a proper interface for other Detector type
+         */
+        virtual XYZVector getGlobalExtent() const;
+
+        /**
+         * @brief Get the size of a single pixel, accounting for non-uniform pixel sizes in some detectors
+         * @return double with area of pixel at this index
+         */
+        virtual double getPixelArea(int column, int row) const = 0;
 
         /**
          * @brief Get pitch of a single pixel
@@ -428,6 +441,14 @@ namespace corryvreckan {
          * @return         Boolean indicating cluster affiliation with region-of-interest
          */
         virtual bool isWithinROI(Cluster* cluster) const = 0;
+
+        /**
+         * @brief Check whether given row and column parameters are within the detector's region-of-interest
+         * @param  col The col to be checked
+         * @param  row The row to be checked
+         * @return         Boolean indicating row+column affiliation with region-of-interest
+         */
+        virtual bool isWithinROI(const int col, const int row) const = 0;
 
         /**
          * @brief Return the thickness of the senosr assembly layer (sensor+support) in fractions of radiation length

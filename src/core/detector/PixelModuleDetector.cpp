@@ -7,6 +7,8 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <algorithm>
+
 #include "PixelModuleDetector.hpp"
 #include "core/utils/log.h"
 #include "exceptions.h"
@@ -184,6 +186,12 @@ PositionVector3D<Cartesian3D<double>> PixelModuleDetector::getLocalPosition(doub
 XYVector PixelModuleDetector::getSize() const {
     return XYVector(m_pitch.X() * (m_nPixels.X() + static_cast<double>(big_pixel_x.size())),
                     m_pitch.Y() * (m_nPixels.Y() + static_cast<double>(big_pixel_y.size())));
+}
+
+double PixelModuleDetector::getPixelArea(int column, int row) const {
+    bool is_big_x_pixel = std::binary_search(big_pixel_x.begin(), big_pixel_x.end(), column);
+    bool is_big_y_pixel = std::binary_search(big_pixel_y.begin(), big_pixel_y.end(), row);
+    return m_pitch.X() * (1 + is_big_x_pixel) * m_pitch.Y() * (1 + is_big_y_pixel);
 }
 
 XYVector PixelModuleDetector::getSpatialResolution(double column = 0, double row = 0) const {

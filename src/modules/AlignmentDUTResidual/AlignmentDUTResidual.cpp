@@ -43,7 +43,7 @@ AlignmentDUTResidual::AlignmentDUTResidual(Configuration& config, std::shared_pt
     m_workers = config.get<unsigned int>("workers");
     nIterations = config_.get<size_t>("iterations");
     m_pruneTracks = config_.get<bool>("prune_tracks");
-    m_spatial_cut_sensoredge = config_.get<bool>("spatial_cut_sensoredge");
+    m_spatial_cut_sensoredge = config_.get<double>("spatial_cut_sensoredge");
 
     m_alignPosition = config_.get<bool>("align_position");
     m_alignOrientation = config_.get<bool>("align_orientation");

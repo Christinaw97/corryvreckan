@@ -7,7 +7,7 @@ SPDX-License-Identifier: CC-BY-4.0
 
 ## addModule.sh
 
-Short script to prepare the source code and CMake files for a new allpix<sup>2</sup> module.
+Short script to prepare the source code and CMake files for a new Corryvreckan module.
 The tool will ask for all necessary information, such as the module name ("Module" will be appended automatically) and the type (global, detector,dut).
 Both unique and detector-specific modules are supported.
 
@@ -16,13 +16,14 @@ Please make sure, the information is correct.
 
 Usage:
 
-```
+```shell
 ./etc/addModule.sh
 ```
 
 Example Output:
-```
-$ ./etc/addModule.sh 
+
+```shell
+$ ./etc/addModule.sh
 
 Preparing code basis for a new module:
 
@@ -46,7 +47,7 @@ Re-run CMake in order to build your new module.
 
 Script to facilitate the compilation of Corryvreckan on the CERN LXPLUS Linux cluster. Sourcing the script via
 
-```
+```shell
 source etc/setup_lxplus.sh
 ```
 

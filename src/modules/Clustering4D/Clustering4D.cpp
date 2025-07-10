@@ -41,9 +41,16 @@ Clustering4D::Clustering4D(Configuration& config, std::shared_ptr<Detector> dete
     charge_weighting_ = config_.get<bool>("charge_weighting");
     use_earliest_pixel_ = config_.get<bool>("use_earliest_pixel");
     reject_by_ROI_ = config_.get<bool>("reject_by_roi");
+
+    // Plotting
+    config_.setDefault<int>("output_plots_charge_max", Units::get(50, "ke"));
+    config_.setDefault<int>("output_plots_charge_bins", 5000);
 }
 
 void Clustering4D::initialize() {
+
+    auto charge_maximum = static_cast<double>(Units::convert(config_.get<double>("output_plots_charge_max"), "e"));
+    auto charge_nbins = config_.get<int>("output_plots_charge_bins");
 
     // Cluster plots
     std::string title = m_detector->getName() + " Cluster size;cluster size;events";
@@ -55,7 +62,7 @@ void Clustering4D::initialize() {
     title = m_detector->getName() + " Cluster Width - Columns;cluster width [columns];events";
     clusterWidthColumn = new TH1F("clusterWidthColumn", title.c_str(), 100, -0.5, 99.5);
     title = m_detector->getName() + " Cluster Charge;cluster charge [e];events";
-    clusterCharge = new TH1F("clusterCharge", title.c_str(), 5000, -0.5, 49999.5);
+    clusterCharge = new TH1F("clusterCharge", title.c_str(), charge_nbins, -0.5, charge_maximum - 0.5);
     title = m_detector->getName() + " Cluster Charge (1px clusters);cluster charge [e];events";
     clusterCharge_1px = new TH1F("clusterCharge_1px", title.c_str(), 256, -0.5, 255.5);
     title = m_detector->getName() + " Cluster Charge (2px clusters);cluster charge [e];events";
@@ -66,11 +73,11 @@ void Clustering4D::initialize() {
     clusterPositionGlobal = new TH2F("clusterPositionGlobal",
                                      title.c_str(),
                                      400,
-                                     -m_detector->getSize().X() / 1.5,
-                                     m_detector->getSize().X() / 1.5,
+                                     m_detector->displacement().X() - m_detector->getGlobalExtent().X() / 1.5,
+                                     m_detector->displacement().X() + m_detector->getGlobalExtent().X() / 1.5,
                                      400,
-                                     -m_detector->getSize().Y() / 1.5,
-                                     m_detector->getSize().Y() / 1.5);
+                                     m_detector->displacement().Y() - m_detector->getGlobalExtent().Y() / 1.5,
+                                     m_detector->displacement().Y() + m_detector->getGlobalExtent().Y() / 1.5);
     title = m_detector->getName() + " Cluster Position (Local);x [px];y [px];events";
     clusterPositionLocal = new TH2F("clusterPositionLocal",
                                     title.c_str(),
@@ -296,6 +303,7 @@ void Clustering4D::calculateClusterCentre(Cluster* cluster) {
     double column_sum(0), column_sum_chargeweighted(0);
     double row_sum(0), row_sum_chargeweighted(0);
     bool found_charge_zero = false;
+    bool found_charge_inf = false;
 
     // Get the pixels on this cluster
     auto pixels = cluster->pixels();
@@ -309,6 +317,11 @@ void Clustering4D::calculateClusterCentre(Cluster* cluster) {
         if(pixel->charge() < std::numeric_limits<double>::epsilon()) {
             // apply arithmetic mean if a pixel has zero charge
             found_charge_zero = true;
+        }
+        // If charge == inf. Can happen with some faulty calibration in ToT systems
+        if(std::isinf(pixel->charge())) {
+            // ignore pixel if pixel has infinite charge
+            found_charge_inf = true;
         }
         charge += pixel->charge();
 
@@ -325,19 +338,19 @@ void Clustering4D::calculateClusterCentre(Cluster* cluster) {
         //    1) found_charge_zero = false, i.e. no zero charge was detected
         //    2) use_earliest_pixel was NOT chosen by the user
         //    3) the current pixel charge is larger than the previous maximum
-        if(!found_charge_zero && !use_earliest_pixel_ && pixel->charge() > maxcharge) {
+        if(!found_charge_zero && !use_earliest_pixel_ && pixel->charge() > maxcharge && !found_charge_inf) {
             timestamp = pixel->timestamp();
             maxcharge = pixel->charge();
 
-            // else: use earliest pixel
-        } else if(pixel->timestamp() < timestamp) {
+            // else: use earliest pixel if this is requested by config option
+        } else if(pixel->timestamp() < timestamp && use_earliest_pixel_) {
             timestamp = pixel->timestamp();
         }
     }
 
-    if(charge_weighting_ && !found_charge_zero) {
+    if(charge_weighting_ && !found_charge_zero && !found_charge_inf) {
         // Charge-weighted centre-of-gravity for cluster centre:
-        // (here it's safe to divide by the charge as it cannot be zero due to !found_charge_zero)
+        // (here it's safe to divide by the charge as it cannot be zero/inf due to !found_charge_zero/!found_charge_inf)
         column = column_sum_chargeweighted / charge;
         row = row_sum_chargeweighted / charge;
     } else {

@@ -25,6 +25,7 @@ The other option is to compare the distance between the cluster center and the t
 * `time_cut_rel`: Number of standard deviations the `time_resolution` of the detector plane will be multiplied by. This value is then used as the maximum time difference allowed between a DUT cluster and track for association. By default, a relative time cut is applied. Absolute and relative time cuts are mutually exclusive. Defaults to `3.0`.
 * `time_cut_abs`: Specifies an absolute value for the maximum time difference allowed between DUT cluster and track for association. Absolute and relative time cuts are mutually exclusive. No default value.
 * `use_cluster_centre`: If set true, the cluster centre will be compared to the track position for the spatial cut. If false, the nearest pixel in the cluster will be used. Defaults to `false`.
+* `charge_cut`: Minimum cluster charge to associate a cluster to the DUT. Defaults to 0.0.
 
 ### Plots produced
 

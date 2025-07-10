@@ -19,6 +19,7 @@
 #include "core/module/Module.hpp"
 #include "objects/Cluster.hpp"
 #include "objects/Pixel.hpp"
+#include "objects/TimerSignal.hpp"
 
 namespace corryvreckan {
     /** @ingroup Modules
@@ -41,6 +42,7 @@ namespace corryvreckan {
         TH2F* hitmap;
         TH2F* hitmap_clusters;
         TH1F* eventTimes;
+        TH1F* eventTimesTimerSignal;
 
         // Correlation plots
         TH1F* correlationX;
@@ -57,10 +59,16 @@ namespace corryvreckan {
         TH2F* correlationY2D;
         TH2F* correlationYX2D;
         TH2F* correlationXY2D;
+        TH2F* correlationXVsTrigger;
+        TH2F* correlationYVsTrigger;
+        TH2F* correlationYXVsTrigger;
+        TH2F* correlationXYVsTrigger;
         TH1F* correlationTime;
         TH2F* correlationTimeOverTime;
+        TH2F* correlationTimerSignalTimeOverTime_px;
         TH2F* correlationTimeOverSeedPixelRawValue;
         TH1F* correlationTime_px;
+        TH1F* correlationTimerSignalTime_px;
         TH2F* correlationTimeOverTime_px;
         TH2F* correlationTimeOverPixelRawValue_px;
         TH1F* correlationTimeInt;
@@ -74,6 +82,12 @@ namespace corryvreckan {
         bool do_time_cut_;
         bool corr_vs_time_;
         double time_binning_;
+
+        // Functions for booking of histogram
+        // Booking of histograms for normal detectors
+        void bookStandardHistograms(int, double, int, std::shared_ptr<Detector>);
+        // Booking of histograms for auxiliary detectors
+        void bookAuxiliaryHistograms();
     };
 } // namespace corryvreckan
 #endif // CORRELATIONS_H

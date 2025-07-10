@@ -20,6 +20,7 @@
 #include <TRef.h>
 
 #include "Cluster.hpp"
+#include "TimerSignal.hpp"
 #include "exceptions.h"
 
 namespace corryvreckan {
@@ -65,9 +66,14 @@ namespace corryvreckan {
         std::string getType() const;
 
         /**
-         * * @brief Add a cluster to the tack, which will be used in the fit
+         * * @brief Add a cluster to the track, which will be used in the fit
          * * @param cluster Pointer to cluster to be added */
         void addCluster(const Cluster* cluster);
+
+        /**
+         * * @brief Add a timersignal to the track, will be ignored in the fit but can be used for timestamp calculations
+         * * @param timer_signal Pointer to timersignal to be added */
+        void addTimerSignal(const TimerSignal* timer_signal);
 
         /**
          * @brief Associate a cluster to a track, will not be part of the fit
@@ -144,6 +150,12 @@ namespace corryvreckan {
         std::vector<Cluster*> getClusters() const;
 
         /**
+         * @brief Get the timersignals contained in the track
+         * @return vector of TimerSignal* associated to the track
+         */
+        std::vector<TimerSignal*> getTimerSignals() const;
+
+        /**
          * @brief Get the clusters associated to the track
          * @return vector of cluster* associated to the track
          */
@@ -164,11 +176,25 @@ namespace corryvreckan {
         bool hasDetector(const std::string& detectorID) const;
 
         /**
+         * @brief Check if this Track has a TimerSignal from a given detector
+         * @param  detectorID DetectorID of the detector to check
+         * @return True if detector has a TimerSignal on this Track, false if not.
+         */
+        bool hasDetectorTimerSignal(const std::string& detectorID) const;
+
+        /**
          * @brief Get a Track cluster from a given detector
          * @param  detectorID DetectorID of the desired detector
          * @return Track cluster from the required detector, nullptr if not found
          */
         Cluster* getClusterFromDetector(std::string detectorID) const;
+
+        /**
+         * @brief Get a Track timersignal from a given detector
+         * @param  detectorID DetectorID of the desired detector
+         * @return Track timersignal from the required detector, nullptr if not found
+         */
+        TimerSignal* getTimerSignalFromDetector(std::string detectorID) const;
 
         /**
          * @brief Get the number of clusters used for track fit
@@ -315,6 +341,7 @@ namespace corryvreckan {
             double z_, x_x0_;
             std::string name_;
             PointerWrapper<Cluster> cluster_;
+            PointerWrapper<TimerSignal> timer_signal_;
             Transform3D to_local_;
         };
 
@@ -324,6 +351,7 @@ namespace corryvreckan {
         std::vector<Plane> getPlanes();
         const Plane* get_plane(const std::string& detetorID) const;
         std::vector<PointerWrapper<Cluster>> track_clusters_;
+        std::vector<PointerWrapper<TimerSignal>> track_timer_signals_;
         std::map<std::string, std::vector<PointerWrapper<Cluster>>> associated_clusters_;
         std::map<std::string, ROOT::Math::XYPoint> residual_local_;
         std::map<std::string, ROOT::Math::XYZPoint> residual_global_;
@@ -340,7 +368,7 @@ namespace corryvreckan {
         int charge_{1};
 
         // ROOT I/O class definition - update version number when you change this class!
-        ClassDefOverride(Track, 12)
+        ClassDefOverride(Track, 13)
     };
     // Vector type declaration
     using TrackVector = std::vector<std::shared_ptr<Track>>;

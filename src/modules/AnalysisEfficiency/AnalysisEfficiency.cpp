@@ -29,6 +29,7 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     config_.setDefault<double>("spatial_cut_sensoredge", 1.);
     config_.setDefault<FakeRateMethod>("fake_rate_method", FakeRateMethod::RADIUS);
     config_.setDefault<double>("fake_rate_distance", 2.);
+    config_.setDefault<int>("fake_rate_histo_range", 25);
     config_.setDefault<int>("n_charge_bins", 1000);
     config_.setDefault<double>("charge_histo_range", 1000.0);
 
@@ -39,6 +40,7 @@ AnalysisEfficiency::AnalysisEfficiency(Configuration& config, std::shared_ptr<De
     spatial_cut_sensoredge = config_.get<double>("spatial_cut_sensoredge");
     m_fake_rate_method = config_.get<FakeRateMethod>("fake_rate_method");
     m_fake_rate_distance = config_.get<double>("fake_rate_distance");
+    m_fake_rate_histo_range = config_.get<int>("fake_rate_histo_range");
     m_n_charge_bins = config_.get<int>("n_charge_bins");
     m_charge_histo_range = config_.get<double>("charge_histo_range");
 
@@ -130,24 +132,26 @@ void AnalysisEfficiency::initialize() {
                                                      1);
 
     title = m_detector->getName() + " Global efficiency map;x [mm];y [mm];#epsilon";
-    hGlobalEfficiencyMap_trackPos_TProfile = new TProfile2D("globalEfficiencyMap_trackPos_TProfile",
-                                                            title.c_str(),
-                                                            300,
-                                                            m_detector->displacement().X() - 1.5 * m_detector->getSize().X(),
-                                                            m_detector->displacement().X() + 1.5 * m_detector->getSize().X(),
-                                                            300,
-                                                            m_detector->displacement().Y() - 1.5 * m_detector->getSize().Y(),
-                                                            m_detector->displacement().Y() + 1.5 * m_detector->getSize().Y(),
-                                                            0,
-                                                            1);
-    hGlobalEfficiencyMap_trackPos = new TEfficiency("globalEfficiencyMap_trackPos",
-                                                    title.c_str(),
-                                                    300,
-                                                    m_detector->displacement().X() - 1.5 * m_detector->getSize().X(),
-                                                    m_detector->displacement().X() + 1.5 * m_detector->getSize().X(),
-                                                    300,
-                                                    m_detector->displacement().Y() - 1.5 * m_detector->getSize().Y(),
-                                                    m_detector->displacement().Y() + 1.5 * m_detector->getSize().Y());
+    hGlobalEfficiencyMap_trackPos_TProfile =
+        new TProfile2D("globalEfficiencyMap_trackPos_TProfile",
+                       title.c_str(),
+                       300,
+                       m_detector->displacement().X() - 1.5 * m_detector->getGlobalExtent().X(),
+                       m_detector->displacement().X() + 1.5 * m_detector->getGlobalExtent().X(),
+                       300,
+                       m_detector->displacement().Y() - 1.5 * m_detector->getGlobalExtent().Y(),
+                       m_detector->displacement().Y() + 1.5 * m_detector->getGlobalExtent().Y(),
+                       0,
+                       1);
+    hGlobalEfficiencyMap_trackPos =
+        new TEfficiency("globalEfficiencyMap_trackPos",
+                        title.c_str(),
+                        300,
+                        m_detector->displacement().X() - 1.5 * m_detector->getGlobalExtent().X(),
+                        m_detector->displacement().X() + 1.5 * m_detector->getGlobalExtent().X(),
+                        300,
+                        m_detector->displacement().Y() - 1.5 * m_detector->getGlobalExtent().Y(),
+                        m_detector->displacement().Y() + 1.5 * m_detector->getGlobalExtent().Y());
     hGlobalEfficiencyMap_trackPos->SetDirectory(this->getROOTDirectory());
 
     hDistanceCluster = new TH1D("distanceTrackHit",
@@ -321,7 +325,8 @@ void AnalysisEfficiency::createFakeRatePlots() {
     }
 
     std::string title = m_detector->getName() + " number of fake hits per event; hits; events";
-    hFakePixelPerEvent = new TH1D("hFakePixelPerEvent", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
+    hFakePixelPerEvent =
+        new TH1D("hFakePixelPerEvent", title.c_str(), m_fake_rate_histo_range, 0 - 0.5, m_fake_rate_histo_range - 0.5);
 
     title = m_detector->getName() + " pixel fake hits per event;x [px];y [px]; hits";
     fakePixelPerEventMap = new TH2D("fakePixelPerEventMap",
@@ -346,10 +351,12 @@ void AnalysisEfficiency::createFakeRatePlots() {
     hFakeClusterCharge = new TH1D("hFakeClusterCharge", title.c_str(), m_n_charge_bins, 0.0, m_charge_histo_range);
 
     title = m_detector->getName() + " number of fake clusters per event; clusters; events";
-    hFakeClusterPerEvent = new TH1D("hFakeClusterPerEvent", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
+    hFakeClusterPerEvent =
+        new TH1D("hFakeClusterPerEvent", title.c_str(), m_fake_rate_histo_range, 0 - 0.5, m_fake_rate_histo_range - 0.5);
 
     title = m_detector->getName() + " cluster size of fake clusters; cluster size; events";
-    hFakeClusterSize = new TH1D("hFakeClusterSize", title.c_str(), 25, 0 - 0.5, 25 - 0.5);
+    hFakeClusterSize =
+        new TH1D("hFakeClusterSize", title.c_str(), m_fake_rate_histo_range, 0 - 0.5, m_fake_rate_histo_range - 0.5);
 }
 
 StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) {
@@ -571,7 +578,7 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
 
                 // discard tracks without intercept, using a tolerance defined
                 // by the radial cut which we will use later.
-                if(m_detector->hasIntercept(track.get(), -m_fake_rate_distance)) {
+                if(!m_detector->hasIntercept(track.get(), -m_fake_rate_distance)) {
                     continue;
                 }
 
@@ -629,23 +636,23 @@ StatusCode AnalysisEfficiency::run(const std::shared_ptr<Clipboard>& clipboard) 
         // track!
         if(!track_in_active) {
 
-            // iterate the dut pixels from clipboard
-            for(auto& pixel : pixels) {
-                fake_hits++;
-                hFakePixelCharge->Fill(pixel->charge());
-                fakePixelPerEventMap->Fill(pixel->column(), pixel->row(), 1);
-            }
-            hFakePixelPerEvent->Fill(fake_hits);
-            fakePixelPerEventVsTime->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
-            fakePixelPerEventVsTimeLong->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
-
             // get and iterate dut clusters from clipboard
             auto clusters = clipboard->getData<Cluster>(m_detector->getName());
             for(auto& cluster : clusters) {
                 fake_clusters++;
                 hFakeClusterCharge->Fill(cluster->charge());
                 hFakeClusterSize->Fill(static_cast<double>(cluster->size()));
+
+                for(auto& pixel : cluster->pixels()) {
+                    fake_hits++;
+                    hFakePixelCharge->Fill(pixel->charge());
+                    fakePixelPerEventMap->Fill(pixel->column(), pixel->row(), 1);
+                }
             }
+
+            hFakePixelPerEvent->Fill(fake_hits);
+            fakePixelPerEventVsTime->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
+            fakePixelPerEventVsTimeLong->Fill(static_cast<double>(Units::convert(event->start(), "s")), fake_hits);
             hFakeClusterPerEvent->Fill(fake_clusters);
         }
     }
@@ -666,7 +673,7 @@ void AnalysisEfficiency::finalize(const std::shared_ptr<ReadonlyClipboard>&) {
 
     double totalEff = 100 * static_cast<double>(matched_tracks) / (total_tracks > 0 ? total_tracks : 1);
     double lowerEffError = totalEff - 100 * (TEfficiency::ClopperPearson(total_tracks, matched_tracks, 0.683, false));
-    double upperEffError = 100 * (TEfficiency::ClopperPearson(total_tracks, matched_tracks, 0.683, true)) - totalEff;
+    double upperEffError = 100 * (TEfficiency::ClopperPearson(total_tracks, matched_tracks, 0.683, true))-totalEff;
     LOG(STATUS) << "Total efficiency of detector " << m_detector->getName() << ": " << totalEff << "(+" << upperEffError
                 << " -" << lowerEffError << ")%, measured with " << matched_tracks << "/" << total_tracks
                 << " matched/total tracks";

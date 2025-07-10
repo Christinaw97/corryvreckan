@@ -31,6 +31,8 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     estimationMethod = config_.get<EstimationMethod>("method", EstimationMethod::CLUSTER);
     seedingMethod = config_.get<SeedingMethod>("seeding_method", SeedingMethod::MULTI);
     thresholdType = config_.get<ThresholdType>("threshold_type", ThresholdType::FIX);
+    calibrationType = config_.get<CalibrationType>("calibration_type", CalibrationType::NONE);
+
     windowSize = config_.get<int>("window_size", 1);
     if(windowSize < 1) {
         throw InvalidValueError(config_, "window_size", "Invalid window size - value should be >= 1.");
@@ -39,6 +41,17 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     useTriggerTimestamp = config_.get<bool>("use_trigger_timestamp", false);
     flagAnalysisShape = config_.get<bool>("analysis_shape", false);
     flagAnalysisSNR = thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX;
+
+    digitizerBinNumber = config_.get<unsigned int>("digitizer_bin_number", 0);
+    digitizerBinWidth = config_.get<float>("digitizer_bin_width", 0.);
+    if(digitizerBinNumber == 0 || std::fabs(digitizerBinWidth - 0) < std::numeric_limits<float>::epsilon()) {
+        LOG(INFO) << "Digitization needs digitizerBinNumber > 0 and digitizerBinWidth > 0, using analog charge info!";
+    } else {
+        // calculate smallest threshold
+        std::vector<float> thresholds = {thresholdSeed, thresholdNeighbor, thresholdIteration};
+        thresholdSmallest = *std::min_element(thresholds.begin(), thresholds.end());
+        LOG(DEBUG) << "Smallest threshold is " << thresholdSmallest;
+    }
 
     auto detConf = m_detector->getConfiguration();
 
@@ -52,19 +65,25 @@ ClusteringAnalog::ClusteringAnalog(Configuration& config, std::shared_ptr<Detect
     }
 
     // Read calibration file
-    isCalibrated = false;
     if(thresholdType == ThresholdType::SNR || thresholdType == ThresholdType::MIX) {
+        // Backwards compatibility for the newly-added calibration type:
         if(detConf.has("calibration_file")) {
+            calibrationType = CalibrationType::FILE;
+        }
+
+        if(calibrationType == CalibrationType::FILE) {
             auto calibFilePath = detConf.getPath("calibration_file", true); // Return absolute path
             if(readCalibrationFileROOT(calibFilePath)) {
                 LOG(INFO) << "Calibration file " << calibFilePath << " loaded successfully";
-                isCalibrated = true;
             } else {
                 throw InvalidValueError(detConf, "calibration_file", "Invalid calibration file");
             }
+        } else if(calibrationType == CalibrationType::VALUE) {
+            noiseValue = config_.get<double>("calibration_noise");
         } else {
-            throw InvalidCombinationError(
-                detConf, {"calibration_file", "threshold_type"}, "Missing calibration file, required by S/N ratio analysis");
+            throw InvalidCombinationError(detConf,
+                                          {"calibration_file", "threshold_type"},
+                                          "Missing calibration file or value, required by S/N ratio analysis");
         }
     }
 
@@ -81,11 +100,7 @@ bool ClusteringAnalog::readCalibrationFileROOT(const std::filesystem::path fileN
         return false;
     }
     // Read histogram name from conf.
-    string hTemp = config_.get<string>("calibration_pedestal");
-    TH2F* hSensorPedestal = dynamic_cast<TH2F*>(f->Get(hTemp.c_str())->Clone("sensorPedestal"));
-    hTemp = config_.get<string>("calibration_noise");
-    TH2F* hSensorNoise = dynamic_cast<TH2F*>(f->Get(hTemp.c_str())->Clone("sensorNoise"));
-    hSensorPedestal->SetDirectory(nullptr);
+    TH2F* hSensorNoise = dynamic_cast<TH2F*>(f->Get(config_.get<string>("calibration_noise").c_str())->Clone("sensorNoise"));
     hSensorNoise->SetDirectory(nullptr);
 
     if(m_detector->nPixels().X() != hSensorNoise->GetNbinsX() || m_detector->nPixels().Y() != hSensorNoise->GetNbinsY()) {
@@ -103,6 +118,30 @@ bool ClusteringAnalog::readCalibrationFileROOT(const std::filesystem::path fileN
     }
     f->Close();
     return true;
+}
+
+void corryvreckan::ClusteringAnalog::digitize(std::shared_ptr<Pixel>& px) {
+
+    // we do not want to digitize
+    if(digitizerBinNumber == 0 || std::fabs(digitizerBinWidth - 0) < std::numeric_limits<float>::epsilon()) {
+        LOG(TRACE) << "Digitization needs digitizerBinNumber > 0 and digitizerBinWidth > 0, using analog charge info!";
+        return;
+    }
+
+    LOG(TRACE) << "Pixel " << px->column() << " " << px->row() << " charge " << px->charge();
+
+    // get charge bin index
+    int charge_bin = static_cast<int>(ceil((px->charge() - thresholdSmallest) / digitizerBinWidth) - 1);
+    // catch edge cases
+    if(charge_bin < 0) {
+        px->setCharge(thresholdSmallest / 2.);
+    } else if(static_cast<unsigned int>(charge_bin) > digitizerBinNumber - 1) {
+        px->setCharge(thresholdSmallest + digitizerBinWidth * (digitizerBinNumber - 0.5));
+    } else {
+        px->setCharge(thresholdSmallest + digitizerBinWidth * (charge_bin + 0.5));
+    }
+
+    LOG(TRACE) << "  Digitized charge " << px->charge();
 }
 
 void ClusteringAnalog::initialize() {
@@ -175,11 +214,11 @@ void ClusteringAnalog::initialize() {
     clusterPositionGlobal = new TH2F("clusterPositionGlobal",
                                      title.c_str(),
                                      min(500, 5 * m_detector->nPixels().X()),
-                                     -m_detector->getSize().X() / 1.5 + dx,
-                                     m_detector->getSize().X() / 1.5 + dx,
+                                     -m_detector->getGlobalExtent().X() / 1.5 + dx,
+                                     m_detector->getGlobalExtent().X() / 1.5 + dx,
                                      min(500, 5 * m_detector->nPixels().Y()),
-                                     -m_detector->getSize().Y() / 1.5 + dy,
-                                     m_detector->getSize().Y() / 1.5 + dy);
+                                     -m_detector->getGlobalExtent().Y() / 1.5 + dy,
+                                     m_detector->getGlobalExtent().Y() / 1.5 + dy);
     title = m_detector->getName() + " Cluster position (local);x [px];y [px];events";
     clusterPositionLocal = new TH2F("clusterPositionLocal",
                                     title.c_str(),
@@ -193,11 +232,11 @@ void ClusteringAnalog::initialize() {
     clusterSeedPositionGlobal = new TH2F("clusterSeedPositionGlobal",
                                          title.c_str(),
                                          min(500, 5 * m_detector->nPixels().X()),
-                                         -m_detector->getSize().X() / 1.5 + dx,
-                                         m_detector->getSize().X() / 1.5 + dx,
+                                         -m_detector->getGlobalExtent().X() / 1.5 + dx,
+                                         m_detector->getGlobalExtent().X() / 1.5 + dx,
                                          min(500, 5 * m_detector->nPixels().Y()),
-                                         -m_detector->getSize().Y() / 1.5 + dy,
-                                         m_detector->getSize().Y() / 1.5 + dy);
+                                         -m_detector->getGlobalExtent().Y() / 1.5 + dy,
+                                         m_detector->getGlobalExtent().Y() / 1.5 + dy);
     title = m_detector->getName() + " Cluster seed position (local);x [px];y [px];events";
     clusterSeedPositionLocal = new TH2F("clusterSeedPositionLocal",
                                         title.c_str(),
@@ -313,11 +352,13 @@ void ClusteringAnalog::fillHistogramsShapeAnalysis(const std::shared_ptr<Cluster
 // Signal/Noise ratio
 // return charge, if calibration file is not available.
 float ClusteringAnalog::SNR(const Pixel* px) {
-    if(!isCalibrated) {
-        LOG_ONCE(WARNING) << "Calibration file NOT initialized - return raw charge of (" << px->column() << "," << px->row()
-                          << ")";
+    if(calibrationType == CalibrationType::NONE) {
+        LOG_ONCE(WARNING) << "No calibration provided - return raw charge of (" << px->column() << "," << px->row() << ")";
         return float(px->charge());
+    } else if(calibrationType == CalibrationType::VALUE) {
+        return float(px->charge() / noiseValue);
     }
+
     double pNoise = noisemap[static_cast<size_t>(px->column())][static_cast<size_t>(px->row())];
     if(pNoise > 0.)
         return float(px->charge() / pNoise);
@@ -480,6 +521,9 @@ StatusCode ClusteringAnalog::run(const std::shared_ptr<Clipboard>& clipboard) {
     for(auto pixel : pixels) {
         // Pre-fill the hitmap with pixels
         hitmap[pixel->column()][pixel->row()] = pixel;
+
+        digitize(pixel);
+
         // Select seeds by threshold
         if(isAboveSeedThreshold(pixel.get())) {
             switch(seedingMethod) {

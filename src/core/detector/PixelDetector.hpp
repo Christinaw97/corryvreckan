@@ -128,10 +128,24 @@ namespace corryvreckan {
         bool isWithinROI(Cluster* cluster) const override;
 
         /**
+         * @brief Check whether given row and column parameters are within the detector's region-of-interest
+         * @param  col The col to be checked
+         * @param  row The row to be checked
+         * @return         Boolean indicating row+column affiliation with region-of-interest
+         */
+        bool isWithinROI(const int col, const int row) const override;
+
+        /**
          * @brief Get the total size of the active matrix, i.e. pitch * number of pixels in both dimensions
-         * @return 2D vector with the dimensions of the pixle matrix in X and Y
+         * @return 2D vector with the dimensions of the pixel matrix in X and Y
          */
         XYVector getSize() const override;
+
+        /**
+         * @brief Get the size of a single pixel
+         * @return double with area of pixel at this index
+         */
+        double getPixelArea(int = 0, int = 0) const override { return getPitch().X() * getPitch().Y(); }
 
         /**
          * @brief Get pitch of a single pixel

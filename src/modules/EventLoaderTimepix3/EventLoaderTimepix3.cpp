@@ -254,7 +254,7 @@ StatusCode EventLoaderTimepix3::run(const std::shared_ptr<Clipboard>& clipboard)
 
     // Make a new container for the data
     PixelVector deviceData;
-    SpidrSignalVector spidrData;
+    TimerSignalVector spidrData;
 
     // Load the next chunk of data
     bool data = loadData(clipboard, deviceData, spidrData);
@@ -425,8 +425,7 @@ bool EventLoaderTimepix3::decodeNextWord() {
         if(!m_detector->isDUT()) {
             LOG(WARNING)
                 /* << "Current time: " << Units::display(event->start(), {"s", "ms", "us", "ns"}) */
-                << " detector " << detectorID << " "
-                << "header == 0x0! (indicates power pulsing.) Ignoring this.";
+                << " detector " << detectorID << " " << "header == 0x0! (indicates power pulsing.) Ignoring this.";
             return true;
         }
         // Note that the following code is probably outdated and/or not much tested
@@ -446,50 +445,33 @@ bool EventLoaderTimepix3::decodeNextWord() {
             const uint64_t powerOn = ((controlbits & 0x2) >> 1);
             const uint64_t shutterClosed = ((controlbits & 0x1));
 
-            auto powerSignal = (powerOn ? std::make_shared<SpidrSignal>("powerOn", timestamp)
-                                        : std::make_shared<SpidrSignal>("powerOff", timestamp));
-
+            auto powerSignal =
+                std::make_shared<TimerSignal>(detectorID, timestamp, (powerOn ? TimerType::POWER_ON : TimerType::POWER_OFF));
             sorted_signals_.push(powerSignal);
             LOG(DEBUG) << "Power is " << (powerOn ? "on" : "off") << " power! Time: " << Units::display(timestamp, "ns");
 
             LOG(TRACE) << "Shutter closed: " << hex << shutterClosed << dec;
 
-            auto shutterSignal = (shutterClosed ? std::make_shared<SpidrSignal>("shutterClosed", timestamp)
-                                                : std::make_shared<SpidrSignal>("shutterOpen", timestamp));
+            auto shutterSignal = std::make_shared<TimerSignal>(
+                detectorID, timestamp, (shutterClosed ? TimerType::SHUTTER_CLOSED : TimerType::SHUTTER_OPEN));
+
             if(!shutterClosed) {
                 sorted_signals_.push(shutterSignal);
                 m_shutterOpen = true;
-                LOG(TRACE) << "Have opened shutter with signal " << shutterSignal->type() << " at time "
-                           << Units::display(timestamp, "ns");
+                LOG(TRACE) << "Have opened shutter with signal " << magic_enum::enum_name(shutterSignal->getType())
+                           << " at time " << Units::display(timestamp, "ns");
             }
 
             if(shutterClosed && m_shutterOpen) {
                 sorted_signals_.push(shutterSignal);
                 m_shutterOpen = false;
-                LOG(TRACE) << "Have closed shutter with signal " << shutterSignal->type() << " at time "
-                           << Units::display(timestamp, "ns");
+                LOG(TRACE) << "Have closed shutter with signal " << magic_enum::enum_name(shutterSignal->getType())
+                           << " at time " << Units::display(timestamp, "ns");
             }
 
             LOG(DEBUG) << "Shutter is " << (shutterClosed ? "closed" : "open")
                        << ". Time: " << Units::display(timestamp, "ns");
         }
-
-        /*
-        // 0x6 is power on
-        if(header2 == 0x6){
-            const double timestamp = ((pixdata & 0x0000000FFFFFFFFF) << 12 ) / (4096 * 0.04);
-            auto signal = std::make_shared<SpidrSignal>("powerOn",timestamp);
-            spidrData.push_back(signal);
-            LOG(DEBUG) <<"Turned on power! Time: " << Units::display(timestamp, "ns");
-        }
-        // 0x7 is power off
-        if(header2 == 0x7){
-            const double timestamp = ((pixdata & 0x0000000FFFFFFFFF) << 12 ) / (4096 * 0.04);
-            auto signal = std::make_shared<SpidrSignal>("powerOff",timestamp);
-            spidrData.push_back(signal);
-            LOG(DEBUG) <<"Turned off power! Time: " << Units::display(timestamp, "ns");
-        }
-            */
     }
 
     // Header 0x6 indicate trigger data
@@ -523,10 +505,12 @@ bool EventLoaderTimepix3::decodeNextWord() {
             LOG(TRACE) << "Trigger time value of: " << triggerTime;
             m_syncTimeTDC = timestamp_raw;
 
-            int triggerID = triggerNumber + (m_triggerOverflowCounter << 12);
+            auto triggerID = static_cast<uint32_t>(triggerNumber + (m_triggerOverflowCounter << 12));
             m_prevTriggerNumber = triggerNumber;
 
-            auto triggerSignal = std::make_shared<SpidrSignal>("trigger", triggerTime, triggerID);
+            auto triggerSignal = std::make_shared<TimerSignal>(detectorID, triggerTime, TimerType::TRIGGER);
+            triggerSignal->setTriggerID(triggerID);
+
             sorted_signals_.push(triggerSignal);
         }
     }
@@ -649,7 +633,7 @@ void EventLoaderTimepix3::fillBuffer() {
 // Function to load data for a given device, into the relevant container
 bool EventLoaderTimepix3::loadData(const std::shared_ptr<Clipboard>& clipboard,
                                    PixelVector& devicedata,
-                                   SpidrSignalVector& spidrData) {
+                                   TimerSignalVector& spidrData) {
 
     std::string detectorID = m_detector->getName();
     auto event = clipboard->getEvent();

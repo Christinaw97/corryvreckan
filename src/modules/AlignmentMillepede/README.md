@@ -27,7 +27,7 @@ is `false`.
 
 ### Usage
 ```toml
-[Millepede]
+[AlignmentMillepede]
 iterations = 10
 dofs = true, true, false, true, true, true
 exclude_dut = false

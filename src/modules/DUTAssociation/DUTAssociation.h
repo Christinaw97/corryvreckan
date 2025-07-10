@@ -39,6 +39,7 @@ namespace corryvreckan {
     private:
         std::shared_ptr<Detector> m_detector;
         double time_cut_;
+        double charge_cut_;
         ROOT::Math::XYVector spatial_cut_;
         bool elliptic_cut_;
         bool use_cluster_centre_;

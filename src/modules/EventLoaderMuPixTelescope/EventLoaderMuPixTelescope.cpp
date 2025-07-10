@@ -22,21 +22,14 @@ EventLoaderMuPixTelescope::EventLoaderMuPixTelescope(Configuration& config, std:
     : Module(config, std::move(detectors)), blockFile_(nullptr) {
 
     config_.setDefault<bool>("is_sorted", false);
-    config_.setDefault<bool>("ts2_is_gray", false);
     config_.setDefault<unsigned>("buffer_depth", 1000);
     config_.setDefault<double>("time_offset", 0.0);
     config_.setDefault<double>("reference_frequency", 125.);
     config_.setDefault<uint>("nbits_timestamp", 10);
     config_.setDefault<uint>("nbits_tot", 6);
-    config_.setDefault<uint>("ckdivend", 0);
-    config_.setDefault<uint>("ckdivend2", 7);
     config_.setDefault<bool>("use_both_timestamps", false);
 
     use_both_timestamps_ = config_.get<bool>("use_both_timestamps");
-    nbitsTS_ = config_.get<uint>("nbits_timestamp");
-    nbitsToT_ = config_.get<uint>("nbits_tot");
-    ckdivend_ = config_.get<uint>("ckdivend");
-    ckdivend2_ = config_.get<uint>("ckdivend2");
     refFrequency_ = config_.get<double>("reference_frequency");
     inputDirectory_ = config_.getPath("input_directory");
     buffer_depth_ = config.get<unsigned>("buffer_depth");
@@ -90,7 +83,7 @@ void EventLoaderMuPixTelescope::initialize() {
         input_file_ = "telescope_run_" + s + ".blck";
     }
 
-    // check the if folder and file do exist
+    // check  if the data folder and file do exist
     dirent* entry;
     bool foundFile = false;
     DIR* directory = opendir(inputDirectory_.c_str());
@@ -104,18 +97,19 @@ void EventLoaderMuPixTelescope::initialize() {
         }
     }
     if(!foundFile) {
-
         throw MissingDataError("Cannot open data file: " + input_file_);
     } else
         LOG(INFO) << "File " << input_file_ << " found";
+
     std::string file = (inputDirectory_ + "/" + entry->d_name);
     LOG(INFO) << "reading " << file;
+
     blockFile_ = new BlockFile(file);
     if(!blockFile_->open_read()) {
         throw MissingDataError("Cannot read data file: " + input_file_);
     }
-    TDirectory* dir = getROOTDirectory();
 
+    TDirectory* dir = getROOTDirectory();
     // create the histograms for all sensor
     for(auto& detector : detectors_) {
         auto name = detector->getName();
@@ -262,8 +256,6 @@ StatusCode EventLoaderMuPixTelescope::read_unsorted(const std::shared_ptr<Clipbo
                 pixels_.at(t).push_back(pixel);
                 hHitMap.at(names_.at(t))->Fill(pixel.get()->column(), pixel.get()->row());
                 hPixelToT.at(names_.at(t))->Fill(pixel.get()->raw());
-                // hPixelToT.at(names_.at(t))->Fill(pixel.get()->raw());
-                // display the 10 bit timestamp distribution
                 hTimeStamp.at(names_.at(t))->Fill(fmod((pixel.get()->timestamp() / 8.), pow(2, 10)));
                 pixelbuffers_.at(t).pop(); // remove top element
             } else {
@@ -298,7 +290,7 @@ EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint tag, long unsigned int
 
     auto anahit = mudaq::AnalysisHit::Factory(h, corrected_fpgaTime, chip_time);
 
-    // Fill basic histograms
+    // Fill basic histograms based on raw hits
     auto name = names_.at(tag);
 
     ts1_ts2[name]->Fill(h.get_ts2(), h.timestamp_raw());
@@ -307,7 +299,6 @@ EventLoaderMuPixTelescope::read_hit(const RawHit& h, uint tag, long unsigned int
     ts_TS1_ToT[name]->Fill(static_cast<double>((static_cast<uint>(h.timestamp_raw() / 8)) & 0xFF),
                            (static_cast<double>(static_cast<uint>(h.tot_decoded() / 8) & 0xFF)));
     // ToDo: allow changes of ckdivends via configs
-    //  return std::make_shared<Pixel>(names_.at(tag), h.column(), h.row(), tot, tot, px_timestamp);
     return std::make_shared<Pixel>(names_.at(tag),
                                    h.column(),
                                    h.row(),
@@ -332,7 +323,6 @@ void EventLoaderMuPixTelescope::fillBuffer() {
     }
     while(!buffers_full) {
         if(blockFile_->read_next(tf_)) {
-            //      std::cout << "Reading hit: "<< tf_.timestamp() <<std::endl;
             // no hits in data - can only happen if the zero suppression is switched off, skip the event
             if(tf_.num_hits() == 0) {
                 continue;
@@ -357,10 +347,6 @@ void EventLoaderMuPixTelescope::fillBuffer() {
                 // get the fpga time +1bit just for plots
                 raw_fpga_vs_chip.at(names_.at(tag))->Fill(raw_time, static_cast<double>(corrected_fpgaTime & 0x7FF));
                 chip_delay.at(names_.at(tag))->Fill(static_cast<double>((corrected_fpgaTime & 0x3FF) - raw_time));
-                // if the chip timestamp is smaller than the fpga we have a bit flip on the 11th bit
-                //                if(((corrected_fpgaTime & 0x3FF) < raw_time)) { // && (corrected_fpgaTime>1024)) {
-                //                    corrected_fpgaTime -= 1024;
-                //                }
                 raw_fpga_vs_chip_corrected.at(names_.at(tag))
                     ->Fill(raw_time, static_cast<double>(corrected_fpgaTime & 0x7FF));
 

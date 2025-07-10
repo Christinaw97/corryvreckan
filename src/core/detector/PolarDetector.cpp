@@ -396,6 +396,15 @@ bool PolarDetector::isWithinROI(Cluster* cluster) const {
     return true;
 }
 
+// Check if column and row number is within ROI:
+bool PolarDetector::isWithinROI(const int col, const int row) const {
+    if(m_roi.empty()) {
+        return true;
+    }
+
+    return (winding_number(std::make_pair(col, row), m_roi) != 0);
+}
+
 XYVector PolarDetector::getSize() const {
     /* The size of a polar detector is approximated as:
      * - X direction: Length of the arc defining the final (longest)
@@ -438,6 +447,17 @@ XYVector PolarDetector::getPolarPitch(double row) const {
     auto pitch_y = strip_length.at(row_int);
 
     return {pitch_x, pitch_y};
+}
+
+double PolarDetector::getPixelArea(int, int row) const {
+    // Get strip length and pitch for the given row
+    auto outer_r = row_radius.at(static_cast<size_t>(row));
+    auto strip_phi = angular_pitch.at(static_cast<size_t>(row));
+    auto inner_r = (row < 1) ? center_radius : row_radius.at(static_cast<size_t>(row) - 1);
+
+    /* A = pi * (r_outer^2 - r_inner^2) * (strip_phi / (2 * pi)) */
+    return (outer_r * outer_r - inner_r * inner_r) * strip_phi / 2;
+
 }
 
 XYVector PolarDetector::getSpatialResolution(double, double row) const {

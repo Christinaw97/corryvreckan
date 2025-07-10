@@ -188,12 +188,27 @@ namespace corryvreckan {
         bool isWithinROI(Cluster* cluster) const override;
 
         /**
+         * @brief Check whether given row and column parameters are within the detector's region-of-interest
+         * @param  col The col to be checked
+         * @param  row The row to be checked
+         * @return         Boolean indicating row+column affiliation with region-of-interest
+         */
+        bool isWithinROI(const int col, const int row) const override;
+
+        /**
          * @brief Get the total size of the active matrix
          * @return 2D vector with the dimensions of the strip matrix in X and Y
          *
          * @note Due to the shape of the polar detectors, the returned dimensions are only approximate
          */
         XYVector getSize() const override;
+
+        /**
+         * @brief Get the size of a given strip, accounting for area differences in
+         * radial rows
+         * @return double with area of pixel at this index
+         */
+        double getPixelArea(int column = 0, int row = 0) const override;
 
         /**
          * @brief Get pitch of a single pixel

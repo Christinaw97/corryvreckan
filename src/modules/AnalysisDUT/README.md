@@ -11,10 +11,12 @@
 ### Description
 Generic analysis module for all types of detectors. Produces a number of commonly used plots to gauge detector performance and allows to discard tracks based on their chi2/ndf value.
 If a region of interest (ROI) is defined for the detector under investigation, only tracks from within this region are evaluated, all others are discarded.
+Tracks going through pixels neighboring a masked pixel are ignored when `ignore_neighbors_masked` is set to `true` to avoid contamination.
 
 ### Parameters
 * `time_cut_frameedge`: Parameter to discard telescope tracks at the frame edges (start and end of the current CLICpix2 frame). Defaults to `20ns`.
 * `spatial_cut_sensoredge`: Parameter to discard telescope tracks at the sensor edges in fractions of pixel pitch. Defaults to `0.5`.
+* `ignore_neighbors_masked`: Boolean so select whether to exclude tracks which go through neighbors of masked pixels to avoid influencing their efficiency. Defaults to `true`.
 * `chi2ndof_cut`: Acceptance criterion for the maximum telescope tracks chi2/ndf, defaults to a value of `3`.
 * `use_closest_cluster`: If `true` the cluster with the smallest distance to the track is used if a track has more than one associated cluster. If `false`, loop over all associated clusters. Defaults to `true`.
 * `n_time_bins`: Number of bins in the time residual and correlation histograms. Defaults to `20000`.

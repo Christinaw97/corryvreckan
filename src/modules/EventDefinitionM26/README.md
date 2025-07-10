@@ -2,16 +2,19 @@
 # SPDX-FileCopyrightText: 2020-2024 CERN and the Corryvreckan authors
 # SPDX-License-Identifier: CC-BY-4.0 OR MIT
 ---
+
 # EventDefinitionM26
+
 **Maintainer**: Lennart Huth (lennart.huth@desy.de), Jens Kroeger (jens.kroeger@cern.ch)
 **Module Type**: *GLOBAL*
 **Status**: Advanced
 
 ### Description
+
 This global module allows to fully utilize the PIVOT pixel behaviour of the
 EUDET type telescopes based on the NI MIMOSA26 readout. The MIMOSA DAQ stores two full rolling shutter frames.
 The first frame corresponds to the frame where the trigger has been received. To store also particle hits at a position in front of the shutter, also the next frame is stored.
-Note that the default NI-converter only returns pixels after the pivot in the first frame and in front of the pivot in the second frame. 
+Note that the default NI-converter only returns pixels after the pivot in the first frame and in front of the pivot in the second frame.
 
 The event begin and
 end are defined based on the  pivot pixel provided in the MIMOSA data
@@ -25,12 +28,10 @@ For a triggerID that has a TLU event from 425.000us to 425.025us (default
 ```math
 begin = t_{trig} - (p * (115.2 / 576)) \mu s \\
 end = begin + 230 \mu s
-
 ```
+
 With an unknown probability the MIMOSA DAQ is not transmitting the correct two frames. Assuming frames t and t+1 are expected it can happen that frames t-1 and t are copied to disk.
 This causes an artificial inefficiency if the above method is used and no additional timing layer is available. To overcome this issue, the option `pixelated_timing_layer` is added. If set to false, this enlarges the frames to cover the full possible timestamp range. This redduces the available statistics by a rate dependent fraction (Typically 30-40%).
-
-
 
 It should be noted that in about 1 permille of the cases, zero triggers per event are
 observed, which should in principle not be possible.
@@ -40,8 +41,8 @@ This causes that in about 1 permille of the cases, the "time before" and
 "time after" a trigger spanning the event is not set correctly when the
 pivot pixel is close to its roll-over.
 
-
 ### Parameters
+
 * `detector_event_time`: Specify the detector type used to define the event timestamp.
 * `file_timestamp`: Data file containing the `detector_event_time` data
 * `file_duration`: Data file containing the  `MIMOSA26` data used to define the extend (duration) of the event.
@@ -53,23 +54,23 @@ pivot pixel is close to its roll-over.
 * `pixelated_timing_layer`: Define if an additional timing layer is being used. If so, the event length is defined as described in the text above. Defaults to `true`.
 * `use_all_mimosa_hits`: Select if all hits in the two MIMOSA frames are used for analysis, or if pivot based selection is used in the converters. If set to `true`, a full frame of `math 115 \mu s` is added at to the `begin` defined above, for `false` it sets `math begin= 115\mu s`.  If`pixelated_timing_layer=true` this has no effect.  Should always be identical to `EventLoaderEUDAQ2` and defaults to `false`.
 
-
 The following parameters are for device debugging only and typically not set manually:
+
 * `add_begin`: Shift the begin of the event further into the past. Defaults to `0`.
 * `add_end`: Shift the end of the event further into the end. Defaults to `0`.
 * `pivot_min`: Minimal pivot pixel to accept frames. Defaults to `0`.
 * `pivot_max`: Maximal pivot pixel to accept frames. Defaults to `576`.
 
-
 In addition, parameters can be forwarded to the EUDAQ2 event converters.
 Please refer to the README of the `EventLoaderEUDAQ2` for more details.
 
-
 ### Plots produced
+
 * 1D histogram of time between trigger timestamps
 * 1D histogram of time between two frames with MIMOSA hits
 
 ### Usage
+
 ```toml
 [EventDefinitionM26]
 detector_event_time = TLU

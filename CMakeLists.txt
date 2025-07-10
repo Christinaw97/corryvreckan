@@ -210,9 +210,9 @@ ADD_RUNTIME_DEP(thisroot.sh)
 ###################################
 
 # Set the clang-format version required by the CI for correct formatting:
-SET(CLANG_FORMAT_VERSION "12")
+SET(CLANG_FORMAT_VERSION "19")
 # Set the clang-tidy version of the linter required by the CI:
-SET(CLANG_TIDY_VERSION "12")
+SET(CLANG_TIDY_VERSION "19")
 
 # Set the source files to clang-format (FIXME: determine this better)
 FILE(GLOB_RECURSE
@@ -265,14 +265,14 @@ ADD_SUBDIRECTORY(testing)
 GET_FILENAME_COMPONENT(CMP_PATH ${CMAKE_CXX_COMPILER} DIRECTORY)
 GET_FILENAME_COMPONENT(PARENT_PATH ${CMP_PATH} DIRECTORY)
 IF(EXISTS ${PARENT_PATH}/setup.sh)
-  LIST(APPEND CORRY_RUNTIME_DEPS "${PARENT_PATH}/setup.sh")
+  LIST(APPEND _CORRY_RUNTIME_DEPS "${PARENT_PATH}/setup.sh")
 ENDIF()
 
 # Build configuration string with commands
-FOREACH(dep ${CORRY_RUNTIME_DEPS})
+FOREACH(dep ${_CORRY_RUNTIME_DEPS})
     SET(SETUP_FILE_DEPS "${SETUP_FILE_DEPS}source ${dep}\n")
 ENDFOREACH()
-FOREACH(dep ${CORRY_RUNTIME_LIBS})
+FOREACH(dep ${_CORRY_RUNTIME_LIBS})
     SET(SETUP_FILE_DEPS "${SETUP_FILE_DEPS}export LD_LIBRARY_PATH=\"${dep}:$LD_LIBRARY_PATH\"\n")
 ENDFOREACH()
 # Create setup file

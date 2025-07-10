@@ -11,7 +11,7 @@
 
 #include "AnalysisPowerPulsing.h"
 #include "objects/Cluster.hpp"
-#include "objects/SpidrSignal.hpp"
+#include "objects/TimerSignal.hpp"
 
 using namespace corryvreckan;
 using namespace std;
@@ -66,49 +66,14 @@ StatusCode AnalysisPowerPulsing::run(const std::shared_ptr<Clipboard>& clipboard
     if(m_shutterOpenTime != 0 && m_shutterOpenTime > m_shutterCloseTime)
         m_shutterCloseTime = 0;
 
-    /*
-        // Now update the power pulsing with any new signals
-        SpidrSignal* spidrData = (SpidrSignals*)clipboard->get(m_DUT, "SpidrSignals");
-        // If there are new signals
-        if(spidrData != NULL) {
-            // Loop over all signals registered
-            int nSignals = spidrData->size();
-            for(int iSig = 0; iSig < nSignals; iSig++) {
-                // Get the signal
-                SpidrSignal* signal = (*spidrData)[iSig];
-                // Register the power on or power off time, and whether the shutter is
-                // open or not
-                if(signal->type() == "shutterOpen") {
-                    // There may be multiple power on/off in 1 time window. At the moment,
-                    // take earliest if within 1ms
-                    if(abs(Units::convert(signal->timestamp() - m_shutterOpenTime, "s")) < 0.001) {
-                        continue;
-                    }
-                    m_shutterOpenTime = signal->timestamp();
-                    LOG(TRACE) << "Shutter opened at " << Units::display(m_shutterOpenTime, {"ns", "us", "s"});
-                }
-                if(signal->type() == "shutterClosed") {
-                    // There may be multiple power on/off in 1 time window. At the moment,
-                    // take earliest if within 1ms
-                    if(abs(Units::convert(signal->timestamp() - m_shutterCloseTime, "s")) < 0.001) {
-                        continue;
-                    }
-                    m_shutterCloseTime = signal->timestamp();
-                    LOG(TRACE) << "Shutter closed at " << Units::display(m_shutterCloseTime, {"ns", "us", "s"});
-                }
-            }
-        }
-
-    */
-
     // Now update the power pulsing with any new signals
-    auto spidrData = clipboard->getData<SpidrSignal>(m_detector->getName());
+    auto timerData = clipboard->getData<TimerSignal>(m_detector->getName());
 
     // Loop over all signals registered
-    for(auto& signal : spidrData) {
+    for(auto& signal : timerData) {
         // Register the power on or power off time, and whether the shutter is
         // open or not
-        if(signal->type() == "shutterOpen") {
+        if(signal->getType() == TimerType::SHUTTER_OPEN) {
             // There may be multiple power on/off in 1 time window. At the moment,
             // take earliest if within 1ms -> 10us
             //     if(abs(Units::convert(signal->timestamp() - m_shutterOpenTime, "s")) < 0.00001) {
@@ -124,8 +89,7 @@ StatusCode AnalysisPowerPulsing::run(const std::shared_ptr<Clipboard>& clipboard
             m_shutterOpenTime = signal->timestamp();
             // LOG(DEBUG) << "Shutter opened at " << double(m_shutterOpenTime) / (4096. * 40000000.);
             LOG(DEBUG) << "Shutter opened at " << Units::display(m_shutterOpenTime, {"ns", "us"}); //, "s"});
-        }
-        if(signal->type() == "shutterClosed") {
+        } else if(signal->getType() == TimerType::SHUTTER_CLOSED) {
             // There may be multiple power on/off in 1 time window. At the moment,
             // take earliest if within 1ms
             // if(fabs(double(signal->timestamp() - m_shutterCloseTime) / (4096. * 40000000.)) < 0.001){

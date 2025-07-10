@@ -13,10 +13,8 @@
 #define CORRYVRECKAN_TRACKINGMULTIPLET_H 1
 
 #include <TCanvas.h>
-#include <TFile.h>
 #include <TH1F.h>
 #include <TH2F.h>
-#include <TTree.h>
 #include <iostream>
 
 #include "core/module/Module.hpp"
@@ -44,7 +42,6 @@ namespace corryvreckan {
         // Init, run and finalise functions
         void initialize();
         StatusCode run(const std::shared_ptr<Clipboard>& clipboard);
-        void finalize(const std::shared_ptr<ReadonlyClipboard>& clipboard) override;
 
         /**
          * @brief Find tracklets for upstream or downstream tracklets
@@ -113,16 +110,6 @@ namespace corryvreckan {
 
         TH1F* multipletKinkAtScattererX;
         TH1F* multipletKinkAtScattererY;
-
-        // BL4S:
-        bool write_tree_;
-        double track_chi2_ndof_;
-        double intersect_x_;
-        double intersect_y_;
-        unsigned triggerID_;
-        TFile* outputFile_;
-        TTree* outputTree_;
-        std::string outName_;
 
         // Function to calculate the weighted average timestamp from the clusters of a track
         double calculate_average_timestamp(const Track* track);

@@ -918,7 +918,7 @@ void AnalysisTimingATLASpix::finalize(const std::shared_ptr<ReadonlyClipboard>&)
             TF1* fPeak = new TF1("fPeak", "gaus");
             fPeak->SetParameters(1, 100, 45);
             double timeInt = 50;
-            fitOption = "q"; // set to "q" = quiet for suppressed terminial output
+            fitOption = "q"; // set to "q" = quiet for suppressed terminal output
             hTrackCorrelationTime_example->Fit("fPeak", fitOption.c_str(), "", timePeak - timeInt, timePeak + timeInt);
             delete fPeak;
         }

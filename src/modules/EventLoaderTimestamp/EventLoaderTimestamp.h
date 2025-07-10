@@ -12,12 +12,14 @@
 #include <TCanvas.h>
 #include <TH1F.h>
 #include <TH2F.h>
+
 #include <iostream>
 #include <queue>
+
 #include "core/module/Module.hpp"
 #include "objects/Cluster.hpp"
 #include "objects/Pixel.hpp"
-#include "objects/SpidrSignal.hpp"
+#include "objects/TimerSignal.hpp"
 #include "objects/Track.hpp"
 
 namespace corryvreckan {
@@ -83,7 +85,7 @@ namespace corryvreckan {
             }
         };
 
-        std::priority_queue<std::shared_ptr<SpidrSignal>, SpidrSignalVector, CompareTimeGreater<SpidrSignal>>
+        std::priority_queue<std::shared_ptr<TimerSignal>, TimerSignalVector, CompareTimeGreater<TimerSignal>>
             sorted_signals_;
     };
 
