@@ -419,9 +419,9 @@ int AnalysisItkStripEfficiency::get_highest_bit_set(int bitset) {
 Event::Position AnalysisItkStripEfficiency::is_within_event(const std::shared_ptr<Clipboard>& clipboard,
                                                             std::shared_ptr<eudaq::StandardEvent> evt) const {
     // Potentially shift the trigger IDs if requested
-  auto triggerN = static_cast<uint32_t>(static_cast<int>(evt->GetTriggerN()));
+    auto triggerN = static_cast<uint32_t>(static_cast<int>(evt->GetTriggerN()));
 
-  auto trigger_position = clipboard->getEvent()->getTriggerPosition(triggerN);
+    auto trigger_position = clipboard->getEvent()->getTriggerPosition(triggerN);
     if(trigger_position == Event::Position::BEFORE) {
         LOG(DEBUG) << "Trigger ID " << evt->GetTriggerN() << " before triggers registered in Corryvreckan event";
         LOG(DEBUG) << "(Shifted) Trigger ID " << triggerN << " before triggers registered in Corryvreckan event";
