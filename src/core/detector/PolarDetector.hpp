@@ -224,7 +224,7 @@ namespace corryvreckan {
          * @param row Strip row (y-index)
          * @return angular pitch and strip length
          */
-        XYVector getPolarPitch(double row = 0) const;
+        ROOT::Math::Polar2DVector getPolarPitch(double row = 0) const;
 
         /**
          * @brief Get intrinsic spatial resolution of the detector

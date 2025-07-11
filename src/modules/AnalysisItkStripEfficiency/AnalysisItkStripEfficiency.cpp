@@ -419,9 +419,9 @@ int AnalysisItkStripEfficiency::get_highest_bit_set(int bitset) {
 Event::Position AnalysisItkStripEfficiency::is_within_event(const std::shared_ptr<Clipboard>& clipboard,
                                                             std::shared_ptr<eudaq::StandardEvent> evt) const {
     // Potentially shift the trigger IDs if requested
-    auto triggerN = static_cast<uint32_t>(static_cast<int>(evt->GetTriggerN()));
+  auto triggerN = static_cast<uint32_t>(static_cast<int>(evt->GetTriggerN()));
 
-    auto trigger_position = clipboard->getEvent()->getTriggerPosition(triggerN);
+  auto trigger_position = clipboard->getEvent()->getTriggerPosition(triggerN);
     if(trigger_position == Event::Position::BEFORE) {
         LOG(DEBUG) << "Trigger ID " << evt->GetTriggerN() << " before triggers registered in Corryvreckan event";
         LOG(DEBUG) << "(Shifted) Trigger ID " << triggerN << " before triggers registered in Corryvreckan event";
@@ -658,15 +658,16 @@ StatusCode AnalysisItkStripEfficiency::run(const std::shared_ptr<Clipboard>& cli
         if(polar_det != nullptr) {
             auto localInterceptPolar = polar_det->getPolarPosition(localIntercept);
             x_remainder =
-                (((localInterceptPolar.phi() + polar_det->getPolarPitch(polar_det->getRow(localIntercept)).X() * 0.5) /
-                  (polar_det->getPolarPitch(polar_det->getRow(localIntercept)).X() * 2.0)) -
-                 (floor((localInterceptPolar.phi() + polar_det->getPolarPitch(polar_det->getRow(localIntercept)).X() * 0.5) /
-                        (polar_det->getPolarPitch(polar_det->getRow(localIntercept)).X() * 2.0)))) *
+                (((localInterceptPolar.phi() + polar_det->getPolarPitch(polar_det->getRow(localIntercept)).phi() * 0.5) /
+                  (polar_det->getPolarPitch(polar_det->getRow(localIntercept)).phi() * 2.0)) -
+                 (floor(
+                     (localInterceptPolar.phi() + polar_det->getPolarPitch(polar_det->getRow(localIntercept)).phi() * 0.5) /
+                     (polar_det->getPolarPitch(polar_det->getRow(localIntercept)).phi() * 2.0)))) *
                 2.0;
             y_remainder =
-                ((localInterceptPolar.r() / (polar_det->getPolarPitch(polar_det->getRow(localIntercept)).Y() * 2.0)) -
+                ((localInterceptPolar.r() / (polar_det->getPolarPitch(polar_det->getRow(localIntercept)).r() * 2.0)) -
                  (floor(localInterceptPolar.r() /
-                        (polar_det->getPolarPitch(polar_det->getRow(localIntercept)).Y() * 2.0)))) *
+                        (polar_det->getPolarPitch(polar_det->getRow(localIntercept)).r() * 2.0)))) *
                 2.0;
         }
 
@@ -679,12 +680,6 @@ StatusCode AnalysisItkStripEfficiency::run(const std::shared_ptr<Clipboard>& cli
                 eReferenceEfficiency->Fill(has_associated_cluster, delay * 25. / 32 - std::fmod(track->timestamp(), 25.));
                 eReferenceEfficiency2D->Fill(has_associated_cluster, std::fmod(track->timestamp(), 50.), delay * 25. / 32);
             }
-            // unnecessary print outs
-            // if(delay < 5 || delay > 28) {
-            //     LOG(INFO) << "eTimingEfficiency was filled with " << has_associated_cluster << "  " << delay;
-            // }
-
-            // LOG(DEBUG) << "eTimingEfficiency pointer print " << eTimingEfficiency;
 
             LOG(DEBUG) << "(has_associated_cluster, delay, x_remainder)" << has_associated_cluster << " , " << delay << ","
                        << x_remainder;
@@ -692,8 +687,7 @@ StatusCode AnalysisItkStripEfficiency::run(const std::shared_ptr<Clipboard>& cli
             hStripEfficiencyOddEven_TProfile->Fill(int(m_detector->getColumn(localIntercept)) % 2,
                                                    m_detector->getPitch().Y() * (y_remainder - floor(y_remainder)),
                                                    has_associated_cluster);
-            // std::cout << "xr: " << x_remainder << " ylocal: " << localIntercept.y() << " row: " <<
-            // m_detector->getRow(localIntercept) << std::endl;
+
             if(is_in_delay_window) {
                 LOG(DEBUG) << " is_within_roi & is_in_delay_window, filling eTotalEfficiency , " << has_associated_cluster;
                 eInColumnEfficiency->Fill(has_associated_cluster, x_remainder);

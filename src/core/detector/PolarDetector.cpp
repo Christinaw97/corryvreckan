@@ -437,16 +437,16 @@ XYVector PolarDetector::getPitch() const {
     return {pitch_x, pitch_y};
 }
 
-XYVector PolarDetector::getPolarPitch(double row) const {
+ROOT::Math::Polar2DVector PolarDetector::getPolarPitch(double row) const {
     /* The strip pitch in a row:
-     * - X direction: angular pitch
-     * - Y direction: radial length
+     * - r: radial length
+     * - phi: angular pitch
      */
     auto row_int = static_cast<unsigned int>(floor(row + 0.5));
-    auto pitch_x = angular_pitch.at(row_int);
-    auto pitch_y = strip_length.at(row_int);
+    auto pitch_phi = angular_pitch.at(row_int);
+    auto pitch_r = strip_length.at(row_int);
 
-    return {pitch_x, pitch_y};
+    return {pitch_r, pitch_phi};
 }
 
 double PolarDetector::getPixelArea(int, int row) const {
