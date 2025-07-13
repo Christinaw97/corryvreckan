@@ -18,13 +18,8 @@ using namespace std;
 
 TreeWriterDUT::TreeWriterDUT(Configuration& config, std::shared_ptr<Detector> detector)
     : Module(config, detector), m_detector(detector) {
-
-    config_.setDefault<std::string>("file_name", "outputTuples.root");
-    config_.setDefault<std::string>("tree_name", "tree");
-
-    m_fileName = config_.get<std::string>("file_name");
-    m_treeName = config_.get<std::string>("tree_name");
 }
+
 
 /*
 
@@ -46,6 +41,12 @@ TreeWriterDUT::TreeWriterDUT(Configuration& config, std::shared_ptr<Detector> de
 
 void TreeWriterDUT::initialize() {
     LOG(DEBUG) << "Initialised TreeWriterDUT";
+
+    config_.setDefault<std::string>("file_name", "outputTuples.root");
+    config_.setDefault<std::string>("tree_name", "tree");
+
+    m_fileName = config_.get<std::string>("file_name");
+    m_treeName = config_.get<std::string>("tree_name");
 
     // Create output file and directories
     auto path = createOutputFile(m_fileName, "root");

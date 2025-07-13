@@ -31,3 +31,7 @@ else
     echo "$ cmake3 .."
     echo "$ make install -j <number_of_cores>"
 fi
+
+parent_dir=$(dirname "$PWD")
+export eudaq_DIR=${parent_dir}/eudaq
+echo "EUDAQ DIR: ${eudaq_DIR}"
