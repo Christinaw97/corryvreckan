@@ -16,21 +16,29 @@ For more details about the project please have a look at the website at https://
 ## Dependencies
 * [ROOT](https://root.cern.ch/building-root) (required, with the GenVector component)
 
-## Installation
-The CMake build system is used for compilation and installation. The install directory can be specified by adding `-DCMAKE_INSTALL_PREFIX=<prefix>` as argument to the CMake command below. Other configuration options are explained in the manual.
+## Installation (should work on lpc and lxplus el9 systems)
 
-The dependencies need to be initialized for the build to succeed.
+```bash
+git clone https://github.com/eudaq/eudaq.git
+git clone git@github.com:Christinaw97/corryvreckan.git
+source corryvreckan/etc/setup_lxplus.sh
 
-### Compilation
-To compile and install a default installation of Corryvreckan, run the following commands
+# install eudaq
+cd eudaq
+mkdir build && cd build
+cmake .. -DEUDAQ_BUILD_EXECUTABLE=OFF -DEUDAQ_BUILD_GUI=OFF -DUSER_TLU_BUILD=ON 
+cmake ..
+make install -j8
 
+## install corryvreckan
+cd ../../corryvreckan
+mkdir build && cd build
+cmake .. -DBUILD_EventLoaderEUDAQ2=ON
+export eudaq_DIR=/path/to/eudaq #use absolute path here
+cmake ..
+make install -j8
 ```
-$ mkdir build && cd build/
-$ cmake ..
-$ make install
-```
 
-For more detailed installation instructions, please refer to the documentation below.
 
 ### Uninstallation
 To uninstall and remove compilation files (e.g. when you want to do a clean recompilation/reinstallation):
