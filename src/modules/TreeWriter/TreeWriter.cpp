@@ -70,6 +70,7 @@ StatusCode TreeWriter::run(const std::shared_ptr<Clipboard>& clipboard) {
 
     // // Getting tracks from the clipboard
     auto tracks = clipboard->getData<Track>();
+    if (tracks.size() == 0) return StatusCode::Success;
 
     // // // Iterate through tracks found
     double chi2min = 999.;
