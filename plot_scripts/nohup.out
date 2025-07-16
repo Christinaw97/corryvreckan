@@ -1,0 +1,368 @@
+/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts
+/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts
+/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts
+/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts
+qt.qpa.xkeyboard: failed to compile a keymap
+qt.qpa.xkeyboard: failed to compile a keymap
+qt.qpa.xkeyboard: failed to compile a keymap
+qt.qpa.xkeyboard: failed to compile a keymap
+qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
+qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
+qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
+qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
+This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
+
+Available platform plugins are: eglfs, linuxfb, minimal, minimalegl, offscreen, vnc, webgl, xcb.
+
+This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
+
+Available platform plugins are: eglfs, linuxfb, minimal, minimalegl, offscreen, vnc, webgl, xcb.
+
+This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
+
+Available platform plugins are: eglfs, linuxfb, minimal, minimalegl, offscreen, vnc, webgl, xcb.
+
+This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
+
+Available platform plugins are: eglfs, linuxfb, minimal, minimalegl, offscreen, vnc, webgl, xcb.
+
+./make_plots.sh: line 7: 2102119 Aborted                 (core dumped) python3 ${SCRIPT_DIR}/plot_residual.py --input_file $1 --postfix $2
+./make_plots.sh: line 7: 2102122 Aborted                 (core dumped) python3 ${SCRIPT_DIR}/plot_residual.py --input_file $1 --postfix $2
+./make_plots.sh: line 7: 2102121 Aborted                 (core dumped) python3 ${SCRIPT_DIR}/plot_residual.py --input_file $1 --postfix $2
+./make_plots.sh: line 7: 2102120 Aborted                 (core dumped) python3 ${SCRIPT_DIR}/plot_residual.py --input_file $1 --postfix $2
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_tracks.py", line 96, in <module>
+    plt.savefig(f"{BASE_PATH}/plots/trackings_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_tracks.py", line 96, in <module>
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    plt.savefig(f"{BASE_PATH}/plots/trackings_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    image.save(fname, **pil_kwargs)
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+Traceback (most recent call last):
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    fp = builtins.open(filename, "w+b")
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_tracks.py", line 96, in <module>
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/trackings_out_MIMOSA.png'
+    plt.savefig(f"{BASE_PATH}/plots/trackings_{postfix}.png", format="png")
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/trackings_out_MIMOSA_1.png'
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/trackings_out_MIMOSA_2.png'
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_tracks.py", line 96, in <module>
+    plt.savefig(f"{BASE_PATH}/plots/trackings_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/trackings_out_MIMOSA_3.png'
+/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts
+/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts
+/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts
+/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_residual.py", line 79, in <module>
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_residual.py", line 79, in <module>
+    plt.savefig(f"{BASE_PATH}/plots/global_residuals_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    plt.savefig(f"{BASE_PATH}/plots/global_residuals_{postfix}.png", format="png")
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    image.save(fname, **pil_kwargs)
+    fp = builtins.open(filename, "w+b")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/global_residuals_out_MIMOSA_4.png'
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/global_residuals_out_MIMOSA_6.png'
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_residual.py", line 79, in <module>
+    plt.savefig(f"{BASE_PATH}/plots/global_residuals_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_residual.py", line 79, in <module>
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    plt.savefig(f"{BASE_PATH}/plots/global_residuals_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/global_residuals_out_MIMOSA_7.png'
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/global_residuals_out_MIMOSA_5.png'
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_tracks.py", line 96, in <module>
+    plt.savefig(f"{BASE_PATH}/plots/trackings_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/trackings_out_MIMOSA_4.png'
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_tracks.py", line 96, in <module>
+    plt.savefig(f"{BASE_PATH}/plots/trackings_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_tracks.py", line 96, in <module>
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    plt.savefig(f"{BASE_PATH}/plots/trackings_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    result = print_method(
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/trackings_out_MIMOSA_7.png'
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/trackings_out_MIMOSA_6.png'
+/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_tracks.py", line 96, in <module>
+    plt.savefig(f"{BASE_PATH}/plots/trackings_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/trackings_out_MIMOSA_5.png'
+/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_residual.py", line 79, in <module>
+    plt.savefig(f"{BASE_PATH}/plots/global_residuals_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/global_residuals_out_MIMOSA_9.png'
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_residual.py", line 79, in <module>
+    plt.savefig(f"{BASE_PATH}/plots/global_residuals_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/global_residuals_out_MIMOSA_8.png'
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_tracks.py", line 96, in <module>
+    plt.savefig(f"{BASE_PATH}/plots/trackings_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/trackings_out_MIMOSA_9.png'
+Traceback (most recent call last):
+  File "/uscms/home/christiw/nobackup/testbeam/track_reconstruction/corryvreckan/plot_scripts/plot_tracks.py", line 96, in <module>
+    plt.savefig(f"{BASE_PATH}/plots/trackings_{postfix}.png", format="png")
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/pyplot.py", line 1119, in savefig
+    res = fig.savefig(*args, **kwargs)  # type: ignore[func-returns-value]
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/figure.py", line 3390, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2187, in print_figure
+    result = print_method(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backend_bases.py", line 2043, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 497, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/backends/backend_agg.py", line 446, in _print_pil
+    mpl.image.imsave(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/matplotlib/image.py", line 1656, in imsave
+    image.save(fname, **pil_kwargs)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-clang16-opt/lib/python3.9/site-packages/PIL/Image.py", line 2429, in save
+    fp = builtins.open(filename, "w+b")
+FileNotFoundError: [Errno 2] No such file or directory: '/uscms_data/d3/christiw/testbeam/track_reconstruction/corryvreckan/plots/trackings_out_MIMOSA_8.png'
+Running make_plots.sh on ../output/out_MIMOSA.root with postfix out_MIMOSA
+Running make_plots.sh on ../output/out_MIMOSA_1.root with postfix out_MIMOSA_1
+Running make_plots.sh on ../output/out_MIMOSA_2.root with postfix out_MIMOSA_2
+Running make_plots.sh on ../output/out_MIMOSA_3.root with postfix out_MIMOSA_3
+Running make_plots.sh on ../output/out_MIMOSA_4.root with postfix out_MIMOSA_4
+Running make_plots.sh on ../output/out_MIMOSA_5.root with postfix out_MIMOSA_5
+Running make_plots.sh on ../output/out_MIMOSA_6.root with postfix out_MIMOSA_6
+Running make_plots.sh on ../output/out_MIMOSA_7.root with postfix out_MIMOSA_7
+Running make_plots.sh on ../output/out_MIMOSA_8.root with postfix out_MIMOSA_8
+Running make_plots.sh on ../output/out_MIMOSA_9.root with postfix out_MIMOSA_9
