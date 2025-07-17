@@ -3,7 +3,7 @@ import subprocess
 import os
 from concurrent.futures import ThreadPoolExecutor
 
-file_list = glob.glob("../alignment/output/out_MIMOSA_*root")
+file_list = glob.glob("../alignment/output/out_MIMOSA*root")
 file_list.sort()
 
 max_workers = 4
