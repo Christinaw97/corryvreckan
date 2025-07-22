@@ -7,10 +7,12 @@ import subprocess
 
 parser = argparse.ArgumentParser(description="Read and display the contents of a file.")
 parser.add_argument("--input_file", help="Path to the input file")
+parser.add_argument("--output_dir", help="Path to the output plots")
 parser.add_argument("--postfix", help="Postfix to add to plot name")
 
 args = parser.parse_args()
 file_path = args.input_file
+output_dir = args.output_dir
 postfix = args.postfix
 
 BASE_PATH = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE).communicate()[0].rstrip().decode('utf-8')
@@ -93,4 +95,4 @@ axs[2].text(0.95, 0.95,
             bbox=dict(boxstyle="round", facecolor="white", alpha=0.7))
 
 # Save and show
-plt.savefig(f"{BASE_PATH}/plots/trackings_{postfix}.png", format="png")
+plt.savefig(f"{BASE_PATH}/{output_dir}/trackings_{postfix}.png", format="png")

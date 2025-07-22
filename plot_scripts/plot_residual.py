@@ -6,11 +6,13 @@ import os
 import subprocess
 parser = argparse.ArgumentParser(description="Read and display the contents of a file.")
 parser.add_argument("--input_file", help="Path to the input file")
+parser.add_argument("--output_dir", help="Path to the output plots")
 parser.add_argument("--postfix", help="Postfix to add to plot name")
 
 args = parser.parse_args()
 file_path = args.input_file
 postfix = args.postfix
+output_dir = args.output_dir
 
 BASE_PATH = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'], stdout=subprocess.PIPE).communicate()[0].rstrip().decode('utf-8')
 
@@ -76,5 +78,5 @@ with uproot.open(file_path) as file:
                   verticalalignment='top',
                   bbox=dict(boxstyle="round", facecolor="white", alpha=0.7))
 
-plt.savefig(f"{BASE_PATH}/plots/global_residuals_{postfix}.png", format="png")
+plt.savefig(f"{BASE_PATH}/{output_dir}/global_residuals_{postfix}.png", format="png")
 
