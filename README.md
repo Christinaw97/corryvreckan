@@ -25,7 +25,7 @@ cmake ..
 make install -j8
 ```
 
-Run `./script.sh [run number]` for test beam reconstruction
+Run `./testbeam_script.sh [run number]` for test beam reconstruction
 
 ### Uninstallation
 To uninstall and remove compilation files (e.g. when you want to do a clean recompilation/reinstallation):
