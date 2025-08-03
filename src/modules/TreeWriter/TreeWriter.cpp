@@ -39,17 +39,6 @@ void TreeWriter::initialize() {
 
     m_eventNumber = 0;
 
-    // // Create the output branches
-    // m_outputTree->Branch("i_evt", &m_eventNumber);
-    // m_outputTree->Branch("ndof", &trackNdof);
-    // m_outputTree->Branch("chi2", &trackChi2); //reduced chi2
-    // m_outputTree->Branch("nClusters", &trackNClusters);
-    // m_outputTree->Branch("ntracks", &ntracks);
-
-    // m_outputTree->Branch("xIntercept", &xIntercept);
-    // m_outputTree->Branch("yIntercept", &yIntercept);
-    // m_outputTree->Branch("xSlope", &xSlope);
-    // m_outputTree->Branch("ySlope", &ySlope);
 
   
 }
@@ -59,6 +48,8 @@ StatusCode TreeWriter::run(const std::shared_ptr<Clipboard>& clipboard) {
     // //initial values
     theConvertedEvent_.chi2 = 999.;
     theConvertedEvent_.numClustersPix = 0.;
+    theConvertedEvent_.numPixels = 0.;
+    theConvertedEvent_.nPlanes = 0.;
     theConvertedEvent_.xIntercept = -999.;
     theConvertedEvent_.yIntercept = -999.;
     theConvertedEvent_.xSlope = -999.;
@@ -87,12 +78,31 @@ StatusCode TreeWriter::run(const std::shared_ptr<Clipboard>& clipboard) {
     if (minChi2Track) {
         theConvertedEvent_.chi2 = minChi2Track->getChi2ndof();
         theConvertedEvent_.numClustersPix = minChi2Track->getNClusters();
+        theConvertedEvent_.numPixels = minChi2Track->getNClusters();
         ROOT::Math::XYZPoint intercept = minChi2Track->getIntercept(0.0);
         theConvertedEvent_.xIntercept = intercept.x()*1e3; //convert from mm to um
         theConvertedEvent_.yIntercept = intercept.y()*1e3; //convert from mm to um
         ROOT::Math::XYZVector slope = minChi2Track->getDirection(0.0);
         theConvertedEvent_.xSlope = slope.x();
         theConvertedEvent_.ySlope = slope.y();
+	 // Loop over clusters of the track:
+	int bits = 0;
+        for(auto& cluster : minChi2Track->getClusters()) {
+            auto detector = this->get_detector(cluster->detectorID());
+            if(detector == nullptr || detector->isDUT()) {
+                continue;
+            }
+
+            auto name = detector->getName();
+	    int value = stoi(std::string(1, name[9])); //conversion
+	    if (value > 5 || value < 0){
+		    std::cout<<"DETECTOR VALUE NUMBER IS WRONG: "<< value << std::endl;
+		    continue;
+	    }
+	    bits |= (1 << value);  // set the x-th bit to 1
+	}
+	theConvertedEvent_.nPlanes = bits;
+
     }
     
 
